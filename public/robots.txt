@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Help crawlers discover canonical route maps
+Sitemap: https://sonpin.netlify.app/sitemap.xml
+
