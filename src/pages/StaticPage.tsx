@@ -103,21 +103,18 @@ export default function StaticPage() {
     ));
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString(
-      pickByLang(currentLanguage, 'zh-TW', 'en-US', 'ja-JP', 'ko-KR'),
-      {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      },
-    );
+    new Date(dateStr).toLocaleDateString(pickByLang(currentLanguage, 'zh-TW', 'en-US', 'ja-JP', 'ko-KR'), {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
 
-  const seoTitle = page?.title ? page.title.split('|')[0].trim() : 'Sonpin';
+  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '淞品土雞專賣店';
 
   useSEO({
     title: seoTitle,
-    description: page?.meta_description || t('static.seo.description', 'Sonpin 的品牌資訊與政策說明。'),
-    keywords: `${page?.title || 'Sonpin'},Sonpin`,
+    description: page?.meta_description || t('static.seo.description', '淞品土雞專賣店的品牌內容與服務資訊。'),
+    keywords: `${page?.title || '淞品土雞專賣店'},淞品,土雞`,
   });
 
   return (
@@ -127,21 +124,21 @@ export default function StaticPage() {
       <main className="flex-1 pt-24">
         {loading && (
           <div className="flex items-center justify-center py-40">
-            <div className="w-8 h-8 border-2 border-[#8e6448] border-t-transparent rounded-full animate-spin" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#8e6448] border-t-transparent" />
           </div>
         )}
 
         {!loading && notFound && (
           <div className="container mx-auto px-6 py-40 text-center">
-            <h1 className="text-3xl font-light text-[#2b221d] mb-4">
+            <h1 className="mb-4 text-3xl font-light text-[#2b221d]">
               {t('static.not_found.title', '找不到頁面')}
             </h1>
-            <p className="text-[#9f8a7b] mb-8">
-              {t('static.not_found.description', '這個頁面目前不存在，請回到首頁繼續瀏覽。')}
+            <p className="mb-8 text-[#9f8a7b]">
+              {t('static.not_found.description', '您瀏覽的內容不存在，請回到首頁重新選擇。')}
             </p>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#8e6448] text-[#fffaf2] rounded-full hover:bg-[#6d4f3d] transition-colors text-sm"
+              className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
             >
               {t('common.home', '首頁')}
               <ChevronRight size={16} />
@@ -151,53 +148,50 @@ export default function StaticPage() {
 
         {!loading && page && (
           <>
-            <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] text-[#fffaf2] py-20">
+            <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] py-20 text-[#fffaf2]">
               <div className="container mx-auto px-6">
                 {translating && (
                   <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[#fffaf2]">
-                    {t('common.translating', '翻譯中')}
+                    翻譯中
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-[#9f8a7b] text-sm mb-6">
-                  <Link to="/" className="hover:text-[#cfa87a] transition-colors">
+                <div className="mb-6 flex items-center gap-2 text-sm text-[#9f8a7b]">
+                  <Link to="/" className="transition-colors hover:text-[#cfa87a]">
                     {t('common.home', '首頁')}
                   </Link>
                   <ChevronRight size={14} />
                   <span className="text-[#eadfd1]">{page.title}</span>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-light tracking-wide">{page.title}</h1>
+                <h1 className="text-4xl font-light tracking-wide md:text-5xl">{page.title}</h1>
                 {page.meta_description && (
-                  <p className="mt-4 text-[#f4ecdf] max-w-2xl font-light leading-relaxed">
+                  <p className="mt-4 max-w-2xl font-light leading-relaxed text-[#f4ecdf]">
                     {page.meta_description}
                   </p>
                 )}
-                <p className="mt-6 text-[#9f8a7b] text-sm">
+                <p className="mt-6 text-sm text-[#9f8a7b]">
                   {t('static.updated_at', '最後更新：')}
                   {formatDate(page.updated_at)}
                 </p>
               </div>
             </section>
 
-            <div className="container mx-auto px-6 py-16 max-w-4xl">
+            <div className="container mx-auto max-w-4xl px-6 py-16">
               {page.sections.map((section, index) => (
-                <div
-                  key={index}
-                  className={`mb-12 ${section.type === 'intro' ? 'pb-12 border-b border-[#eadfd1]' : ''}`}
-                >
+                <div key={index} className={`mb-12 ${section.type === 'intro' ? 'border-b border-[#eadfd1] pb-12' : ''}`}>
                   {section.type === 'intro' ? (
-                    <div className="bg-[#f4ecdf] border border-[#eadfd1] rounded-2xl p-8">
-                      <h2 className="text-2xl font-light text-[#2b221d] mb-4">{section.title}</h2>
-                      <p className="text-[#6d4f3d] leading-relaxed font-light text-lg whitespace-pre-line">
+                    <div className="rounded-2xl border border-[#eadfd1] bg-[#f4ecdf] p-8">
+                      <h2 className="mb-4 text-2xl font-light text-[#2b221d]">{section.title}</h2>
+                      <p className="whitespace-pre-line text-lg font-light leading-relaxed text-[#6d4f3d]">
                         {section.content}
                       </p>
                     </div>
                   ) : (
                     <div>
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-1 bg-[#cfa87a] rounded-full flex-shrink-0 mt-1" style={{ minHeight: '1.5rem' }} />
+                      <div className="mb-4 flex items-start gap-4">
+                        <div className="mt-1 h-6 w-1 flex-shrink-0 rounded-full bg-[#cfa87a]" />
                         <h2 className="text-xl font-medium text-[#2b221d]">{section.title}</h2>
                       </div>
-                      <div className="ml-5 text-[#6d4f3d] leading-relaxed font-light whitespace-pre-line">
+                      <div className="ml-5 whitespace-pre-line font-light leading-relaxed text-[#6d4f3d]">
                         {formatContent(section.content)}
                       </div>
                     </div>
@@ -205,53 +199,23 @@ export default function StaticPage() {
                 </div>
               ))}
 
-              <div className="mt-16 pt-8 border-t border-[#eadfd1] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm text-[#9f8a7b] font-light">
-                  {t('static.more_pages', '相關頁面')}
-                </p>
-                <div className="flex items-center gap-4 flex-wrap justify-center">
-                  <Link
-                    to="/privacy"
-                    className={`text-sm transition-colors ${
-                      slug === 'privacy'
-                        ? 'text-[#8e6448] font-medium'
-                        : 'text-[#9f8a7b] hover:text-[#8e6448]'
-                    }`}
-                  >
-                    {t('footer.privacy', '隱私權政策')}
+              <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#eadfd1] pt-8 sm:flex-row">
+                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '其他頁面')}</p>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <Link to="/privacy" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                    隱私權政策
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
-                  <Link
-                    to="/terms"
-                    className={`text-sm transition-colors ${
-                      slug === 'terms'
-                        ? 'text-[#8e6448] font-medium'
-                        : 'text-[#9f8a7b] hover:text-[#8e6448]'
-                    }`}
-                  >
-                    {t('footer.terms', '服務條款')}
+                  <Link to="/terms" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                    服務條款
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
-                  <Link
-                    to="/shipping"
-                    className={`text-sm transition-colors ${
-                      slug === 'shipping'
-                        ? 'text-[#8e6448] font-medium'
-                        : 'text-[#9f8a7b] hover:text-[#8e6448]'
-                    }`}
-                  >
-                    {t('footer.shipping', '配送說明')}
+                  <Link to="/shipping" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                    購物須知
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
-                  <Link
-                    to="/returns"
-                    className={`text-sm transition-colors ${
-                      slug === 'returns'
-                        ? 'text-[#8e6448] font-medium'
-                        : 'text-[#9f8a7b] hover:text-[#8e6448]'
-                    }`}
-                  >
-                    {t('footer.returns', '退換貨政策')}
+                  <Link to="/returns" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                    退換貨政策
                   </Link>
                 </div>
               </div>

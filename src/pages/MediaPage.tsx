@@ -18,8 +18,8 @@ export default function MediaPage() {
 
   useSEO({
     title: group?.title || '相關報導',
-    description: `${group?.title || '相關報導'} - 淞品土雞專賣店`,
-    keywords: '相關報導, 報章雜誌, 影音報導, 淞品, Sonpin',
+    description: `${group?.title || '相關報導'} - 淞品土雞專賣店新聞與影音整理。`,
+    keywords: '淞品土雞,相關報導,新聞公告,影音報導',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
       { name: group?.title || '相關報導', url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
@@ -41,7 +41,7 @@ export default function MediaPage() {
               <span className="text-stone-700">{group?.title || '相關報導'}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
-              {group?.label || 'Media'}
+              {group?.label || 'News'}
             </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
               {group?.title || '相關報導'}
@@ -59,7 +59,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              報章雜誌
+              新聞公告
             </Link>
             <Link
               to="/media/78"
@@ -76,10 +76,6 @@ export default function MediaPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {articles.map((article) => {
               const cardImage = article.featuredImage || article.galleryImages[0] || '/sonpin-images/153285188512.jpg';
-              const fallbackExcerpt =
-                article.kind === 'video' && (!article.excerpt || article.excerpt === article.title)
-                  ? '影音報導內容，原站未附完整文字摘要。'
-                  : article.excerpt;
               return (
                 <Link
                   key={`${article.groupSlug}-${article.articleSlug}`}
@@ -94,7 +90,7 @@ export default function MediaPage() {
                     <h2 className="text-base leading-7 text-stone-800 transition-colors group-hover:text-amber-800">
                       {article.title}
                     </h2>
-                    <p className="mt-3 text-sm leading-7 text-stone-500">{fallbackExcerpt}</p>
+                    <p className="mt-3 text-sm leading-7 text-stone-500">{article.excerpt}</p>
                   </div>
                 </Link>
               );

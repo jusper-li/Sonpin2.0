@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Facebook, Instagram, Youtube, Mail, Settings } from 'lucide-react';
+import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS } from '../data/homepageContent';
 import { openCookieConsentSettings } from '../lib/cookieConsent';
@@ -20,6 +20,15 @@ interface SocialLinks {
   facebook?: string;
   instagram?: string;
   youtube?: string;
+}
+
+interface SocialAccount {
+  id: string;
+  platform: string;
+  username: string;
+  url: string;
+  is_active: boolean;
+  sort_order?: number | null;
 }
 
 interface FooterSettings {
@@ -45,6 +54,16 @@ const DEFAULT_FOOTER_LINK_LABELS: Record<string, string> = {
 };
 
 const isGarbledText = (value?: string) => !value || /[\uFFFD?]/.test(value);
+
+const SOCIAL_ICON_MAP: Record<string, any> = {
+  facebook: Facebook,
+  instagram: Instagram,
+  youtube: Youtube,
+  line: Globe,
+  twitter: Globe,
+};
+
+const normalizePlatform = (value: string) => value.trim().toLowerCase();
 
 const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings => {
   const fallbackGroups = DEFAULT_FOOTER_SETTINGS.link_groups;
@@ -79,11 +98,13 @@ const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings =>
 
 export default function SiteFooter() {
   const [settings, setSettings] = useState<FooterSettings>(DEFAULT_FOOTER_SETTINGS);
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
     loadSettings();
+    loadSocialAccounts();
   }, []);
 
   const loadSettings = async () => {
@@ -111,6 +132,24 @@ export default function SiteFooter() {
     }
   };
 
+  const loadSocialAccounts = async () => {
+    if (!isSupabaseContentEnabled) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('id, platform, username, url, is_active, sort_order')
+        .order('sort_order', { ascending: true })
+        .order('platform', { ascending: true });
+
+      if (error) throw error;
+      setSocialAccounts((data || []) as SocialAccount[]);
+    } catch (error) {
+      if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) return;
+      console.error('Failed to load social accounts:', error);
+    }
+  };
+
   const handleNavigation = (href: string) => {
     if (href.startsWith('#')) {
       if (window.location.pathname !== '/') {
@@ -132,6 +171,23 @@ export default function SiteFooter() {
     }
   };
 
+  const socialLinks = socialAccounts.length
+    ? socialAccounts.filter((item) => item.is_active && item.url.trim())
+    : ([
+        settings.social_links.instagram && {
+          platform: 'Instagram',
+          url: settings.social_links.instagram,
+        },
+        settings.social_links.facebook && {
+          platform: 'Facebook',
+          url: settings.social_links.facebook,
+        },
+        settings.social_links.youtube && {
+          platform: 'YouTube',
+          url: settings.social_links.youtube,
+        },
+      ].filter(Boolean) as Array<{ platform: string; url: string }>);
+
   return (
     <footer className="bg-[#f7f0e6] text-stone-700 w-full">
       <div className="h-px bg-gradient-to-r from-transparent via-[#cfa87a]/50 to-transparent" />
@@ -150,39 +206,22 @@ export default function SiteFooter() {
               {t('footer.about', settings.about_text)}
             </p>
             <div className="flex items-center gap-4">
-              {settings.social_links.instagram && (
-                <a
-                  href={settings.social_links.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
-                  aria-label="Instagram"
-                >
-                  <Instagram size={16} />
-                </a>
-              )}
-              {settings.social_links.facebook && (
-                <a
-                  href={settings.social_links.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
-                  aria-label="Facebook"
-                >
-                  <Facebook size={16} />
-                </a>
-              )}
-              {settings.social_links.youtube && (
-                <a
-                  href={settings.social_links.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
-                  aria-label="YouTube"
-                >
-                  <Youtube size={16} />
-                </a>
-              )}
+              {socialLinks.map((item) => {
+                const Icon = SOCIAL_ICON_MAP[normalizePlatform(item.platform)] || Globe;
+
+                return (
+                  <a
+                    key={`${item.platform}-${item.url}`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
+                    aria-label={item.platform}
+                  >
+                    <Icon size={16} />
+                  </a>
+                );
+              })}
               {settings.contact_email && (
                 <a
                   href={`mailto:${settings.contact_email}`}

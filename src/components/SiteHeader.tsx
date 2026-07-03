@@ -150,7 +150,7 @@ export default function SiteHeader() {
       .filter((group) => group.links.length > 0);
     const shoppingLinks = dedupeMenuLinks(
       [
-        { label: t('header.shop', '禮盒商城'), href: '/shop' },
+        { label: t('header.shop', '商品介紹'), href: '/shop' },
         ...(settings.show_cart ? [{ label: t('header.cart', `購物車${itemCount > 0 ? ` (${itemCount})` : ''}`), href: '/cart' }] : []),
       ],
       seen,
@@ -312,16 +312,15 @@ export default function SiteHeader() {
                 <img
                   src={settings.logo_image}
                   alt={settings.logo_text}
-                  className="h-11 md:h-16 transition-all duration-300 group-hover:scale-105"
-                  style={{ filter: isSolidHeader ? 'none' : 'brightness(0) invert(1)' }}
+                  className="h-11 md:h-16 object-contain transition-all duration-300 group-hover:scale-105"
                 />
               ) : (
                 <span className="flex flex-col">
                   <span className={`text-xl md:text-3xl font-semibold tracking-wider transition-all duration-300 ${isSolidHeader ? 'text-[#2b221d] group-hover:text-[#6d4f3d]' : 'text-white group-hover:text-white/90'}`}>
-                    {settings.logo_text.split(' ')[0] || 'y & m'}
+                    {settings.logo_text.split(' ')[0] || '淞品'}
                   </span>
                   <span className={`text-[9px] md:text-xs tracking-[0.3em] uppercase transition-colors duration-300 ${isSolidHeader ? 'text-[#a97a4f] group-hover:text-[#8e6448]' : 'text-white/70 group-hover:text-white/60'}`}>
-                    {settings.logo_text.split(' ').slice(1).join(' ') || 'Coffee'}
+                    {settings.logo_text.split(' ').slice(1).join(' ') || '土雞專賣店'}
                   </span>
                 </span>
               )}

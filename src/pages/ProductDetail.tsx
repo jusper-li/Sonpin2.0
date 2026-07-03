@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Check,
@@ -119,6 +119,8 @@ const mergeRelatedProductWithFallback = (item: RelatedProduct): RelatedProduct =
     summary: item.summary || fallback.summary,
   };
 };
+
+const getProductCategoryPath = (slug?: string) => (slug === 'main-products' ? '6' : '7');
 
 const isSeedPlaceholderImage = (src?: string | null) => !src || src.includes('images.pexels.com');
 
@@ -262,7 +264,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 
   return (
     <article className="group">
-      <Link to={`/product/${product.slug}`} className="block">
+        <Link to={`/products/${getProductCategoryPath(product.categories?.slug)}/${product.slug}`} className="block">
         <div className="mb-3 overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#f7efe5] transition-all group-hover:border-[#d8bda4] group-hover:shadow-lg aspect-square">
           <ProductImage
             src={product.images?.[0]}
@@ -352,7 +354,7 @@ function ProductInfoSections({
       <section className="scroll-mt-28">
         <div className="mb-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.storyTag', 'Product Story')}
+            {t('product.detail.storyTag', '商品故事')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.story', '商品故事')}
@@ -376,7 +378,7 @@ function ProductInfoSections({
       <section className="scroll-mt-28">
         <div className="mb-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.specTag', 'Specifications')}
+            {t('product.detail.specTag', '規格資訊')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.spec', '規格資訊')}
@@ -411,7 +413,7 @@ function ProductInfoSections({
       <section className="scroll-mt-28">
         <div className="mb-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.serviceTag', 'Service')}
+            {t('product.detail.serviceTag', '配送與服務')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.service', '配送與服務')}
@@ -516,7 +518,7 @@ export default function ProductDetail() {
           }),
           breadcrumbSchema([
             { name: t('common.home', '首頁'), url: window.location.origin },
-            { name: t('shop.breadcrumb', '禮盒商城'), url: `${window.location.origin}/shop` },
+            { name: t('shop.breadcrumb', '商品介紹'), url: `${window.location.origin}/products` },
             { name: t('product.detail.breadcrumb', t(`product.${product.slug}.name`, product.name)), url: window.location.href },
           ]),
         ]
@@ -675,11 +677,11 @@ export default function ProductDetail() {
             {t('product.detail.notFound', '找不到此商品')}
           </h1>
           <Link
-            to="/shop"
+            to="/products"
             className="inline-flex items-center gap-2 rounded-xl bg-stone-800 px-6 py-3 text-sm text-white transition-colors hover:bg-stone-700"
           >
             <ChevronLeft className="h-4 w-4" />
-            {t('product.detail.backShop', '返回商城')}
+          {t('product.detail.backShop', '返回商品介紹')}
           </Link>
         </div>
       </div>
@@ -695,8 +697,8 @@ export default function ProductDetail() {
   const priceLabel = user && product.member_price
     ? t('product.detail.price.member', '會員價')
     : product.sale_price
-      ? t('product.detail.price.sale', '優惠價')
-      : t('product.detail.price.regular', '售價');
+      ? t('product.detail.price.sale', '特價')
+      : t('product.detail.price.regular', '一般售價');
   const inStock = product.stock > 0;
 
   return (
@@ -716,8 +718,8 @@ export default function ProductDetail() {
                 <ChevronRight className="h-3 w-3" />
               </li>
               <li>
-                <Link to="/shop" className="transition-colors hover:text-stone-600">
-                  {t('shop.breadcrumb', '禮盒商城')}
+                <Link to="/products" className="transition-colors hover:text-stone-600">
+                  {t('shop.breadcrumb', '商品介紹')}
                 </Link>
               </li>
               {product.categories && (
@@ -726,7 +728,7 @@ export default function ProductDetail() {
                     <ChevronRight className="h-3 w-3" />
                   </li>
                   <li>
-                    <Link to="/shop" className="transition-colors hover:text-stone-600">
+                    <Link to={`/products/${getProductCategoryPath(product.categories.slug)}`} className="transition-colors hover:text-stone-600">
                       {t(`product.category.${product.categories.slug}`, product.categories.name)}
                     </Link>
                   </li>
@@ -936,7 +938,7 @@ export default function ProductDetail() {
                   {
                     icon: Shield,
                     label: t('product.detail.badge.quality', '品質把關'),
-                    sub: t('product.detail.badge.qualitySub', '嚴選咖啡豆與烘焙'),
+                    sub: t('product.detail.badge.qualitySub', '嚴選食材與穩定製程'),
                   },
                   {
                     icon: Package,
@@ -975,7 +977,7 @@ export default function ProductDetail() {
                     {t('product.detail.relatedTitle', '您可能也喜歡')}
                   </h2>
                 </div>
-                <Link to="/shop" className="group flex items-center gap-1 text-xs text-stone-400 transition-colors hover:text-stone-700">
+            <Link to="/products" className="group flex items-center gap-1 text-xs text-stone-400 transition-colors hover:text-stone-700">
                   {t('product.detail.viewAll', '查看全部')}
                   <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </Link>
@@ -1083,3 +1085,4 @@ export default function ProductDetail() {
     </div>
   );
 }
+

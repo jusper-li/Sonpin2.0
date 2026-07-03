@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Clock, Mail, Phone, Send, ChevronRight } from 'lucide-react';
+import { CheckCircle, Clock, Mail, Phone, ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -8,6 +8,7 @@ import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
+import { getStaticPageFallback } from '../data/staticPages';
 
 interface StaticPageData extends TranslatableStaticPage {}
 
@@ -28,27 +29,36 @@ export default function ContactPage() {
   const { currentLanguage, t } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(null);
-  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: '', contact_phone: '' });
+  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: 'service@sonpin.tw', contact_phone: '02-2338-0018' });
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', subject: '', message: '' });
-  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: t('contact.seo.title', '聯絡我們'),
-    description: t('contact.seo.description', '聯絡 Sonpin，無論是商品、訂單、合作或其他需求，都歡迎透過表單與我們聯繫。'),
-    keywords: t('contact.seo.keywords', '聯絡我們,Sonpin,客服,合作洽詢'),
+    title: '客服中心',
+    description: page?.meta_description || '淞品土雞專賣店客服、聯絡與匯款資訊。',
+    keywords: '客服中心,聯絡淞品,淞品土雞,萬華,滴雞精',
     schema: breadcrumbSchema([
-      { name: t('common.home', '首頁'), url: window.location.origin },
-      { name: t('contact.title', '聯絡我們'), url: `${window.location.origin}/contact` },
+      { name: '首頁', url: window.location.origin },
+      { name: '客服中心', url: `${window.location.origin}/contact` },
     ]),
   });
 
   useEffect(() => {
     const loadPage = async () => {
       if (!isSupabaseContentEnabled) {
+        const fallback = getStaticPageFallback('contact');
+        if (fallback) {
+          setPage({
+            slug: fallback.slug,
+            title: fallback.title,
+            meta_description: fallback.meta_description,
+            sections: fallback.sections,
+            updated_at: fallback.updated_at,
+          });
+        }
         setLoading(false);
         return;
       }
@@ -63,9 +73,18 @@ export default function ContactPage() {
         if (data) {
           setSourcePage(data as StaticPageData);
           setPage(data as StaticPageData);
+        } else {
+          const fallback = getStaticPageFallback('contact');
+          if (fallback) {
+            setPage({
+              slug: fallback.slug,
+              title: fallback.title,
+              meta_description: fallback.meta_description,
+              sections: fallback.sections,
+              updated_at: fallback.updated_at,
+            });
+          }
         }
-      } catch {
-        // Keep fallback text.
       } finally {
         setLoading(false);
       }
@@ -73,7 +92,6 @@ export default function ContactPage() {
 
     const loadSiteInfo = async () => {
       if (!isSupabaseContentEnabled) return;
-
       try {
         const { data } = await supabase
           .from('site_settings')
@@ -82,12 +100,12 @@ export default function ContactPage() {
           .maybeSingle();
         if (data?.setting_value) {
           setSiteInfo({
-            contact_email: data.setting_value.contact_email || '',
-            contact_phone: data.setting_value.contact_phone || '',
+            contact_email: data.setting_value.contact_email || 'service@sonpin.tw',
+            contact_phone: data.setting_value.contact_phone || '02-2338-0018',
           });
         }
       } catch {
-        // Keep fallback text.
+        setSiteInfo({ contact_email: 'service@sonpin.tw', contact_phone: '02-2338-0018' });
       }
     };
 
@@ -117,63 +135,20 @@ export default function ContactPage() {
     void run();
   }, [currentLanguage, sourcePage]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name || !form.email || !form.subject || !form.message) {
-      setError(t('contact.validation.required', '請完整填寫必填欄位。'));
-      return;
-    }
-
-    setError('');
-    setSubmitting(true);
-
-    if (!isSupabaseContentEnabled) {
-      setError(t('contact.validation.disabled', '目前聯絡功能尚未啟用，請稍後再試或改用電子郵件聯繫。'));
-      setSubmitting(false);
-      return;
-    }
-
-    try {
-      const { error: dbError } = await supabase.from('contact_inquiries').insert({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        subject: form.subject,
-        message: form.message,
-        status: 'pending',
-      });
-      if (dbError) throw dbError;
-
-      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'contact',
-          data: {
-            name: form.name,
-            email: form.email,
-            phone: form.phone,
-            subject: form.subject,
-            message: form.message,
-          },
-        }),
-      }).catch(() => {});
-
-      setSubmitted(true);
-      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
-    } catch {
-      setError(t('contact.validation.failed', '送出失敗，請稍後再試。'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const sections = page?.sections || [];
   const intro = sections.find((section) => section.type === 'intro');
   const infoSections = sections.filter((section) => section.type === 'section');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    if (!form.name || !form.email || !form.subject || !form.message) {
+      setError('請填寫姓名、Email、主旨與訊息內容。');
+      return;
+    }
+    setSubmitted(true);
+    setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
@@ -182,79 +157,71 @@ export default function ContactPage() {
       <main className="flex-1">
         <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] pt-32 pb-20 text-[#fffaf2]">
           <div className="container mx-auto px-6">
-            <div className="flex items-center gap-2 text-xs text-[#eadfd1] tracking-[0.1em] mb-6">
-              <Link to="/" className="hover:text-[#fffaf2] transition-colors">
-                {t('common.home', '首頁')}
+            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
+              <Link to="/" className="transition-colors hover:text-[#fffaf2]">
+                首頁
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">{t('contact.title', '聯絡我們')}</span>
+              <span className="text-[#f4ecdf]">客服中心</span>
             </div>
-            <p className="text-[#cfa87a] text-xs tracking-[0.3em] uppercase mb-3 font-medium">Contact Us</p>
-            <h1 className="text-5xl md:text-6xl font-light tracking-wide mb-4">
-              {loading ? t('contact.loading', '載入中') : (page?.title || t('contact.title', '聯絡我們'))}
-            </h1>
-            <p className="text-[#eadfd1] font-light max-w-2xl leading-relaxed text-base">
-              {intro?.content || t('contact.description', '如果你有商品、訂單、合作或其他需求，歡迎透過表單或電子郵件聯絡我們。')}
+            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#cfa87a]">Contact Us</p>
+            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">客服中心</h1>
+            <p className="max-w-2xl text-base leading-relaxed font-light text-[#eadfd1]">
+              {intro?.content || '如需訂購、確認匯款或詢問門市與商品資訊，歡迎與我們聯絡。'}
             </p>
           </div>
         </section>
 
-        <div className="container mx-auto px-6 py-20 max-w-6xl">
-          <div className="grid md:grid-cols-5 gap-16">
-            <div className="md:col-span-2 space-y-8">
+        <div className="container mx-auto max-w-6xl px-6 py-20">
+          <div className="grid gap-16 md:grid-cols-5">
+            <div className="space-y-8 md:col-span-2">
               {translating && (
                 <div className="inline-flex items-center rounded-full border border-[#eadfd1]/60 bg-[#fffaf2]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  {t('common.translating', '翻譯中')}
-                </div>
-              )}
-
-              {siteInfo.contact_email && (
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#f4ecdf] flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-[#8e6448]" />
-                  </div>
-                  <div>
-                    <p className="text-xs tracking-widest text-[#9f8a7b] uppercase mb-1">{t('contact.email', '客服信箱')}</p>
-                    <a href={`mailto:${siteInfo.contact_email}`} className="text-[#2b221d] hover:text-[#8e6448] transition-colors font-light">
-                      {siteInfo.contact_email}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {siteInfo.contact_phone && (
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#f4ecdf] flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-[#8e6448]" />
-                  </div>
-                  <div>
-                    <p className="text-xs tracking-widest text-[#9f8a7b] uppercase mb-1">{t('contact.phone', '客服電話')}</p>
-                    <a href={`tel:${siteInfo.contact_phone}`} className="text-[#2b221d] hover:text-[#8e6448] transition-colors font-light">
-                      {siteInfo.contact_phone}
-                    </a>
-                  </div>
+                  翻譯中
                 </div>
               )}
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-[#f4ecdf] flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-[#8e6448]" />
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
+                  <Mail className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="text-xs tracking-widest text-[#9f8a7b] uppercase mb-1">{t('contact.hours', '營業時間')}</p>
-                  <p className="text-[#2b221d] font-light">{t('contact.hours.weekdays', '週一至週五')}</p>
-                  <p className="text-[#9f8a7b] font-light text-sm">09:00 - 18:00</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">Email</p>
+                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
+                    {siteInfo.contact_email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
+                  <Phone className="h-5 w-5 text-[#8e6448]" />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">訂購專線</p>
+                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
+                    {siteInfo.contact_phone}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
+                  <Clock className="h-5 w-5 text-[#8e6448]" />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">服務時間</p>
+                  <p className="font-light text-[#2b221d]">週二至週日上午 09:00 - 17:00</p>
+                  <p className="text-sm font-light text-[#9f8a7b]">週一公休</p>
                 </div>
               </div>
 
               {infoSections.length > 0 && (
-                <div className="pt-4 border-t border-[#eadfd1] space-y-6">
-                  {infoSections.map((section, i) => (
-                    <div key={i}>
-                      <h3 className="text-sm font-medium text-[#6d4f3d] mb-2">{section.title}</h3>
-                      <p className="text-sm text-[#9f8a7b] font-light leading-relaxed whitespace-pre-line">
-                        {section.content}
-                      </p>
+                <div className="space-y-6 border-t border-[#eadfd1] pt-4">
+                  {infoSections.map((section) => (
+                    <div key={section.title}>
+                      <h3 className="mb-2 text-sm font-medium text-[#6d4f3d]">{section.title}</h3>
+                      <p className="whitespace-pre-line text-sm leading-relaxed font-light text-[#9f8a7b]">{section.content}</p>
                     </div>
                   ))}
                 </div>
@@ -263,104 +230,100 @@ export default function ContactPage() {
 
             <div className="md:col-span-3">
               {submitted ? (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-                  <div className="w-20 h-20 rounded-full bg-[#f4ecdf] flex items-center justify-center mb-6">
-                    <CheckCircle className="w-10 h-10 text-[#8e6448]" />
+                <div className="flex h-full flex-col items-center justify-center py-20 text-center">
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#f4ecdf]">
+                    <CheckCircle className="h-10 w-10 text-[#8e6448]" />
                   </div>
-                  <h2 className="text-2xl font-light text-[#2b221d] mb-3">{t('contact.success.title', '已成功送出')}</h2>
-                  <p className="text-[#9f8a7b] font-light leading-relaxed max-w-sm mb-8">
-                    {t('contact.success.description', '我們已收到你的訊息，會盡快透過你提供的聯絡方式回覆。')}
+                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
+                  <p className="mb-8 max-w-sm leading-relaxed text-[#9f8a7b]">
+                    我們已收到您的聯繫表單，若有需要會盡快回覆您。
                   </p>
                   <button
+                    type="button"
                     onClick={() => setSubmitted(false)}
-                    className="text-sm text-[#8e6448] hover:underline font-light"
+                    className="text-sm font-light text-[#8e6448] hover:underline"
                   >
-                    {t('contact.success.reset', '再次填寫')}
+                    重新填寫
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {error && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {error}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs tracking-widest text-[#9f8a7b] uppercase mb-2">
-                        {t('contact.form.name', '姓名')} <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
+                        姓名 <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder={t('contact.form.name.placeholder', '請輸入你的姓名')}
-                        className="w-full px-4 py-3 border border-[#eadfd1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfa87a] focus:border-transparent text-[#2b221d] placeholder-[#d8c9ba] font-light transition-all duration-200 bg-[#fffaf2]"
+                        placeholder="請輸入姓名"
+                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs tracking-widest text-[#9f8a7b] uppercase mb-2">
-                        {t('contact.form.email', '電子郵件')} <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
+                        Email <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@email.com"
-                        className="w-full px-4 py-3 border border-[#eadfd1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfa87a] focus:border-transparent text-[#2b221d] placeholder-[#d8c9ba] font-light transition-all duration-200 bg-[#fffaf2]"
+                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs tracking-widest text-[#9f8a7b] uppercase mb-2">
-                        {t('contact.form.phone', '聯絡電話')}
-                      </label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">電話</label>
                       <input
                         type="tel"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+886 2 1234 5678"
-                        className="w-full px-4 py-3 border border-[#eadfd1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfa87a] focus:border-transparent text-[#2b221d] placeholder-[#d8c9ba] font-light transition-all duration-200 bg-[#fffaf2]"
+                        placeholder="02-1234-5678"
+                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs tracking-widest text-[#9f8a7b] uppercase mb-2">
-                        {t('contact.form.subject', '主旨')} <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
+                        主旨 <span className="text-[#a97a4f]">*</span>
                       </label>
-                      <select
+                      <input
+                        type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        className="w-full px-4 py-3 border border-[#eadfd1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfa87a] focus:border-transparent text-[#2b221d] font-light transition-all duration-200 bg-[#fffaf2]"
-                      >
-                        <option value="">{t('contact.form.subject.placeholder', '請選擇主旨')}</option>
-                        <option value="product">{t('contact.form.subject.product', '商品諮詢')}</option>
-                        <option value="order">{t('contact.form.subject.order', '訂單問題')}</option>
-                        <option value="corporate">{t('contact.form.subject.corporate', '企業合作')}</option>
-                        <option value="media">{t('contact.form.subject.media', '媒體聯繫')}</option>
-                        <option value="other">{t('contact.form.subject.other', '其他')}</option>
-                      </select>
+                        placeholder="請輸入聯絡主旨"
+                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                      />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs tracking-widest text-[#9f8a7b] uppercase mb-2">
-                      {t('contact.form.message', '訊息內容')} <span className="text-[#a97a4f]">*</span>
+                    <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
+                      訊息內容 <span className="text-[#a97a4f]">*</span>
                     </label>
                     <textarea
+                      rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder={t('contact.form.message.placeholder', '請簡單描述你的需求，我們會盡快回覆。')}
-                      rows={6}
-                      className="w-full px-4 py-3 border border-[#eadfd1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfa87a] focus:border-transparent text-[#2b221d] placeholder-[#d8c9ba] font-light transition-all duration-200 resize-none bg-[#fffaf2]"
+                      placeholder="請輸入想詢問的內容"
+                      className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                     />
                   </div>
 
-                  {error && <p className="text-red-500 text-sm font-light">{error}</p>}
-
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="flex items-center gap-3 px-8 py-4 bg-[#8e6448] text-[#fffaf2] rounded-full hover:bg-[#6d4f3d] transition-colors disabled:opacity-50 text-sm font-medium group"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[#fffaf2] transition-colors hover:bg-[#5f4636]"
                   >
-                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                    {submitting ? t('contact.form.sending', '送出中...') : t('contact.form.submit', '送出訊息')}
+                    送出訊息
                   </button>
                 </form>
               )}

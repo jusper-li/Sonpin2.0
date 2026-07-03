@@ -595,7 +595,7 @@ export default function Homepage() {
           -webkit-backdrop-filter: none !important;
         }
         .ym-homepage header img {
-          filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgba(0, 0, 0, 0.28)) !important;
+          filter: none !important;
         }
         .ym-homepage header nav a,
         .ym-homepage header nav button {
@@ -836,7 +836,7 @@ export default function Homepage() {
           }
           .ym-homepage header nav > div > a:first-child img {
             height: 48px !important;
-            filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgba(0, 0, 0, 0.28)) !important;
+            filter: none !important;
           }
           .ym-homepage header nav > div > div:last-child {
             pointer-events: none;

@@ -68,7 +68,7 @@ export function useSEO({
     setMetaContent('meta[property="og:site_name"]', ['property', 'og:site_name'], SITE_NAME);
     setMetaContent('meta[property="og:locale"]', ['property', 'og:locale'], 'zh_TW');
     setMetaContent('meta[name="twitter:card"]', ['name', 'twitter:card'], 'summary_large_image');
-    setMetaContent('meta[name="twitter:site"]', ['name', 'twitter:site'], '@youandmecoffee');
+    setMetaContent('meta[name="twitter:site"]', ['name', 'twitter:site'], '@sonpin');
 
     setMetaContent('meta[property="og:title"]', ['property', 'og:title'], fullTitle);
     setMetaContent('meta[name="twitter:title"]', ['name', 'twitter:title'], fullTitle);

@@ -283,7 +283,7 @@ export default function ProductPageCardRenderer({
       data-product-page-tone={document.tone}
     >
       <header className="mb-4 flex items-center justify-between px-1 md:mb-6">
-        <p className={`text-[11px] font-medium uppercase tracking-[0.24em] ${style.overline}`}>Story Layout</p>
+        <p className={`text-[11px] font-medium uppercase tracking-[0.24em] ${style.overline}`}>商品版面</p>
         <span className={`rounded-full border px-3 py-1 text-xs font-medium ${style.badge}`}>
           {PRODUCT_PAGE_TONE_LABEL[document.tone]}
         </span>
@@ -308,7 +308,7 @@ export default function ProductPageCardRenderer({
       </div>
 
       <div className={`mx-1 mt-7 h-px ${style.divider}`} />
-      <p className={`mt-3 px-1 text-[11px] tracking-[0.12em] ${style.overline}`}>Y&M COFFEE PRODUCT STORY</p>
+      <p className={`mt-3 px-1 text-[11px] tracking-[0.12em] ${style.overline}`}>淞品商品故事</p>
     </section>
   );
 }

@@ -319,7 +319,7 @@ export default function SEOManagement() {
                     placeholder="/about"
                     required
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.page_path_hint', '例如: /, /shop, /product/example')}</p>
+                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.page_path_hint', '例如: /, /products, /products/6/example')}</p>
                 </div>
 
                 <div className="col-span-2">

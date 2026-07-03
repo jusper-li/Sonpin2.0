@@ -1,21 +1,7 @@
 /*
-  # Setup Default Languages and Homepage Content
-
-  1. Changes
-    - Insert default languages (Traditional Chinese, English, Japanese, Korean)
-    - Create default homepage sections with comprehensive content structure
-    - Add default translations for common UI elements
-  
-  2. Security
-    - All tables already have RLS enabled
-    - This migration only adds default data
-  
-  3. Content Structure
-    - Each homepage section stores: images, text, links, buttons
-    - Sections are ordered and can be toggled active/inactive
+  # Setup Default Languages and Homepage Content for Sonpin
 */
 
--- Insert default languages
 INSERT INTO languages (code, name, is_default, is_active) VALUES
   ('zh-TW', '繁體中文', true, true),
   ('en', 'English', false, true),
@@ -23,19 +9,18 @@ INSERT INTO languages (code, name, is_default, is_active) VALUES
   ('ko', '한국어', false, true)
 ON CONFLICT (code) DO NOTHING;
 
--- Insert default homepage sections
 INSERT INTO homepage_sections (section_type, title, content, sort_order, is_active) VALUES
   (
     'hero',
     '首頁主視覺',
     '{
       "background_image": "",
-      "title": "Sonpin",
-      "subtitle": "品味每一刻的美好",
-      "description": "嚴選世界各地的優質咖啡豆，以專業烘焙技術，為您呈現最純粹的咖啡香氣",
+      "title": "淞品土雞專賣店",
+      "subtitle": "萬華老字號土雞專賣品牌",
+      "description": "從門市到製程，堅持以新鮮、安心與熟悉的街區味道，帶給顧客最道地的土雞料理與滴雞精。",
       "buttons": [
-        {"text": "探索更多", "link": "#products", "style": "primary"},
-        {"text": "查看門市", "link": "#stores", "style": "secondary"}
+        {"text": "商品介紹", "link": "/products", "style": "primary"},
+        {"text": "店頭資訊", "link": "/store", "style": "secondary"}
       ]
     }'::jsonb,
     1,
@@ -43,16 +28,16 @@ INSERT INTO homepage_sections (section_type, title, content, sort_order, is_acti
   ),
   (
     'about',
-    '關於我們',
+    '關於淞品',
     '{
       "image": "",
-      "title": "關於 Sonpin",
-      "subtitle": "我們的故事",
-      "description": "Sonpin 創立於 2020 年，致力於為咖啡愛好者提供最優質的咖啡體驗。我們相信每一杯咖啡都應該是一次難忘的旅程。",
+      "title": "關於淞品",
+      "subtitle": "品牌起點",
+      "description": "淞品土雞專賣店深耕萬華與三水街市場多年，以實在的土雞料理與滴雞精品項陪伴在地生活。",
       "features": [
-        {"icon": "coffee", "title": "精選咖啡豆", "description": "來自世界各地的優質產區"},
-        {"icon": "flame", "title": "專業烘焙", "description": "嚴格控制每一個烘焙環節"},
-        {"icon": "heart", "title": "用心服務", "description": "為每位顧客提供最好的體驗"}
+        {"icon": "shield", "title": "安心來源", "description": "重視食材品質與來源透明"},
+        {"icon": "flame", "title": "現做現售", "description": "維持每日新鮮出餐的節奏"},
+        {"icon": "heart", "title": "在地服務", "description": "陪伴熟客與街區共同成長"}
       ]
     }'::jsonb,
     2,
@@ -60,11 +45,11 @@ INSERT INTO homepage_sections (section_type, title, content, sort_order, is_acti
   ),
   (
     'products',
-    '精選商品',
+    '商品介紹',
     '{
-      "title": "精選商品",
-      "subtitle": "我們的咖啡",
-      "description": "嚴選世界各地優質咖啡豆，提供多種風味選擇",
+      "title": "商品介紹",
+      "subtitle": "淞品人氣商品",
+      "description": "提供滴雞精、煙燻雞、鹹水雞與禮盒等多樣選擇。",
       "display_mode": "grid",
       "show_count": 6
     }'::jsonb,
@@ -73,11 +58,11 @@ INSERT INTO homepage_sections (section_type, title, content, sort_order, is_acti
   ),
   (
     'stores',
-    '門市據點',
+    '店頭資訊',
     '{
-      "title": "門市據點",
+      "title": "店頭資訊",
       "subtitle": "歡迎蒞臨",
-      "description": "我們在各地都有門市，歡迎您前來品嚐",
+      "description": "北部多個門市據點，歡迎就近前來選購。",
       "display_mode": "list"
     }'::jsonb,
     4,
@@ -85,33 +70,32 @@ INSERT INTO homepage_sections (section_type, title, content, sort_order, is_acti
   ),
   (
     'contact',
-    '聯絡我們',
+    '客服中心',
     '{
-      "title": "聯絡我們",
+      "title": "客服中心",
       "subtitle": "與我們聯繫",
-      "description": "有任何問題或建議，歡迎隨時與我們聯繫",
-      "email": "hello@ymcoffee.com",
-      "phone": "+886-2-1234-5678",
-      "address": "台北市信義區信義路五段7號"
+      "description": "有任何訂單、門市或合作問題，歡迎與我們聯繫。",
+      "email": "service@sonpin.tw",
+      "phone": "02-2338-0018",
+      "address": "台北市萬華區三水街84號"
     }'::jsonb,
     5,
     true
   )
 ON CONFLICT DO NOTHING;
 
--- Insert default UI translations for Traditional Chinese
 INSERT INTO translations (language_code, key, value) VALUES
   ('zh-TW', 'nav.home', '首頁'),
-  ('zh-TW', 'nav.about', '關於'),
-  ('zh-TW', 'nav.products', '商品'),
-  ('zh-TW', 'nav.stores', '門市'),
-  ('zh-TW', 'nav.contact', '聯絡'),
-  ('zh-TW', 'footer.copyright', '© 2026 Sonpin. All Rights Reserved.'),
+  ('zh-TW', 'nav.about', '關於淞品'),
+  ('zh-TW', 'nav.products', '商品介紹'),
+  ('zh-TW', 'nav.stores', '店頭資訊'),
+  ('zh-TW', 'nav.contact', '客服中心'),
+  ('zh-TW', 'footer.copyright', '© 2026 淞品土雞專賣店. All Rights Reserved.'),
   ('zh-TW', 'footer.privacy', '隱私權政策'),
   ('zh-TW', 'footer.terms', '服務條款'),
-  ('zh-TW', 'footer.contact', '聯絡我們'),
-  ('zh-TW', 'footer.stores', '門市資訊'),
-  ('zh-TW', 'footer.email', 'hello@ymcoffee.com'),
+  ('zh-TW', 'footer.contact', '客服中心'),
+  ('zh-TW', 'footer.stores', '店頭資訊'),
+  ('zh-TW', 'footer.email', 'service@sonpin.tw'),
   ('zh-TW', 'common.loading', '載入中...'),
   ('zh-TW', 'common.error', '發生錯誤'),
   ('zh-TW', 'common.success', '成功'),

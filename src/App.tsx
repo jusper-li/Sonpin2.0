@@ -9,6 +9,12 @@ const Homepage = lazy(() => import('./pages/Homepage'));
 const Backoffice = lazy(() => import('./pages/Backoffice'));
 const Shop = lazy(() => import('./pages/Shop'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const StorePage = lazy(() => import('./pages/StorePage'));
+const ServicePage = lazy(() => import('./pages/ServicePage'));
+const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'));
+const MediaPage = lazy(() => import('./pages/MediaPage'));
+const MediaDetailPage = lazy(() => import('./pages/MediaDetailPage'));
+const ProcessPage = lazy(() => import('./pages/ProcessPage'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const CheckoutResult = lazy(() => import('./pages/CheckoutResult'));
@@ -61,7 +67,17 @@ function App() {
                 <Route path="/" element={<Homepage />} />
                 <Route path="/backoffice" element={<Backoffice />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/products" element={<Shop />} />
+                <Route path="/products/:categorySlug" element={<Shop />} />
+                <Route path="/products/:categorySlug/:slug" element={<ProductDetail />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
+                <Route path="/store" element={<StorePage />} />
+                <Route path="/service" element={<ServicePage />} />
+                <Route path="/service/:slug" element={<ServiceDetailPage />} />
+                <Route path="/media" element={<MediaPage />} />
+                <Route path="/media/:categorySlug" element={<MediaPage />} />
+                <Route path="/media/:groupSlug/:articleSlug" element={<MediaDetailPage />} />
+                <Route path="/culture" element={<ProcessPage />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/checkout/result" element={<CheckoutResult />} />
@@ -76,6 +92,7 @@ function App() {
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/story" element={<StoryPage />} />
+                <Route path="/process" element={<ProcessPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/categories/:categorySlug" element={<BlogList />} />

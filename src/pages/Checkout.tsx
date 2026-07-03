@@ -66,7 +66,7 @@ export default function Checkout() {
 
   const paymentOptions = [
     { value: 'credit_card', label: t('checkout.payment.creditCard', '信用卡付款') },
-    { value: 'bank_transfer', label: t('checkout.payment.transfer', '銀行轉帳') },
+    { value: 'bank_transfer', label: t('checkout.payment.transfer', '銀行轉帳（匯款後出貨）') },
     { value: 'cash_on_delivery', label: t('checkout.payment.cod', '貨到付款') },
   ];
 
@@ -211,7 +211,10 @@ export default function Checkout() {
             </h1>
             <p className="mb-2 font-light text-stone-500">{t('checkout.success.subtitle', '感謝您的訂購')}</p>
             <p className="mb-8 text-sm font-light text-stone-400">
-              {t('checkout.success.description', '訂單確認信已寄送至您的信箱，我們將盡快為您處理。')}
+              {t(
+                'checkout.success.description',
+                '訂單確認信已寄送至您的信箱；若您選擇銀行轉帳，請依信件中的匯款資訊完成付款，我們將在確認入帳後安排出貨。'
+              )}
             </p>
             <div className="mb-8 inline-block w-full rounded-2xl border border-stone-100 bg-white px-6 py-5">
               <p className="mb-2 text-xs tracking-widest text-stone-400 uppercase">
@@ -221,10 +224,10 @@ export default function Checkout() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
-                onClick={() => navigate('/shop')}
+                onClick={() => navigate('/products')}
                 className="rounded-xl bg-stone-800 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-700"
               >
-                {t('checkout.success.continueShopping', '繼續購物')}
+                {t('checkout.success.continueShopping', '繼續選購')}
               </button>
               <button
                 onClick={() => navigate('/')}
@@ -397,6 +400,12 @@ export default function Checkout() {
                     </label>
                   ))}
                 </div>
+                <p className="mt-3 text-xs leading-6 text-stone-500">
+                  {t(
+                    'checkout.payment.note',
+                    '若選擇銀行轉帳，請依照訂單確認信中的匯款資訊完成付款；確認入帳後，我們會更新付款狀態並安排出貨。'
+                  )}
+                </p>
               </section>
 
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">

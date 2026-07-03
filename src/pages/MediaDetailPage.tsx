@@ -18,25 +18,21 @@ export default function MediaDetailPage() {
   const article = getMediaArticle(groupSlug, articleSlug);
   const group = getMediaGroup(groupSlug);
   const currentPageUrl = `${window.location.origin}/media/${groupSlug}/${articleSlug}`;
-  const externalUrl = (() => {
-    if (article?.kind === 'video' && article.iframeUrl) {
-      const videoId = article.iframeUrl.split('/embed/')[1]?.split('?')[0];
-      return videoId ? `https://www.youtube.com/watch?v=${videoId}` : article.sourceUrl || '';
-    }
-    return article?.sourceUrl || '';
-  })();
-  const showExternalUrl = Boolean(externalUrl && externalUrl !== currentPageUrl);
+  const externalUrl =
+    article?.kind === 'video' && article.iframeUrl
+      ? `https://www.youtube.com/watch?v=${article.iframeUrl.split('/embed/')[1]?.split('?')[0] || ''}`
+      : article?.sourceUrl || '';
 
   useSEO({
     title: article?.title || '相關報導',
-    description: article?.excerpt || '淞品土雞專賣店相關報導內容。',
+    description: article?.excerpt || '淞品土雞專賣店的新聞與影音內容。',
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
       ? breadcrumbSchema([
           { name: '首頁', url: window.location.origin },
           { name: '相關報導', url: `${window.location.origin}/media` },
-          { name: group?.title || '媒體報導', url: `${window.location.origin}/media/${groupSlug}` },
+          { name: group?.title || '影音報導', url: `${window.location.origin}/media/${groupSlug}` },
         ])
       : undefined,
   });
@@ -46,12 +42,12 @@ export default function MediaDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">找不到這篇報導內容。</p>
+          <p className="text-sm text-stone-500">找不到這則內容。</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
           >
-            返回相關報導
+            返回列表
           </Link>
         </main>
         <SiteFooter />
@@ -60,41 +56,26 @@ export default function MediaDetailPage() {
   }
 
   const galleryImages = article.galleryImages.length > 0 ? article.galleryImages : article.featuredImage ? [article.featuredImage] : [];
-  const hasBody = article.bodyParagraphs.length > 0;
   const showVideoFirst = article.kind === 'video' && article.videoPlacement !== 'bottom';
   const showVideoLast = article.kind === 'video' && article.videoPlacement === 'bottom';
-  const isExternalVideo = article.kind === 'video' && article.videoMode === 'external';
-  const videoBlock = article.kind === 'video' && !isExternalVideo ? (
-    <div className="bg-stone-100">
-      <div className="aspect-video w-full bg-black/90">
-        <iframe
-          src={article.iframeUrl}
-          title={article.title}
-          width="100%"
-          height="315"
-          frameBorder={0}
-          className="h-full w-full"
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-        />
+  const videoBlock =
+    article.kind === 'video' && article.iframeUrl ? (
+      <div className="overflow-hidden rounded-2xl border border-[#eadfd1] bg-black shadow-sm">
+        <div className="aspect-video w-full">
+          <iframe
+            src={article.iframeUrl}
+            title={article.title}
+            width="100%"
+            height="315"
+            frameBorder={0}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
       </div>
-    </div>
-  ) : article.kind === 'video' ? (
-    <div className="flex aspect-video w-full items-center justify-center bg-stone-900 px-6 text-center">
-      <div>
-        <p className="text-sm tracking-[0.2em] text-[#d6a96a]">VIDEO</p>
-        <p className="mt-3 text-lg text-white">此影片請使用原始 YouTube 播放</p>
-        <a
-          href={article.iframeUrl.replace('/embed/', '/watch?v=')}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#eadfd1] px-4 py-2 text-sm text-white transition-colors hover:bg-white hover:text-stone-900"
-        >
-          觀看原始影片
-        </a>
-      </div>
-    </div>
-  ) : null;
+    ) : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
@@ -112,7 +93,7 @@ export default function MediaDetailPage() {
                 相關報導
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '媒體報導'}</span>
+              <span className="text-stone-700">{group?.title || '影音報導'}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'Media'}
@@ -125,7 +106,7 @@ export default function MediaDetailPage() {
                 <Clock className="h-3.5 w-3.5" />
                 {formatDate(article.date)}
               </span>
-              {showExternalUrl && (
+              {externalUrl && externalUrl !== currentPageUrl && (
                 <a
                   href={externalUrl}
                   target="_blank"
@@ -156,7 +137,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : null}
 
-              {hasBody ? (
+              {article.bodyParagraphs.length > 0 ? (
                 <div className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]">
                   {article.bodyParagraphs.map((paragraph) => (
                     <p key={paragraph} className="whitespace-pre-line">
@@ -166,23 +147,11 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>這則內容原站以影音報導為主，文字摘要較少。</p>
-                  <p className="mt-2">
-                    如需查看原始資料，可前往{' '}
-                    <a
-                      href={article.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-[#8e6448]/40 underline-offset-4 hover:text-[#8e6448]"
-                    >
-                      原始來源
-                    </a>
-                    。
-                  </p>
+                  <p>原站內容以影音或圖片為主，本站保留原始標題與來源。</p>
                 </div>
               )}
 
-              {showVideoLast ? <div className="mt-10 overflow-hidden rounded-2xl border border-[#eadfd1] bg-black shadow-sm">{videoBlock}</div> : null}
+              {showVideoLast ? <div className="mt-10">{videoBlock}</div> : null}
 
               {galleryImages.length > 1 && (
                 <div className="mt-10 grid gap-4 md:grid-cols-2">

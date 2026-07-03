@@ -4,24 +4,13 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
-
-const SERVICE_SHARES = [
-  { slug: '73', title: '萬華龍山寺週邊(三水街)美食', image: '/sonpin-images/153267480349.png' },
-  { slug: '72', title: '雞肉半隻(鹹水+煙燻)', image: '/sonpin-images/153267470935.png' },
-  { slug: '71', title: '淞品土雞', image: '/sonpin-images/153267463973.png' },
-  { slug: '70', title: '萬華半日行。勇伯米苔目、淞品土雞、龍都冰果店', image: '/sonpin-images/153267457195.png' },
-  { slug: '69', title: '台北 : 萬華 - 淞品畜產', image: '/sonpin-images/153267443796.png' },
-  { slug: '68', title: '萬華除了有龍山寺之外 很多小吃也不錯', image: '/sonpin-images/153267418589.png' },
-  { slug: '67', title: '台北補品：淞品滴雞精@雨後', image: '/sonpin-images/153267400021.png' },
-  { slug: '66', title: '淞品商行---令人噴口水的 "白斬雞 & 燻雞"', image: '/sonpin-images/153267430289.png' },
-  { slug: '40', title: '淞品商行---令人噴口水的 "白斬雞 & 燻雞"', image: '/sonpin-images/153267424872.png' },
-];
+import { SERVICE_SHARES } from '../data/serviceContent';
 
 export default function ServicePage() {
   useSEO({
     title: '饕客分享',
-    description: '蒐集淞品土雞專賣店的饕客分享與食記內容。',
-    keywords: '饕客分享,淞品,萬華,土雞,食記',
+    description: '淞品土雞專賣店的食記與媒體分享，整理萬華三水街與龍山寺周邊的食用心得。',
+    keywords: '饕客分享,淞品土雞,萬華美食,龍山寺,三水街',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
       { name: '饕客分享', url: `${window.location.origin}/service` },
@@ -42,7 +31,7 @@ export default function ServicePage() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">饕客分享</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Service</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Share</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
               饕客分享
             </h1>
