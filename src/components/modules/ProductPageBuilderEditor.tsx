@@ -27,7 +27,7 @@ import {
   renderProductPageDocumentAsHtml,
   serializeProductPageDocument,
 } from '../../lib/productPageCards';
-import { isSupabaseAiEnabled } from '../../lib/supabase';
+import { isSupabaseAiEnabled, supabaseAnonKey, supabaseBaseUrl } from '../../lib/supabase';
 
 interface ProductPageBuilderEditorProps {
   content: string;
@@ -238,8 +238,8 @@ export default function ProductPageBuilderEditor({
   };
 
   const tryGenerateWithRemoteAi = async () => {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const url = supabaseBaseUrl;
+    const anon = supabaseAnonKey;
     const isLocalDev =
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' ||

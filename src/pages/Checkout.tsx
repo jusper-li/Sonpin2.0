@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
@@ -160,10 +160,10 @@ export default function Checkout() {
         return;
       }
 
-      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+      fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

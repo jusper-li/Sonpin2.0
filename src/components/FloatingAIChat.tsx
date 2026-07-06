@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertCircle, Bot, MessageCircle, Minimize2, RotateCcw, Send, Sparkles, ThumbsDown, ThumbsUp, User, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface Message {
@@ -160,10 +160,10 @@ function FloatingAIChatContent() {
     let streamStarted = false;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, {
+      const res = await fetch(`${supabaseBaseUrl}/functions/v1/ai-chat`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ message: msgText, session_id: currentSessionId }),

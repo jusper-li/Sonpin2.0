@@ -1,6 +1,7 @@
 import type { BlogCategory } from '../data/blogContent';
 import type { BlogArticleCategoryMap, LoadedBlogArticle } from './blog';
 import { normalizeLang, pickByLang, type SupportedLanguage } from './language';
+import { supabaseAnonKey, supabaseBaseUrl } from './supabase';
 
 export interface TranslatableBlogData {
   categories: BlogCategory[];
@@ -75,11 +76,11 @@ const translateText = async (
 ): Promise<string> => {
   if (!sourceText.trim()) return sourceText;
 
-  const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate`;
+  const apiUrl = `${supabaseBaseUrl}/functions/v1/translate`;
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      Authorization: `Bearer ${supabaseAnonKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
+import { isSupabaseContentEnabled, isSupabaseNetworkError, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { normalizeLang, pickByLang, type SupportedLanguage } from '../lib/language';
 
 interface Language {
@@ -108,9 +108,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const fetchTranslation = async (key: string, sourceText: string, targetLanguage: SupportedLanguage): Promise<string> => {
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate`;
+      const apiUrl = `${supabaseBaseUrl}/functions/v1/translate`;
       const headers = {
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        Authorization: `Bearer ${supabaseAnonKey}`,
         'Content-Type': 'application/json',
       };
 
