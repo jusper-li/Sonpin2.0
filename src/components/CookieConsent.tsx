@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Settings2, ShieldCheck, X } from 'lucide-react';
 import {
   COOKIE_CONSENT_OPEN_EVENT,
@@ -25,8 +25,6 @@ export default function CookieConsent() {
   const [showDetails, setShowDetails] = useState(false);
   const [state, setState] = useState<ConsentState>(DEFAULT_STATE);
   const [ready, setReady] = useState(false);
-
-  const savedConsent = useMemo(() => getCookieConsent(), [ready]);
 
   useEffect(() => {
     const current = getCookieConsent();

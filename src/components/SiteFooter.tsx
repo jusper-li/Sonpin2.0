@@ -28,7 +28,6 @@ interface SocialAccount {
   username: string;
   url: string;
   is_active: boolean;
-  sort_order?: number | null;
 }
 
 interface FooterSettings {
@@ -138,12 +137,12 @@ export default function SiteFooter() {
     try {
       const { data, error } = await supabase
         .from('social_accounts')
-        .select('id, platform, username, url, is_active, sort_order')
-        .order('sort_order', { ascending: true })
-        .order('platform', { ascending: true });
+        .select('id, platform, username, url, is_active');
 
       if (error) throw error;
-      setSocialAccounts((data || []) as SocialAccount[]);
+      setSocialAccounts(
+        ((data || []) as SocialAccount[]).sort((a, b) => a.platform.localeCompare(b.platform, 'zh-Hant')),
+      );
     } catch (error) {
       if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) return;
       console.error('Failed to load social accounts:', error);

@@ -154,15 +154,6 @@ function StageImage({
 const getStagePalette = (index: number) =>
   PRODUCT_STAGE_PALETTES[index % PRODUCT_STAGE_PALETTES.length];
 
-const hashText = (value: string) => {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0;
-  }
-  return String(hash >>> 0);
-};
-
 const DEFAULT_HERO_PRODUCTS = mergeHomepageHeroProducts();
 const HERO_BLOCKS_CACHE_KEY = 'ym_homepage_hero_blocks_cache_v1';
 const HERO_PRODUCTS_CACHE_KEY = 'ym_homepage_hero_products_cache_v1';

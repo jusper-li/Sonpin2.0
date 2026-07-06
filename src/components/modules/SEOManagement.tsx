@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Eye, FileText, Globe, Plus, Save, Search, ToggleLeft, ToggleRight, Trash2, X, CreditCard as Edit } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import ImageUpload from '../ImageUpload';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SEOSetting {
   id: string;
@@ -41,7 +40,6 @@ const DEFAULT_GOOGLE_ANALYTICS: GoogleAnalyticsSetting = {
 };
 
 export default function SEOManagement() {
-  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [seoSettings, setSeoSettings] = useState<SEOSetting[]>([]);
   const [googleAnalytics, setGoogleAnalytics] = useState<GoogleAnalyticsSetting>(DEFAULT_GOOGLE_ANALYTICS);

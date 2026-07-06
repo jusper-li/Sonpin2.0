@@ -26,14 +26,14 @@ interface FormState {
 }
 
 export default function ContactPage() {
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(null);
   const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: 'service@sonpin.tw', contact_phone: '02-2338-0018' });
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({

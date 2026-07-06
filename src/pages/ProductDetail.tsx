@@ -16,14 +16,6 @@ import {
   Truck,
   ZoomIn,
 } from 'lucide-react';
-import {
-  isMissingSupabaseTableError,
-  isSupabaseContentEnabled,
-  isSupabaseNetworkError,
-  isSupabaseTemporarilyOffline,
-  markSupabaseTemporarilyOffline,
-  supabase,
-} from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
@@ -33,11 +25,10 @@ import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, productSchema } from '../utils/schemaMarkup';
-import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
-import { resolveSonpinProductImages } from '../lib/productImages';
 import { extractProductPageDocument, type ExtractedProductPageDocument } from '../lib/productPageCards';
 import { normalizeLang } from '../lib/language';
 import { shouldTranslateProductPage, translateHtmlContentWithT, translateProductPageDocumentWithT } from '../lib/productPageLiveTranslation';
+import { loadCatalogProducts } from '../lib/supabaseCatalog';
 const ProductPageCardRenderer = lazy(() => import('../components/product-page/ProductPageCardRenderer'));
 
 interface Product {
@@ -59,7 +50,7 @@ interface Product {
   seo_description: string | null;
   seo_keywords: string | null;
   og_image: string | null;
-  categories?: { name: string; slug: string };
+  categories?: { name: string; slug: string } | null;
 }
 
 interface RelatedProduct {
@@ -70,11 +61,8 @@ interface RelatedProduct {
   sale_price: number | null;
   images: string[];
   summary: string;
+  categories?: { name: string; slug: string } | null;
 }
-
-type FallbackProduct = (typeof FALLBACK_PRODUCTS)[number];
-
-const FALLBACK_PRODUCT_BY_SLUG = new Map(FALLBACK_PRODUCTS.map((item) => [item.slug, item]));
 const STORE_ONLY_PRODUCT_SLUGS = new Set([
   'sonpin-salted-half-chicken',
   'sonpin-smoked-half-chicken',
@@ -85,70 +73,10 @@ const STORE_ONLY_PRODUCT_SLUGS = new Set([
   'sonpin-chicken-intestine',
 ]);
 
-const withRequestTimeout = <T,>(request: PromiseLike<T>, ms = 4500) =>
-  Promise.race([
-    request,
-    new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error('Request timed out')), ms);
-    }),
-  ]);
-
-const toDetailProduct = (item: FallbackProduct): Product => ({
-  ...item,
-  images: resolveSonpinProductImages(item),
-  seo_title: null,
-  seo_description: null,
-  seo_keywords: null,
-  og_image: null,
-});
-
-const mergeDetailProductWithFallback = (item: Product, fallback?: FallbackProduct): Product => {
-  if (!fallback) return item;
-  return {
-    ...toDetailProduct(fallback),
-    id: item.id,
-    images: resolveSonpinProductImages({
-      name: item.name,
-      slug: item.slug,
-      category_slug: item.category_id,
-      images: fallback.images?.length ? fallback.images : item.images,
-    }),
-  };
-};
-
-const toRelatedProduct = (item: FallbackProduct): RelatedProduct => ({
-  id: item.id,
-  name: item.name,
-  slug: item.slug,
-  price: item.price,
-  sale_price: item.sale_price,
-  images: resolveSonpinProductImages(item),
-  summary: item.summary,
-});
-
-const mergeRelatedProductWithFallback = (item: RelatedProduct): RelatedProduct => {
-  const fallback = FALLBACK_PRODUCT_BY_SLUG.get(item.slug);
-  if (!fallback) return item;
-  return {
-    ...item,
-    images: resolveSonpinProductImages({
-      name: item.name,
-      slug: item.slug,
-      category_slug: undefined,
-      images: fallback.images?.length ? fallback.images : item.images,
-    }),
-    summary: item.summary || fallback.summary,
-  };
-};
-
 const isStoreOnlyProduct = (item: { slug: string; categories?: { slug: string } | null }) =>
   item.categories?.slug === 'other-products' || STORE_ONLY_PRODUCT_SLUGS.has(item.slug);
 
 const getProductCategoryPath = (slug?: string) => (slug === 'main-products' ? '6' : '7');
-
-const isSeedPlaceholderImage = (src?: string | null) => !src || src.includes('images.pexels.com');
-
-const hasPublishableImage = (item: RelatedProduct) => item.images?.some((src) => !isSeedPlaceholderImage(src)) ?? false;
 
 function ImageGallery({ images, name }: { images: string[]; name: string }) {
   const { t } = useLanguage();
@@ -573,63 +501,37 @@ export default function ProductDetail() {
     setLoading(true);
     setQuantity(1);
     window.scrollTo({ top: 0, behavior: 'auto' });
-    const fallbackProduct = FALLBACK_PRODUCTS.find((item) => item.slug === slug);
-
-    const useFallbackProduct = () => {
-      if (!fallbackProduct) {
-        setProduct(null);
-        setRelated([]);
-        navigate('/shop', { replace: true });
-        return;
-      }
-      setProduct(toDetailProduct(fallbackProduct));
-      setRelated(
-        FALLBACK_PRODUCTS.filter((item) => item.category_id === fallbackProduct.category_id && item.id !== fallbackProduct.id).map(
-          toRelatedProduct
-        )
-      );
-    };
-
-    if (!isSupabaseContentEnabled || isSupabaseTemporarilyOffline()) {
-      useFallbackProduct();
-      setLoading(false);
-      return;
-    }
 
     try {
-      const { data, error } = await withRequestTimeout(
-        supabase.from('products').select('*, categories(name, slug)').eq('slug', slug).eq('is_active', true).maybeSingle()
-      );
+      const allProducts = await loadCatalogProducts();
+      const currentProduct = allProducts.find((item) => item.slug === slug && item.is_active);
 
-      if (error) throw error;
-      if (!data) {
-        useFallbackProduct();
+      if (!currentProduct) {
+        setProduct(null);
+        setRelated([]);
         return;
       }
 
-      setProduct(mergeDetailProductWithFallback(data, fallbackProduct));
-
-      if (data?.category_id) {
-        const { data: relatedData } = await withRequestTimeout(
-          supabase
-            .from('products')
-            .select('id, name, slug, price, sale_price, images, summary')
-            .eq('category_id', data.category_id)
-            .eq('is_active', true)
-            .neq('id', data.id)
-            .limit(4)
-        );
-
-        setRelated((relatedData || []).map(mergeRelatedProductWithFallback).filter(hasPublishableImage));
-      }
+      setProduct(currentProduct);
+      setRelated(
+        allProducts
+          .filter((item) => item.category_id === currentProduct.category_id && item.id !== currentProduct.id)
+          .slice(0, 4)
+          .map((item) => ({
+            id: item.id,
+            name: item.name,
+            slug: item.slug,
+            price: item.price,
+            sale_price: item.sale_price,
+            images: item.images,
+            summary: item.summary || item.description || '',
+            categories: item.categories || (item.category_slug ? { name: item.category_name, slug: item.category_slug } : null),
+          })),
+      );
     } catch (err) {
-      if (isSupabaseNetworkError(err)) {
-        markSupabaseTemporarilyOffline();
-      }
-      if (!isMissingSupabaseTableError(err) && !isSupabaseNetworkError(err)) {
-        console.error('Failed to load product:', err);
-      }
-      useFallbackProduct();
+      console.error('Failed to load product:', err);
+      setProduct(null);
+      setRelated([]);
     } finally {
       setLoading(false);
     }

@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, Shield, Truck, Gift, ShoppingBag } from 'lucide-react';
+import { ChevronRight, Gift, Search, Shield, ShoppingBag, Truck } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, collectionPageSchema } from '../utils/schemaMarkup';
-import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
-import { resolveSonpinProductImages } from '../lib/productImages';
-import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
+import { loadCatalogCategories, loadCatalogProducts, type CatalogCategory } from '../lib/supabaseCatalog';
 
 type SortKey = 'newest' | 'price_asc' | 'price_desc';
 
@@ -27,63 +25,31 @@ type ShopProduct = {
   created_at?: string;
 };
 
-const CATEGORY_TABS: Array<{ id: string | null; name: string }> = [
-  { id: null, name: '全部' },
-  { id: 'main-products', name: '主打商品' },
-  { id: 'other-products', name: '其他商品' },
-];
-
 const PROMISES: Array<{ id: string; icon: typeof Gift; title: string; text: string }> = [
   { id: 'gift', icon: Gift, title: '質感禮盒', text: '適合節慶與企業送禮' },
-  { id: 'shipping', icon: Truck, title: '快速出貨', text: '完成付款後盡快安排配送' },
+  { id: 'shipping', icon: Truck, title: '快速出貨', text: '完成付款後儘快安排配送' },
   { id: 'quality', icon: Shield, title: '安心品質', text: '嚴選食材，穩定工法' },
 ];
-const PRODUCT_ORDER_SETTING_KEY = 'product_order';
 
 const getProductPath = (slug: string, categorySlug: string) => `/products/${categorySlug === 'main-products' ? '6' : '7'}/${slug}`;
-
-const normalizeImages = (value: unknown): string[] => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []);
-
-const parseProductOrder = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
-  if (value && typeof value === 'object') {
-    const maybe = value as { slugs?: unknown; ids?: unknown };
-    if (Array.isArray(maybe.slugs)) return parseProductOrder(maybe.slugs);
-    if (Array.isArray(maybe.ids)) return parseProductOrder(maybe.ids);
-  }
-  return [];
-};
-
-const toFallbackProduct = (item: (typeof FALLBACK_PRODUCTS)[number]): ShopProduct => ({
-  id: item.id,
-  name: item.name,
-  slug: item.slug,
-  summary: item.summary || '',
-  description: item.description || '',
-  price: item.price,
-  sale_price: item.sale_price ?? null,
-  images: resolveSonpinProductImages(item),
-  category_slug: item.category_id,
-  category_name: item.category_id === 'main-products' ? '主打商品' : '其他商品',
-  is_active: true,
-});
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('newest');
-  const [products, setProducts] = useState<ShopProduct[]>(FALLBACK_PRODUCTS.map(toFallbackProduct));
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '商品介紹', 
-    description: '瀏覽淞品商品介紹、主打商品與其他商品，快速找到想購買的土雞與伴手禮。', 
-    keywords: '商品介紹,主打商品,其他商品,土雞,伴手禮,淞品', 
+    title: '商品介紹',
+    description: '淞品土雞商品介紹，包含禮盒、主打商品與門市熟食。',
+    keywords: '商品介紹,禮盒,主打商品,門市熟食,淞品土雞',
     schema: [
-      collectionPageSchema('商品介紹'),
+      collectionPageSchema('商品介紹', '淞品土雞商品介紹，包含禮盒、主打商品與門市熟食。'),
       breadcrumbSchema([
         { name: '首頁', url: window.location.origin },
-        { name: '商品介紹', url: window.location.origin + '/products' },
+        { name: '商品介紹', url: `${window.location.origin}/products` },
       ]),
     ],
   });
@@ -92,76 +58,33 @@ export default function Shop() {
     let cancelled = false;
 
     const loadProducts = async () => {
-      if (!isSupabaseContentEnabled) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const [{ data: productData, error: productError }, { data: orderData, error: orderError }] = await Promise.all([
-          supabase
-            .from('products')
-            .select('id, name, slug, description, price, sale_price, images, is_active, created_at, categories(id, name, slug)')
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('site_settings')
-            .select('setting_value')
-            .eq('setting_key', PRODUCT_ORDER_SETTING_KEY)
-            .maybeSingle(),
-        ]);
-
-        if (productError) throw productError;
-        if (orderError && !isMissingSupabaseTableError(orderError)) throw orderError;
+        const [categoryData, productData] = await Promise.all([loadCatalogCategories(), loadCatalogProducts()]);
         if (cancelled) return;
 
-        const order = parseProductOrder(orderData?.setting_value);
-        const loadedProducts = ((productData || []) as Array<{
-          id: string;
-          name: string;
-          slug: string;
-          description?: string;
-          price: number | string;
-          sale_price: number | string | null;
-          images: unknown;
-          is_active?: boolean;
-          created_at?: string;
-          categories?: { id: string; name: string; slug: string } | null;
-        }>)
-          .filter((item) => item.is_active !== false)
-          .map((item) => ({
+        setCategories(categoryData);
+        setProducts(
+          productData.map((item): ShopProduct => ({
             id: item.id,
             name: item.name,
             slug: item.slug,
-            summary: item.description || '',
+            summary: item.summary || item.description || '',
             description: item.description || '',
-            price: Number(item.price || 0),
-            sale_price: item.sale_price === null || item.sale_price === undefined ? null : Number(item.sale_price),
-            images: resolveSonpinProductImages({
-              name: item.name,
-              slug: item.slug,
-              category_slug: item.categories?.slug,
-              images: normalizeImages(item.images),
-            }),
-            category_slug: item.categories?.slug || 'other-products',
-            category_name: item.categories?.name || '',
-            is_active: item.is_active !== false,
+            price: item.price,
+            sale_price: item.sale_price,
+            images: item.images,
+            category_slug: item.category_slug || item.categories?.slug || 'other-products',
+            category_name: item.category_name || item.categories?.name || '',
+            is_active: item.is_active,
             created_at: item.created_at,
-          }));
-
-        const orderIndex = new Map(order.map((slug, index) => [slug, index]));
-        loadedProducts.sort((a, b) => {
-          const aIndex = orderIndex.get(a.slug) ?? Number.MAX_SAFE_INTEGER;
-          const bIndex = orderIndex.get(b.slug) ?? Number.MAX_SAFE_INTEGER;
-          if (aIndex !== bIndex) return aIndex - bIndex;
-          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-        });
-
-        setProducts(loadedProducts.length ? loadedProducts : FALLBACK_PRODUCTS.map(toFallbackProduct));
+          })),
+        );
       } catch (error) {
-        if (!isMissingSupabaseTableError(error) && !isSupabaseNetworkError(error)) {
-          console.warn('Using fallback products:', error);
+        console.error('Failed to load catalog products:', error);
+        if (!cancelled) {
+          setCategories([]);
+          setProducts([]);
         }
-        setProducts(FALLBACK_PRODUCTS.map(toFallbackProduct));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -173,6 +96,11 @@ export default function Shop() {
       cancelled = true;
     };
   }, []);
+
+  const categoryTabs = useMemo(
+    () => [{ id: null, name: '全部' }, ...categories.map((item) => ({ id: item.slug, name: item.name }))],
+    [categories],
+  );
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -204,7 +132,7 @@ export default function Shop() {
   const categoryCount = (id: string | null) => (id ? products.filter((item) => item.category_slug === id).length : products.length);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">載入商品中...</div>
+    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">商品載入中...</div>;
   }
 
   return (
@@ -222,9 +150,7 @@ export default function Shop() {
               <span className="text-stone-700">商品介紹</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Product Collection</p>
-            <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              商品介紹
-            </h1>
+            <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">商品介紹</h1>
           </div>
         </section>
 
@@ -241,7 +167,7 @@ export default function Shop() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {CATEGORY_TABS.map((tab) => (
+              {categoryTabs.map((tab) => (
                 <button
                   key={tab.id ?? 'all'}
                   type="button"
@@ -281,6 +207,7 @@ export default function Shop() {
                 ].map((option) => (
                   <button
                     key={option.key}
+                    type="button"
                     onClick={() => setSortKey(option.key)}
                     className={`border px-4 py-2 text-xs tracking-[0.16em] transition-all ${
                       sortKey === option.key
@@ -292,7 +219,7 @@ export default function Shop() {
                   </button>
                 ))}
               </div>
-              <div className="text-xs text-stone-400">{filteredProducts.length} 項商品</div>
+              <div className="text-xs text-stone-400">{filteredProducts.length} 件商品</div>
             </div>
           </div>
         </section>
@@ -300,7 +227,7 @@ export default function Shop() {
         <section className="container mx-auto px-6 pb-16">
           {filteredProducts.length === 0 ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
-              目前沒有符合條件的商品
+              目前沒有符合條件的商品。
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

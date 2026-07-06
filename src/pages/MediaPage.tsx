@@ -5,7 +5,6 @@ import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
-import { getMediaGroup } from '../data/mediaContent';
 import { loadMediaArticles } from '../lib/media';
 
 const defaultGroupSlug = '79';

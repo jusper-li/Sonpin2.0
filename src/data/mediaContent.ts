@@ -275,13 +275,13 @@ export const MEDIA_ARTICLES: MediaArticle[] = [
 export const MEDIA_GROUPS = {
   '79': {
     slug: '79',
-    title: '????',
-    label: '????',
+    title: '報章雜誌',
+    label: '報章雜誌',
   },
   '78': {
     slug: '78',
-    title: '????',
-    label: '????',
+    title: '影音報導',
+    label: '影音報導',
   },
 } as const;
 

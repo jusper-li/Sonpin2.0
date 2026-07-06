@@ -56,7 +56,7 @@ export default function AboutPage() {
   const { currentLanguage, t } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData>(ABOUT_FALLBACK);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({
