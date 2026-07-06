@@ -29,3 +29,6 @@ dist-ssr
 protected-route-smoke.png
 vite.config.ts.timestamp-*.mjs
 *.tsbuildinfo
+
+# Local Netlify folder
+.netlify
