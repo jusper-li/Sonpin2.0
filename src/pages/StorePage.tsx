@@ -56,6 +56,18 @@ const normalizeStore = (row: StoreRow): StoreView => ({
   email: row.email,
 });
 
+const STORE_ORDER = ['永和', '萬華', '士林', '民生', '新埔', '新店'];
+
+const sortStores = (items: StoreView[]) =>
+  [...items].sort((a, b) => {
+    const aIndex = STORE_ORDER.indexOf(a.city);
+    const bIndex = STORE_ORDER.indexOf(b.city);
+    const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+    const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+    if (normalizedA !== normalizedB) return normalizedA - normalizedB;
+    return a.name.localeCompare(b.name, 'zh-Hant');
+  });
+
 export default function StorePage() {
   const [stores, setStores] = useState<StoreRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +126,7 @@ export default function StorePage() {
   const normalizedStores = useMemo(() => stores.map(normalizeStore), [stores]);
 
   const northStores = useMemo<StoreView[]>(
-    () => normalizedStores.filter((store) => store.city !== 'factory'),
+    () => sortStores(normalizedStores.filter((store) => store.city !== 'factory')),
     [normalizedStores],
   );
 

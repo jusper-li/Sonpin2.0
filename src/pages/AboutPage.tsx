@@ -11,8 +11,6 @@ import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStatic
 
 interface StaticPageData extends TranslatableStaticPage {}
 
-const ABOUT_VIDEO_URL = 'https://www.youtube.com/embed/xJyJpzDpTlA?rel=0';
-
 const ABOUT_IMAGES = ['/sonpin-images/20180730135352.jpg', '/sonpin-images/20180730135448.jpg'];
 
 export default function AboutPage() {
@@ -137,21 +135,6 @@ export default function AboutPage() {
                 <img src={src} alt={`關於淞品圖片 ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
               </figure>
             ))}
-          </div>
-        </section>
-
-        <section className="container mx-auto px-6 py-10">
-          <div className="mb-4 overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#2b221d] shadow-sm">
-            <div className="aspect-video w-full">
-              <iframe
-                className="h-full w-full"
-                src={ABOUT_VIDEO_URL}
-                title="關於淞品影片"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              />
-            </div>
           </div>
         </section>
 
