@@ -37,8 +37,8 @@ export default function ContactPage() {
 
   useSEO({
     title: page?.title || '客服中心',
-    description: page?.meta_description || '',
-    keywords: '客服中心,聯絡我們,淞品土雞,門市資訊',
+    description: page?.meta_description || '聯絡淞品土雞客服，取得訂購與售後協助。',
+    keywords: '客服中心,聯絡淞品,訂購,售後,門市',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
       { name: '客服中心', url: `${window.location.origin}/contact` },
@@ -121,7 +121,7 @@ export default function ContactPage() {
     event.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.subject || !form.message) {
-      setError('請填寫姓名、Email、主旨與訊息內容。');
+      setError('請完整填寫姓名、Email、主旨與訊息內容。');
       return;
     }
     setSubmitted(true);
@@ -145,7 +145,7 @@ export default function ContactPage() {
       <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
         <SiteHeader />
         <main className="flex-1">
-          <section className="container mx-auto px-6 py-24 text-stone-500">目前沒有可顯示的頁面內容。</section>
+          <section className="container mx-auto px-6 py-24 text-stone-500">找不到客服中心內容。</section>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -169,7 +169,7 @@ export default function ContactPage() {
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#cfa87a]">Contact Us</p>
             <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title}</h1>
             <p className="max-w-2xl text-base font-light leading-relaxed text-[#eadfd1]">
-              {intro?.content || ''}
+              {intro?.content || '如需訂購、門市資訊或售後協助，歡迎直接與我們聯絡。'}
             </p>
           </div>
         </section>
@@ -190,7 +190,7 @@ export default function ContactPage() {
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">Email</p>
                   <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
-                    {siteInfo.contact_email}
+                    {siteInfo.contact_email || 'service@sonpin.tw'}
                   </a>
                 </div>
               </div>
@@ -200,9 +200,9 @@ export default function ContactPage() {
                   <Phone className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">聯絡電話</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">客服電話</p>
                   <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
-                    {siteInfo.contact_phone}
+                    {siteInfo.contact_phone || '02-2338-0018'}
                   </a>
                 </div>
               </div>
@@ -213,8 +213,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">服務時間</p>
-                  <p className="font-light text-[#2b221d]">週二至週日 上午 09:00 - 17:00</p>
-                  <p className="text-sm font-light text-[#9f8a7b]">週一公休</p>
+                  <p className="font-light text-[#2b221d]">週一至週日 上午 09:00 - 17:00</p>
+                  <p className="text-sm font-light text-[#9f8a7b]">實際營業時間請以門市公告為準</p>
                 </div>
               </div>
 
@@ -238,14 +238,14 @@ export default function ContactPage() {
                   </div>
                   <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
                   <p className="mb-8 max-w-sm leading-relaxed text-[#9f8a7b]">
-                    我們已收到您的訊息，會盡快透過 Email 或電話與您聯繫。
+                    我們已收到您的訊息，若有需要會儘快透過 Email 與您聯繫。
                   </p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
                     className="text-sm font-light text-[#8e6448] hover:underline"
                   >
-                    再傳送一則
+                    再送出一則
                   </button>
                 </div>
               ) : (
@@ -265,7 +265,7 @@ export default function ContactPage() {
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="王小明"
+                        placeholder="請輸入姓名"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -302,7 +302,7 @@ export default function ContactPage() {
                         type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        placeholder="請輸入主旨"
+                        placeholder="請填寫主旨"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -316,7 +316,7 @@ export default function ContactPage() {
                       rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="請簡單描述您的需求"
+                      placeholder="請描述您的需求或問題"
                       className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                     />
                   </div>

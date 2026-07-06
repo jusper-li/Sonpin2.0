@@ -43,15 +43,15 @@ export default function MediaDetailPage() {
   const externalUrl = article?.sourceUrl || '';
 
   useSEO({
-    title: article?.title || '相關報導',
-    description: article?.excerpt || '淞品土雞相關報導與新聞內容。',
+    title: article?.title || '媒體報導',
+    description: article?.excerpt || '淞品土雞相關媒體報導與影音內容。',
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
       ? breadcrumbSchema([
           { name: '首頁', url: window.location.origin },
-          { name: '相關報導', url: `${window.location.origin}/media` },
-          { name: group?.title || '相關報導', url: `${window.location.origin}/media/${groupSlug}` },
+          { name: '媒體報導', url: `${window.location.origin}/media` },
+          { name: group?.title || '媒體報導', url: `${window.location.origin}/media/${groupSlug}` },
         ])
       : undefined,
   });
@@ -66,7 +66,7 @@ export default function MediaDetailPage() {
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
           >
-            返回列表
+            回到媒體列表
           </Link>
         </main>
         <DeferredSiteFooter />
@@ -84,7 +84,7 @@ export default function MediaDetailPage() {
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
           >
-            返回列表
+            回到媒體列表
           </Link>
         </main>
         <DeferredSiteFooter />
@@ -127,10 +127,10 @@ export default function MediaDetailPage() {
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/media" className="transition-colors hover:text-stone-700">
-                相關報導
+                媒體報導
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '相關報導'}</span>
+              <span className="text-stone-700">{group?.title || '媒體報導'}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'Media'}
@@ -189,7 +189,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>目前尚無內文。</p>
+                  <p>目前沒有文章內容。</p>
                 </div>
               )}
 
@@ -216,7 +216,7 @@ export default function MediaDetailPage() {
                   className="inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  返回列表
+                  回到列表
                 </Link>
               </div>
             </div>

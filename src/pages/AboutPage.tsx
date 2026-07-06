@@ -13,10 +13,7 @@ interface StaticPageData extends TranslatableStaticPage {}
 
 const ABOUT_VIDEO_URL = 'https://www.youtube.com/embed/xJyJpzDpTlA?rel=0';
 
-const ABOUT_IMAGES = [
-  '/sonpin-images/20180730135352.jpg',
-  '/sonpin-images/20180730135448.jpg',
-];
+const ABOUT_IMAGES = ['/sonpin-images/20180730135352.jpg', '/sonpin-images/20180730135448.jpg'];
 
 export default function AboutPage() {
   const { currentLanguage, t } = useLanguage();
@@ -27,8 +24,8 @@ export default function AboutPage() {
 
   useSEO({
     title: page?.title || '關於淞品',
-    description: page?.meta_description || '',
-    keywords: '關於淞品,品牌故事,淞品土雞,門市資訊',
+    description: page?.meta_description || '認識淞品土雞專賣店的品牌起點、經營理念與堅持。',
+    keywords: '關於淞品,品牌故事,淞品土雞,土雞專賣店',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
       { name: '關於淞品', url: `${window.location.origin}/about` },
@@ -104,7 +101,7 @@ export default function AboutPage() {
       <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
         <SiteHeader />
         <main className="flex-1">
-          <section className="container mx-auto px-6 py-24 text-stone-500">目前沒有可顯示的頁面內容。</section>
+          <section className="container mx-auto px-6 py-24 text-stone-500">找不到關於淞品的內容。</section>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -137,7 +134,7 @@ export default function AboutPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {ABOUT_IMAGES.map((src, index) => (
               <figure key={src} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                <img src={src} alt={`關於淞品照片 ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                <img src={src} alt={`關於淞品圖片 ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
               </figure>
             ))}
           </div>
@@ -163,7 +160,7 @@ export default function AboutPage() {
             <div className="container mx-auto max-w-4xl px-6 py-16">
               {translating && (
                 <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  {t('common.translating', '翻譯中')}
+                  翻譯中
                 </div>
               )}
               <p className="text-center text-lg leading-relaxed text-[#6d4f3d] md:text-xl">{intro.content}</p>

@@ -62,8 +62,8 @@ export default function StorePage() {
 
   useSEO({
     title: '門市資訊',
-    description: '淞品土雞門市與工廠資訊，包含地址、電話與營業時間。',
-    keywords: '門市資訊,淞品土雞,門市地址,營業時間',
+    description: '淞品土雞門市據點、聯絡方式與營業時間。',
+    keywords: '門市資訊,淞品土雞,門市,營業時間,聯絡方式',
     schema: [
       localBusinessSchema(),
       breadcrumbSchema([
@@ -146,7 +146,7 @@ export default function StorePage() {
               門市資訊
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-              這裡列出淞品土雞的門市與中央工廠資訊，包含電話、地址與營業時間。
+              查看淞品土雞各門市據點、電話、地址與營業時間。
             </p>
           </div>
         </section>
@@ -167,7 +167,12 @@ export default function StorePage() {
                     {northStores.map((store) => (
                       <article key={store.name} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
                         <div className="aspect-[4/3] overflow-hidden bg-stone-100">
-                          <img src={store.image || store.images?.[0] || ''} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
+                          <img
+                            src={store.image || store.images?.[0] || ''}
+                            alt={store.name}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
                         </div>
                         <div className="p-6">
                           <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
@@ -187,9 +192,7 @@ export default function StorePage() {
                                 <span className="whitespace-pre-line">{store.hours}</span>
                               </p>
                             )}
-                            {store.email && (
-                              <p className="text-sm text-[#9f8a7b]">{store.email}</p>
-                            )}
+                            {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
                           </div>
                         </div>
                       </article>
@@ -223,14 +226,18 @@ export default function StorePage() {
                                 <span className="whitespace-pre-line">{store.hours}</span>
                               </p>
                             )}
-                            {store.email && (
-                              <p className="text-sm text-[#9f8a7b]">{store.email}</p>
-                            )}
+                            {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                           {(store.images || []).slice(0, 4).map((image) => (
-                            <img key={image} src={image} alt={store.name} className="h-full w-full rounded-2xl object-cover" loading="lazy" />
+                            <img
+                              key={image}
+                              src={image}
+                              alt={store.name}
+                              className="h-full w-full rounded-2xl object-cover"
+                              loading="lazy"
+                            />
                           ))}
                         </div>
                       </div>

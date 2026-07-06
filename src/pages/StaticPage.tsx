@@ -109,12 +109,12 @@ export default function StaticPage() {
       day: 'numeric',
     });
 
-  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '????';
+  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '淞品土雞';
 
   useSEO({
     title: seoTitle,
-    description: page?.meta_description || t('static.seo.description', '????????????'),
-    keywords: `${page?.title || '????'},????,???`,
+    description: page?.meta_description || t('static.seo.description', '淞品土雞品牌資訊與相關說明。'),
+    keywords: `${page?.title || '淞品土雞'},品牌資訊,淞品土雞`,
   });
 
   return (
@@ -131,16 +131,16 @@ export default function StaticPage() {
         {!loading && notFound && (
           <div className="container mx-auto px-6 py-40 text-center">
             <h1 className="mb-4 text-3xl font-light text-[#2b221d]">
-              {t('static.not_found.title', '?????')}
+              {t('static.not_found.title', '找不到頁面')}
             </h1>
             <p className="mb-8 text-[#9f8a7b]">
-              {t('static.not_found.description', '?????????????')}
+              {t('static.not_found.description', '這個頁面目前沒有可顯示的內容。')}
             </p>
             <Link
               to="/"
               className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
             >
-              {t('common.home', '擐?')}
+              {t('common.home', '首頁')}
               <ChevronRight size={16} />
             </Link>
           </div>
@@ -152,12 +152,12 @@ export default function StaticPage() {
               <div className="container mx-auto px-6">
                 {translating && (
                   <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[#fffaf2]">
-                    蝧餉陌銝?
+                    翻譯中
                   </div>
                 )}
                 <div className="mb-6 flex items-center gap-2 text-sm text-[#9f8a7b]">
                   <Link to="/" className="transition-colors hover:text-[#cfa87a]">
-                    {t('common.home', '擐?')}
+                    {t('common.home', '首頁')}
                   </Link>
                   <ChevronRight size={14} />
                   <span className="text-[#eadfd1]">{page.title}</span>
@@ -169,7 +169,7 @@ export default function StaticPage() {
                   </p>
                 )}
                 <p className="mt-6 text-sm text-[#9f8a7b]">
-                  {t('static.updated_at', '?敺?堆?')}
+                  {t('static.updated_at', '更新日期：')}
                   {formatDate(page.updated_at)}
                 </p>
               </div>
@@ -200,22 +200,22 @@ export default function StaticPage() {
               ))}
 
               <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#eadfd1] pt-8 sm:flex-row">
-                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '?嗡??')}</p>
+                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '更多頁面')}</p>
                 <div className="flex flex-wrap items-center justify-center gap-4">
                   <Link to="/privacy" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    ?梁?甈蝑?
+                    隱私權政策
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/terms" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    ??璇狡
+                    使用條款
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/shipping" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    鞈潛?
+                    購物須知
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/returns" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    ??疏?輻?
+                    退換貨說明
                   </Link>
                 </div>
               </div>

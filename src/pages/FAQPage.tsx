@@ -20,7 +20,7 @@ interface FAQ {
 const CATEGORY_KEYS: Record<string, string> = {
   general: 'faq.category.general',
   order: 'faq.category.order',
-  shipping: 'footer.shipping',
+  shipping: 'faq.category.shipping',
   product: 'faq.category.product',
   payment: 'faq.category.payment',
   return: 'faq.category.return',
@@ -36,16 +36,16 @@ export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   useSEO({
-    title: t('faq.seo.title', '????'),
-    description: t('faq.seo.description', '??????????????'),
-    keywords: t('faq.seo.keywords', 'FAQ,????,????,????'),
+    title: t('faq.seo.title', '常見問題'),
+    description: t('faq.seo.description', '整理淞品土雞常見的訂購、付款、配送與門市相關問題。'),
+    keywords: t('faq.seo.keywords', 'FAQ,常見問題,訂購,配送,付款'),
     schema:
       faqs.length > 0
         ? [
             faqPageSchema(faqs.map((f) => ({ question: f.question, answer: f.answer }))),
             breadcrumbSchema([
-              { name: t('common.home', '擐?'), url: window.location.origin },
-              { name: t('faq.breadcrumb', '撣貉???'), url: `${window.location.origin}/faq` },
+              { name: t('common.home', '首頁'), url: window.location.origin },
+              { name: t('faq.breadcrumb', '常見問題'), url: `${window.location.origin}/faq` },
             ]),
           ]
         : undefined,
@@ -105,7 +105,7 @@ export default function FAQPage() {
   }, {});
 
   const categoryLabel = (cat: string) => {
-    if (cat === 'all') return t('faq.all', '?券');
+    if (cat === 'all') return t('faq.all', '全部');
     const key = CATEGORY_KEYS[cat];
     return key ? t(key, cat) : cat;
   };
@@ -119,16 +119,16 @@ export default function FAQPage() {
           <div className="container mx-auto px-6">
             <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
               <Link to="/" className="transition-colors hover:text-[#fffaf2]">
-                {t('common.home', '擐?')}
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">{t('faq.breadcrumb', '撣貉???')}</span>
+              <span className="text-[#f4ecdf]">{t('faq.breadcrumb', '常見問題')}</span>
             </div>
             <h1 className="text-4xl font-light tracking-wide md:text-5xl">
-              {t('faq.title', '撣貉???')}
+              {t('faq.title', '常見問題')}
             </h1>
             <p className="mt-4 max-w-2xl text-base font-light leading-relaxed text-[#f4ecdf]">
-              {t('faq.description', '?????????????????')}
+              {t('faq.description', '整理訂購、付款、配送、門市與產品相關的常見問題。')}
             </p>
           </div>
         </section>
@@ -138,7 +138,7 @@ export default function FAQPage() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9f8a7b]" />
             <input
               type="text"
-              placeholder={t('faq.search', '????...')}
+              placeholder={t('faq.search', '搜尋問題...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-2xl border border-[#eadfd1] bg-[#fffaf2] py-4 pl-12 pr-4 text-[#2b221d] placeholder-[#d8c9ba] focus:outline-none focus:ring-2 focus:ring-[#cfa87a]"
@@ -172,7 +172,7 @@ export default function FAQPage() {
           {!loading && filtered.length === 0 && (
             <div className="py-20 text-center">
               <p className="text-lg font-light text-[#9f8a7b]">
-                {t('faq.empty', '?????????')}
+                {t('faq.empty', '目前沒有符合條件的問題。')}
               </p>
               <button
                 onClick={() => {
@@ -181,7 +181,7 @@ export default function FAQPage() {
                 }}
                 className="mt-4 text-sm text-[#8e6448] hover:underline"
               >
-                {t('faq.reset', '皜蝭拚')}
+                {t('faq.reset', '清除篩選條件')}
               </button>
             </div>
           )}
@@ -217,7 +217,7 @@ export default function FAQPage() {
                         {open && (
                           <div className="px-6 pb-6 pt-0">
                             <div className="border-t border-[#eadfd1] pt-5">
-                              <p className="whitespace-pre-line leading-relaxed text-[#6d4f3d] font-light">
+                              <p className="whitespace-pre-line leading-relaxed font-light text-[#6d4f3d]">
                                 {faq.answer}
                               </p>
                             </div>
@@ -232,16 +232,16 @@ export default function FAQPage() {
 
           <div className="mt-16 rounded-3xl border border-[#eadfd1] bg-[#fffaf2] px-6 py-8 shadow-sm">
             <h3 className="mb-2 text-lg font-medium text-[#2b221d]">
-              {t('faq.cta.title', '???嗡?????')}
+              {t('faq.cta.title', '找不到答案嗎？')}
             </h3>
             <p className="mb-6 font-light text-[#6d4f3d]">
-              {t('faq.cta.description', '??????????????????????')}
+              {t('faq.cta.description', '可以直接聯絡客服，我們會協助您確認訂購、配送或門市資訊。')}
             </p>
             <a
               href="mailto:service@sonpin.tw"
               className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
             >
-              {t('faq.cta.button', '?舐窗摰Ｘ?')}
+              {t('faq.cta.button', '聯絡客服')}
               <ChevronRight size={16} />
             </a>
           </div>
