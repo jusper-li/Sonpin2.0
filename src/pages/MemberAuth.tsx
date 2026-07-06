@@ -314,7 +314,7 @@ export default function MemberAuth() {
               <Coffee className="h-5 w-5 text-[#f3e6d3]" />
             </div>
             <h2 className="mb-4 text-4xl font-light leading-snug text-[#fffaf2]">
-              歡迎回來，慢慢享受一杯咖啡的時間
+              ????????????????
               <br />
               <span className="text-amber-300">登入後，收藏與訂單都在這裡</span>
             </h2>

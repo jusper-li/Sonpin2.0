@@ -76,7 +76,7 @@ export default function CookieConsent() {
     persist({ necessary: true, analytics: true, marketing: true });
   };
 
-  if (!ready || !isOpen || savedConsent) {
+  if (!ready || !isOpen) {
     return null;
   }
 

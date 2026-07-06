@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Leaf } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -10,6 +10,13 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
 interface StaticPageData extends TranslatableStaticPage {}
+
+const ABOUT_VIDEO_URL = 'https://www.youtube.com/embed/xJyJpzDpTlA?rel=0';
+
+const ABOUT_IMAGES = [
+  '/sonpin-images/20180730135352.jpg',
+  '/sonpin-images/20180730135448.jpg',
+];
 
 const bankTransferNotice = `訂購專線：02-2338-0018
 轉帳銀行：永豐銀行 萬華分行 銀行代碼：807
@@ -22,7 +29,7 @@ const bankTransferNotice = `訂購專線：02-2338-0018
 const ABOUT_FALLBACK: StaticPageData = {
   slug: 'about',
   title: '關於淞品',
-  meta_description: '艋舺傳香十多年的淞品土雞，堅持台灣土雞與家傳料理法。',
+  meta_description: '艋舺傳香十多年的淞品土雞，堅持自養台灣土雞與家傳料理法。',
   sections: [
     {
       type: 'intro',
@@ -102,8 +109,7 @@ export default function AboutPage() {
 
       setTranslating(true);
       try {
-        const translated = await translateStaticPage(sourcePage, currentLanguage);
-        setPage(translated);
+        setPage(await translateStaticPage(sourcePage, currentLanguage));
       } catch {
         setPage(sourcePage);
       } finally {
@@ -136,9 +142,32 @@ export default function AboutPage() {
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
               關於淞品
             </h1>
-            <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-              {page.meta_description}
-            </p>
+            <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">{page.meta_description}</p>
+          </div>
+        </section>
+
+        <section className="container mx-auto px-6 py-10">
+          <div className="grid gap-4 md:grid-cols-2">
+            {ABOUT_IMAGES.map((src, index) => (
+              <figure key={src} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                <img src={src} alt={`淞品介紹照片 ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section className="container mx-auto px-6 py-10">
+          <div className="mb-4 overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#2b221d] shadow-sm">
+            <div className="aspect-video w-full">
+              <iframe
+                className="h-full w-full"
+                src={ABOUT_VIDEO_URL}
+                title="淞品介紹影片"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
           </div>
         </section>
 
@@ -150,9 +179,7 @@ export default function AboutPage() {
                   {t('common.translating', '翻譯中')}
                 </div>
               )}
-              <p className="text-center text-lg leading-relaxed text-[#6d4f3d] md:text-xl">
-                {intro.content}
-              </p>
+              <p className="text-center text-lg leading-relaxed text-[#6d4f3d] md:text-xl">{intro.content}</p>
             </div>
           </section>
         )}
@@ -162,9 +189,8 @@ export default function AboutPage() {
             {rest.map((section, index) => (
               <div key={section.title} className={`flex flex-col gap-8 md:flex-row ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
                 <div className="md:w-1/3">
-                  <div className="flex h-full min-h-[180px] flex-col justify-between rounded-3xl bg-[#2b221d] p-8 text-[#fffaf2]">
-                    <Leaf className="mb-4 h-8 w-8 text-[#f4ecdf]" />
-                    <h2 className="text-2xl font-light">{section.title}</h2>
+                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[#2b221d] px-4 py-3 text-[#fffaf2]">
+                    <h2 className="text-lg font-medium tracking-[0.05em] md:text-xl">{section.title}</h2>
                   </div>
                 </div>
                 <div className="md:w-2/3">

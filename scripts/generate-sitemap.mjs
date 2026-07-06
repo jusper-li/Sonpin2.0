@@ -22,7 +22,9 @@ const staticUrls = [
   { loc: '/products/6', changefreq: 'daily', priority: '0.9' },
   { loc: '/products/7', changefreq: 'daily', priority: '0.9' },
   { loc: '/about', changefreq: 'weekly', priority: '0.8' },
+  { loc: '/story', changefreq: 'weekly', priority: '0.8' },
   { loc: '/culture', changefreq: 'weekly', priority: '0.8' },
+  { loc: '/process', changefreq: 'weekly', priority: '0.8' },
   { loc: '/service', changefreq: 'weekly', priority: '0.8' },
   { loc: '/store', changefreq: 'weekly', priority: '0.8' },
   { loc: '/media', changefreq: 'weekly', priority: '0.8' },
@@ -33,6 +35,37 @@ const staticUrls = [
   { loc: '/privacy', changefreq: 'monthly', priority: '0.5' },
   { loc: '/terms', changefreq: 'monthly', priority: '0.5' },
   { loc: '/blog', changefreq: 'weekly', priority: '0.7' },
+];
+
+const serviceUrls = [
+  '/service/72',
+  '/service/73',
+];
+
+const mediaCategoryUrls = [
+  '/media/78',
+  '/media/79',
+];
+
+const mediaDetailUrls = [
+  '/media/78/77',
+  '/media/78/80',
+  '/media/78/81',
+  '/media/78/82',
+  '/media/78/84',
+  '/media/78/85',
+  '/media/78/86',
+  '/media/78/87',
+  '/media/78/88',
+  '/media/78/115',
+  '/media/79/40',
+  '/media/79/66',
+  '/media/79/83',
+  '/media/79/90',
+  '/media/79/91',
+  '/media/79/92',
+  '/media/79/93',
+  '/media/79/231',
 ];
 
 const categoryPathBySlug = new Map([
@@ -58,7 +91,14 @@ const legacyProductUrls = productSlugs.map((slug) => ({
   priority: '0.8',
 }));
 
-const allUrls = [...staticUrls, ...productUrls, ...legacyProductUrls];
+const allUrls = [
+  ...staticUrls,
+  ...serviceUrls.map((loc) => ({ loc, changefreq: 'weekly', priority: '0.75' })),
+  ...mediaCategoryUrls.map((loc) => ({ loc, changefreq: 'weekly', priority: '0.75' })),
+  ...mediaDetailUrls.map((loc) => ({ loc, changefreq: 'weekly', priority: '0.7' })),
+  ...productUrls,
+  ...legacyProductUrls,
+];
 
 const urlXml = allUrls
   .map(

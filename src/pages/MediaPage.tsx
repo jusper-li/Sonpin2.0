@@ -1,12 +1,17 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
-import { getMediaArticlesByGroup, getMediaGroup } from '../data/mediaContent';
+import { getMediaGroup } from '../data/mediaContent';
+import { loadMediaArticles } from '../lib/media';
 
 const defaultGroupSlug = '79';
+const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
+  '79': new Set(['66', '40']),
+};
 
 export default function MediaPage() {
   const { categorySlug } = useParams();
@@ -14,15 +19,39 @@ export default function MediaPage() {
   const isVideoPage = categorySlug === '78' || pathname.replace(/\/+$/, '') === '/media/78';
   const groupSlug = isVideoPage ? '78' : defaultGroupSlug;
   const group = getMediaGroup(groupSlug) || getMediaGroup(defaultGroupSlug);
-  const articles = getMediaArticlesByGroup(groupSlug);
+  const [articles, setArticles] = useState<Awaited<ReturnType<typeof loadMediaArticles>>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const data = await loadMediaArticles();
+      if (cancelled) return;
+      const hiddenSlugs = HIDDEN_MEDIA_LIST_ARTICLES[groupSlug] || new Set<string>();
+      setArticles(
+        data.filter(
+          (article) =>
+            article.groupSlug === groupSlug && !hiddenSlugs.has(article.articleSlug),
+        ),
+      );
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupSlug]);
+
+  const pageArticles = useMemo(() => articles, [articles]);
 
   useSEO({
-    title: group?.title || '相關報導',
-    description: `${group?.title || '相關報導'} - 淞品土雞專賣店新聞與影音整理。`,
-    keywords: '淞品土雞,相關報導,新聞公告,影音報導',
+    title: group?.title || '????',
+    description: `${group?.title || '????'} - ?????????????`,
+    keywords: '????,????,????,????',
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: group?.title || '相關報導', url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
+      { name: '??', url: window.location.origin },
+      { name: group?.title || '????', url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
     ]),
   });
 
@@ -43,7 +72,7 @@ export default function MediaPage() {
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'News'}
             </p>
-            <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
+            <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
               {group?.title || '相關報導'}
             </h1>
           </div>
@@ -59,7 +88,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              新聞公告
+              報章雜誌
             </Link>
             <Link
               to="/media/78"
@@ -74,7 +103,7 @@ export default function MediaPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {articles.map((article) => {
+            {pageArticles.map((article) => {
               const cardImage = article.featuredImage || article.galleryImages[0] || '/sonpin-images/153285188512.jpg';
               return (
                 <Link

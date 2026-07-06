@@ -4,6 +4,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { CartProvider } from './contexts/CartContext';
 import { MemberAuthProvider } from './contexts/MemberAuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import GoogleAnalytics from './components/GoogleAnalytics';
 
 const Homepage = lazy(() => import('./pages/Homepage'));
 const Backoffice = lazy(() => import('./pages/Backoffice'));
@@ -14,6 +15,7 @@ const ServicePage = lazy(() => import('./pages/ServicePage'));
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'));
 const MediaPage = lazy(() => import('./pages/MediaPage'));
 const MediaDetailPage = lazy(() => import('./pages/MediaDetailPage'));
+const CulturePage = lazy(() => import('./pages/CulturePage'));
 const ProcessPage = lazy(() => import('./pages/ProcessPage'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
@@ -49,6 +51,7 @@ function GlobalWidgets() {
 
   return (
     <>
+      <GoogleAnalytics />
       <FloatingAIChat />
       <CookieConsent />
     </>
@@ -77,7 +80,7 @@ function App() {
                 <Route path="/media" element={<MediaPage />} />
                 <Route path="/media/:categorySlug" element={<MediaPage />} />
                 <Route path="/media/:groupSlug/:articleSlug" element={<MediaDetailPage />} />
-                <Route path="/culture" element={<ProcessPage />} />
+                <Route path="/culture" element={<CulturePage />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/checkout/result" element={<CheckoutResult />} />

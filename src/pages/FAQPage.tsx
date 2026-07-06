@@ -36,14 +36,14 @@ export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   useSEO({
-    title: t('faq.seo.title', '常見問題'),
-    description: t('faq.seo.description', 'Sonpin 常見問題與客服說明。'),
-    keywords: t('faq.seo.keywords', '常見問題,FAQ,Sonpin,配送說明,退換貨,付款方式'),
+    title: t('faq.seo.title', '?????????'),
+    description: t('faq.seo.description', '??????????????'),
+    keywords: t('faq.seo.keywords', '????,FAQ,????,????,???,????'),
     schema: faqs.length > 0 ? [
       faqPageSchema(faqs.map((f) => ({ question: f.question, answer: f.answer }))),
       breadcrumbSchema([
-        { name: t('common.home', '首頁'), url: window.location.origin },
-        { name: t('faq.breadcrumb', '常見問題'), url: `${window.location.origin}/faq` },
+        { name: t('common.home', '??'), url: window.location.origin },
+        { name: t('faq.breadcrumb', '????'), url: `${window.location.origin}/faq` },
       ]),
     ] : undefined,
   });
@@ -220,11 +220,11 @@ export default function FAQPage() {
             </div>
           ))}
 
-          <div className="mt-16 bg-[#f4ecdf] border border-[#eadfd1] rounded-2xl p-8 text-center">
+            <p className="text-[#6d4f3d] font-light mb-6">{t('faq.cta.description', '??????????????????????????')}</p>
             <h3 className="text-lg font-medium text-[#2b221d] mb-2">{t('faq.cta.title', '還有其他問題嗎？')}</h3>
             <p className="text-[#6d4f3d] font-light mb-6">{t('faq.cta.description', '如果這裡沒有找到答案，歡迎直接聯絡我們。')}</p>
             <a
-              href="mailto:info@coffeehouse.com"
+              href="mailto:service@sonpin.tw"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#8e6448] text-[#fffaf2] rounded-full hover:bg-[#6d4f3d] transition-colors text-sm"
             >
               {t('faq.cta.button', '聯絡我們')}

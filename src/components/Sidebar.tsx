@@ -1,4 +1,4 @@
-import {
+﻿import {
   BarChart3,
   BookOpen,
   Brain,
@@ -13,6 +13,7 @@ import {
   Layers,
   Package,
   Search,
+  History,
   Shield,
   ShoppingCart,
   Share2,
@@ -47,44 +48,45 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
 
   const menuGroups: MenuGroup[] = [
     {
-      title: t('admin.sidebar.group.overview', '總覽'),
-      items: [{ id: 'dashboard', label: t('admin.sidebar.dashboard', '儀錶板'), icon: LayoutDashboard }],
+      title: t('admin.sidebar.group.overview', '蝮質汗'),
+      items: [{ id: 'dashboard', label: t('admin.sidebar.dashboard', '??嗆'), icon: LayoutDashboard }],
     },
     {
-      title: t('admin.sidebar.group.ai', 'AI 智能系統'),
+      title: t('admin.sidebar.group.ai', 'AI ?箄蝟餌絞'),
       items: [
-        { id: 'ai-chat', label: t('admin.sidebar.aiChat', 'AI 客服聊天'), icon: MessageSquare, badge: 'AI' },
-        { id: 'knowledge-base', label: t('admin.sidebar.knowledgeBase', '知識庫管理'), icon: BookOpen },
-        { id: 'ai-training', label: t('admin.sidebar.aiTraining', 'AI 學習分析'), icon: Brain },
-        { id: 'ai-analytics', label: t('admin.sidebar.aiAnalytics', 'AI 用量分析'), icon: BarChart3 },
+        { id: 'ai-chat', label: t('admin.sidebar.aiChat', 'AI 摰Ｘ??予'), icon: MessageSquare, badge: 'AI' },
+        { id: 'knowledge-base', label: t('admin.sidebar.knowledgeBase', '?亥?摨怎恣??), icon: BookOpen },
+        { id: 'ai-training', label: t('admin.sidebar.aiTraining', 'AI 摮貊???'), icon: Brain },
+        { id: 'ai-analytics', label: t('admin.sidebar.aiAnalytics', 'AI ?券???'), icon: BarChart3 },
       ],
     },
     {
-      title: t('admin.sidebar.group.business', '商務管理'),
+      title: t('admin.sidebar.group.business', '??蝞∠?'),
       items: [
-        { id: 'products', label: t('admin.sidebar.products', '商品管理'), icon: Package },
-        { id: 'orders', label: t('admin.sidebar.orders', '訂單管理'), icon: ShoppingCart },
-        { id: 'payments', label: t('admin.sidebar.payments', '金流管理'), icon: CreditCard },
-        { id: 'stores', label: t('admin.sidebar.stores', '門市管理'), icon: Store },
-        { id: 'members', label: t('admin.sidebar.members', '會員管理'), icon: Users },
+        { id: 'products', label: t('admin.sidebar.products', '??蝞∠?'), icon: Package },
+        { id: 'orders', label: t('admin.sidebar.orders', '閮蝞∠?'), icon: ShoppingCart },
+        { id: 'payments', label: t('admin.sidebar.payments', '??蝞∠?'), icon: CreditCard },
+        { id: 'stores', label: t('admin.sidebar.stores', '?撣恣??), icon: Store },
+        { id: 'members', label: t('admin.sidebar.members', '?蝞∠?'), icon: Users },
       ],
     },
     {
-      title: t('admin.sidebar.group.content', '內容管理'),
+      title: t('admin.sidebar.group.content', '?批捆蝞∠?'),
       items: [
-        { id: 'homepage', label: t('admin.sidebar.homepage', '首頁管理'), icon: Home },
-        { id: 'articles', label: t('admin.sidebar.articles', '文章管理'), icon: FileText },
-        { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 管理'), icon: HelpCircle },
-        { id: 'static-pages', label: t('admin.sidebar.staticPages', '靜態頁面'), icon: Layers },
+        { id: 'homepage', label: t('admin.sidebar.homepage', '擐?蝞∠?'), icon: Home },
+        { id: 'articles', label: t('admin.sidebar.articles', '??蝞∠?'), icon: FileText },
+        { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 蝞∠?'), icon: HelpCircle },
+        { id: 'static-pages', label: t('admin.sidebar.staticPages', '???'), icon: Layers },
       ],
     },
     {
-      title: t('admin.sidebar.group.settings', '系統設定'),
+      title: t('admin.sidebar.group.settings', '蝟餌絞閮剖?'),
       items: [
-        { id: 'social', label: t('admin.sidebar.social', '社群連結'), icon: Share2 },
-        { id: 'languages', label: t('admin.sidebar.languages', '語系管理'), icon: Languages },
-        { id: 'seo', label: t('admin.sidebar.seo', 'SEO 管理'), icon: Search },
-        { id: 'permissions', label: t('admin.sidebar.permissions', '權限管理'), icon: Shield },
+        { id: 'social', label: t('admin.sidebar.social', '蝷曄黎???'), icon: Share2 },
+        { id: 'languages', label: t('admin.sidebar.languages', '隤頂蝞∠?'), icon: Languages },
+        { id: 'seo', label: t('admin.sidebar.seo', 'SEO 蝞∠?'), icon: Search },
+        { id: 'version-logs', label: '版本紀錄', icon: History },
+        { id: 'permissions', label: t('admin.sidebar.permissions', '甈?蝞∠?'), icon: Shield },
       ],
     },
   ];
@@ -114,7 +116,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
           </div>
           <div>
             <h1 className="whitespace-nowrap bg-gradient-to-r from-white to-slate-300 bg-clip-text text-xl font-bold text-transparent">
-              {t('admin.sidebar.brand', '後台管理')}
+              {t('admin.sidebar.brand', '敺蝞∠?')}
             </h1>
             <p className="whitespace-nowrap text-xs tracking-wide text-slate-500">Super Admin Panel</p>
           </div>
@@ -179,7 +181,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
           className="group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
         >
           <ExternalLink className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span className="text-sm font-medium">{t('admin.sidebar.backHome', '返回前台')}</span>
+          <span className="text-sm font-medium">{t('admin.sidebar.backHome', '餈??')}</span>
         </a>
       </div>
     </div>

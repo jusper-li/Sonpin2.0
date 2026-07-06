@@ -35,6 +35,7 @@ import ProductPageCardRenderer from '../components/product-page/ProductPageCardR
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, productSchema } from '../utils/schemaMarkup';
 import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
+import { resolveSonpinProductImages } from '../lib/productImages';
 import { extractProductPageDocument, type ExtractedProductPageDocument } from '../lib/productPageCards';
 import { normalizeLang } from '../lib/language';
 import { shouldTranslateProductPage, translateHtmlContentWithT, translateProductPageDocumentWithT } from '../lib/productPageLiveTranslation';
@@ -74,6 +75,15 @@ interface RelatedProduct {
 type FallbackProduct = (typeof FALLBACK_PRODUCTS)[number];
 
 const FALLBACK_PRODUCT_BY_SLUG = new Map(FALLBACK_PRODUCTS.map((item) => [item.slug, item]));
+const STORE_ONLY_PRODUCT_SLUGS = new Set([
+  'sonpin-salted-half-chicken',
+  'sonpin-smoked-half-chicken',
+  'sonpin-salted-plate',
+  'sonpin-smoked-plate',
+  'sonpin-braised-chicken-feet',
+  'sonpin-chicken-gizzard',
+  'sonpin-chicken-intestine',
+]);
 
 const withRequestTimeout = <T,>(request: PromiseLike<T>, ms = 4500) =>
   Promise.race([
@@ -85,6 +95,7 @@ const withRequestTimeout = <T,>(request: PromiseLike<T>, ms = 4500) =>
 
 const toDetailProduct = (item: FallbackProduct): Product => ({
   ...item,
+  images: resolveSonpinProductImages(item),
   seo_title: null,
   seo_description: null,
   seo_keywords: null,
@@ -96,7 +107,12 @@ const mergeDetailProductWithFallback = (item: Product, fallback?: FallbackProduc
   return {
     ...toDetailProduct(fallback),
     id: item.id,
-    images: fallback.images?.length ? fallback.images : item.images,
+    images: resolveSonpinProductImages({
+      name: item.name,
+      slug: item.slug,
+      category_slug: item.category_id,
+      images: fallback.images?.length ? fallback.images : item.images,
+    }),
   };
 };
 
@@ -106,7 +122,7 @@ const toRelatedProduct = (item: FallbackProduct): RelatedProduct => ({
   slug: item.slug,
   price: item.price,
   sale_price: item.sale_price,
-  images: item.images,
+  images: resolveSonpinProductImages(item),
   summary: item.summary,
 });
 
@@ -115,10 +131,18 @@ const mergeRelatedProductWithFallback = (item: RelatedProduct): RelatedProduct =
   if (!fallback) return item;
   return {
     ...item,
-    images: fallback.images?.length ? fallback.images : item.images,
+    images: resolveSonpinProductImages({
+      name: item.name,
+      slug: item.slug,
+      category_slug: undefined,
+      images: fallback.images?.length ? fallback.images : item.images,
+    }),
     summary: item.summary || fallback.summary,
   };
 };
+
+const isStoreOnlyProduct = (item: { slug: string; categories?: { slug: string } | null }) =>
+  item.categories?.slug === 'other-products' || STORE_ONLY_PRODUCT_SLUGS.has(item.slug);
 
 const getProductCategoryPath = (slug?: string) => (slug === 'main-products' ? '6' : '7');
 
@@ -261,6 +285,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
   const { addToCart } = useCart();
   const translatedName = t(`product.related.${product.slug}.name`, product.name);
   const displayPrice = product.sale_price ?? product.price;
+  const storeOnly = STORE_ONLY_PRODUCT_SLUGS.has(product.slug);
 
   return (
     <article className="group">
@@ -286,7 +311,8 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
         </div>
       </Link>
       <button
-        onClick={() =>
+        onClick={() => {
+          if (storeOnly) return;
           addToCart(
             {
               id: product.id,
@@ -298,11 +324,12 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
               slug: product.slug,
             },
             1
-          )
-        }
-        className="mt-3 w-full rounded-xl border border-[#d8c8b6] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[#fffaf2]"
+          );
+        }}
+        disabled={storeOnly}
+        className="mt-3 w-full rounded-xl border border-[#d8c8b6] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[#fffaf2] disabled:cursor-not-allowed disabled:border-[#eadfd1] disabled:bg-[#f7efe5] disabled:text-stone-400"
       >
-        {t('product.detail.related.add', '加入購物車')}
+        {storeOnly ? t('product.detail.storeOnly', '僅供門市販售') : t('product.detail.related.add', '加入購物車')}
       </button>
     </article>
   );
@@ -700,6 +727,8 @@ export default function ProductDetail() {
       ? t('product.detail.price.sale', '特價')
       : t('product.detail.price.regular', '一般售價');
   const inStock = product.stock > 0;
+  const storeOnly = isStoreOnlyProduct(product);
+  const purchaseUnavailableLabel = t('product.detail.storeOnly', '僅供門市販售');
 
   return (
     <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
@@ -857,13 +886,19 @@ export default function ProductDetail() {
                 </span>
               </div>
 
+              {storeOnly && (
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  {purchaseUnavailableLabel}
+                </div>
+              )}
+
               <div className="mb-6" id="buy-now">
                 <div className="mb-5 flex items-center gap-4">
                   <span className="text-sm font-medium text-stone-500">{t('product.detail.quantity', '數量')}</span>
                   <div className="flex items-center overflow-hidden rounded-xl border border-stone-200">
                     <button
                       onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                      disabled={quantity <= 1}
+                      disabled={storeOnly || quantity <= 1}
                       className="flex h-11 w-11 items-center justify-center text-stone-500 transition-colors hover:bg-stone-50 active:bg-stone-100 disabled:opacity-30"
                       aria-label={t('product.detail.decreaseQty', '減少數量')}
                     >
@@ -874,7 +909,7 @@ export default function ProductDetail() {
                     </span>
                     <button
                       onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))}
-                      disabled={quantity >= product.stock}
+                      disabled={storeOnly || quantity >= product.stock}
                       className="flex h-11 w-11 items-center justify-center text-stone-500 transition-colors hover:bg-stone-50 active:bg-stone-100 disabled:opacity-30"
                       aria-label={t('product.detail.increaseQty', '增加數量')}
                     >
@@ -892,16 +927,20 @@ export default function ProductDetail() {
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={handleAddToCart}
-                    disabled={!inStock}
+                    disabled={storeOnly || !inStock}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-sm font-semibold transition-all duration-200 ${
-                      added
+                      storeOnly
+                        ? 'cursor-not-allowed bg-stone-100 text-stone-400'
+                        : added
                         ? 'bg-green-600 text-white'
                         : inStock
                           ? 'border border-stone-200 bg-stone-100 text-stone-700 hover:bg-stone-200 active:bg-stone-300'
                           : 'cursor-not-allowed bg-stone-100 text-stone-300'
                     }`}
                   >
-                    {added ? (
+                    {storeOnly ? (
+                      <>{purchaseUnavailableLabel}</>
+                    ) : added ? (
                       <>
                         <Check className="h-4 w-4" />
                         {t('product.detail.added', '已加入購物車！')}
@@ -915,10 +954,10 @@ export default function ProductDetail() {
                   </button>
                   <button
                     onClick={handleBuyNow}
-                    disabled={!inStock}
+                    disabled={storeOnly || !inStock}
                     className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-4 text-sm font-semibold text-white transition-all hover:bg-stone-700 active:bg-stone-900 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
                   >
-                    {inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
+                    {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
                   </button>
                 </div>
               </div>
@@ -998,16 +1037,20 @@ export default function ProductDetail() {
           </div>
           <button
             onClick={handleAddToCart}
-            disabled={!inStock}
+            disabled={storeOnly || !inStock}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-all ${
-              added
+              storeOnly
+                ? 'cursor-not-allowed border border-stone-100 text-stone-300'
+                : added
                 ? 'bg-green-600 text-white'
                 : inStock
                   ? 'border border-stone-200 text-stone-700 hover:bg-stone-50'
                   : 'cursor-not-allowed border border-stone-100 text-stone-300'
             }`}
           >
-            {added ? (
+            {storeOnly ? (
+              <>{purchaseUnavailableLabel}</>
+            ) : added ? (
               <>
                 <Check className="h-4 w-4" />
                 {t('product.detail.addedShort', '已加入')}
@@ -1021,10 +1064,10 @@ export default function ProductDetail() {
           </button>
           <button
             onClick={handleBuyNow}
-            disabled={!inStock}
+            disabled={storeOnly || !inStock}
             className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-3.5 text-sm font-semibold text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
           >
-            {inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
+            {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
           </button>
         </div>
 
@@ -1047,16 +1090,20 @@ export default function ProductDetail() {
               <div className="flex flex-shrink-0 gap-2">
                 <button
                   onClick={handleAddToCart}
-                  disabled={!inStock}
+                  disabled={storeOnly || !inStock}
                   className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all ${
-                    added
+                    storeOnly
+                      ? 'border border-stone-100 text-stone-300'
+                      : added
                       ? 'bg-green-600 text-white'
                       : inStock
                         ? 'border border-stone-200 text-stone-700 hover:bg-stone-100'
                         : 'border border-stone-100 text-stone-300'
                   }`}
                 >
-                  {added ? (
+                  {storeOnly ? (
+                    <>{purchaseUnavailableLabel}</>
+                  ) : added ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
                       {t('product.detail.addedShort', '已加入')}
@@ -1070,10 +1117,10 @@ export default function ProductDetail() {
                 </button>
                 <button
                   onClick={handleBuyNow}
-                  disabled={!inStock}
+                  disabled={storeOnly || !inStock}
                   className="rounded-lg bg-stone-800 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
                 >
-                  {t('product.detail.buyNow', '立即購買')}
+                  {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
                 </button>
               </div>
             </div>

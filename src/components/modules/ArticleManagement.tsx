@@ -9,6 +9,7 @@ import {
   saveBlogArticleCategoryMap,
   saveBlogCategories,
 } from '../../lib/blog';
+import { buildMediaArticleSeedRows } from '../../lib/mediaArticleSeed';
 import { supabase } from '../../lib/supabase';
 import ImageUpload from '../ImageUpload';
 import RichTextEditor from '../RichTextEditor';
@@ -294,6 +295,26 @@ export default function ArticleManagement() {
     }
   };
 
+  const importMediaArticles = async () => {
+    const rows = buildMediaArticleSeedRows();
+    if (!confirm(t('article_management.import_media_confirm', `即將同步 ${rows.length} 篇影音文章到 Supabase，確定要繼續嗎？`))) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc('import_media_articles', {
+        p_articles: rows,
+      });
+      if (error) throw error;
+      await loadData();
+      alert(t('article_management.import_media_done', '影音文章同步完成。'));
+    } catch (error) {
+      console.error('Failed to import media articles:', error);
+      alert(t('article_management.import_media_failed', '影音文章同步失敗，請確認 Supabase 權限與連線狀態。'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">{t('common.loading', '載入中...')}</div>;
   }
@@ -306,6 +327,10 @@ export default function ArticleManagement() {
           <p className="mt-2 text-slate-600">{t('article_management.subtitle', '集中管理文章、分類與發佈狀態，方便後台快速維護內容。')}</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={importMediaArticles} className="flex items-center gap-2 rounded-lg border border-amber-300 px-4 py-2 text-amber-700 hover:bg-amber-50">
+            <RefreshCw className="h-4 w-4" />
+            {t('article_management.import_media', '同步影音文章')}
+          </button>
           <button onClick={importArticles} className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50">
             <RefreshCw className="h-4 w-4" />
             {t('article_management.import', '同步匯入文章')}

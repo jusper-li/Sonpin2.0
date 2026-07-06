@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -279,17 +279,17 @@ export default function Homepage() {
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
 
   useSEO({
-    title: 'Sonpin 精品咖啡禮盒',
-    description: 'Sonpin 以精品咖啡、冠軍烘豆與精緻禮盒，打造適合收藏、贈禮與日常飲用的咖啡選物。',
-    keywords: '精品咖啡,咖啡禮盒,you and me coffee,y and m coffee,Sonpin',
+    title: '淞品土雞｜土雞精、商品介紹與品牌故事',
+    description: '淞品土雞提供土雞精、雞肉禮盒、門市資訊與品牌故事，內容與商品可由後台同步更新。',
+    keywords: '淞品土雞,土雞精,商品介紹,品牌故事,門市資訊,媒體報導',
     noSuffix: true,
     schema: [organizationSchema(), localBusinessSchema(), websiteSchema()],
   });
 
   useSEO({
-    title: t('homepage.seo.title', 'Sonpin 精品禮盒'),
-    description: t('homepage.seo.description', 'Sonpin 以精品咖啡與禮盒設計，傳遞送禮與日常品飲的美好體驗。'),
-    keywords: t('homepage.seo.keywords', '精品禮盒,精品咖啡,coffee gift box,you and me coffee,y and m coffee,Sonpin'),
+    title: t('homepage.seo.title', '淞品土雞｜品牌首頁'),
+    description: t('homepage.seo.description', '淞品土雞提供土雞禮盒、門市資訊與品牌故事，讓顧客快速找到商品與最新內容。'),
+    keywords: t('homepage.seo.keywords', '淞品土雞,土雞禮盒,商品介紹,品牌故事,門市資訊,媒體報導'),
     noSuffix: true,
   });
 
@@ -423,7 +423,7 @@ export default function Homepage() {
           image: block.image,
           href: block.href,
           cta_label: '前往商品',
-          submenu: [{ label: 'View', title: '前往商品', href: block.href }],
+          submenu: [{ label: '前往商品', title: '前往商品', href: block.href }],
         },
         background_image: block.image,
         description: block.description,
@@ -578,7 +578,7 @@ export default function Homepage() {
         `}</style>
         <div className="ym-home-loading-panel text-center">
           <div className="ym-loading-ring mx-auto mb-4" />
-          <p className="text-sm">載入首頁商品</p>
+          <p className="text-sm">頛擐???</p>
         </div>
       </div>
     );
@@ -961,11 +961,11 @@ export default function Homepage() {
           const palette = getStagePalette(index);
           const title = getSectionTitle(section) || 'Sonpin';
           const href = getSectionHref(section) || '/shop';
-          const localizedTitle = t(`homepage:${section.id}:title:${hashText(title)}`, title);
-          const localizedSubtitle = t(`homepage:${section.id}:subtitle:${hashText(section.subtitle || '')}`, section.subtitle || '');
-          const localizedLabel = t(`homepage:${section.id}:label:${hashText(section.label || '')}`, section.label || '');
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '閱讀更多');
-          const localizedCtaLabel = t(`homepage:${section.id}:cta:${hashText(ctaLabel)}`, ctaLabel);
+          const localizedTitle = title;
+          const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
+          const localizedLabel = section.label || section.content?.label || '';
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多');
+          const localizedCtaLabel = ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
           const sectionStyle = {
@@ -999,7 +999,6 @@ export default function Homepage() {
                   />
                 ) : null}
               </Link>
-
               <div className="ym-stage-panel absolute inset-x-0 bottom-0 z-20 flex items-center justify-center px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-10 text-center sm:px-8 md:pb-12 md:pt-12">
                 <div className={`ym-stage-copy ym-reveal is-visible mx-auto flex max-w-4xl flex-col items-center ${isVisible ? 'is-active-copy' : ''}`}>
                   <Link to={href} className="ym-stage-title-link group block max-w-[22rem] sm:max-w-2xl md:max-w-4xl">
@@ -1013,14 +1012,14 @@ export default function Homepage() {
                   </Link>
 
                   <div className="ym-stage-actions mt-4 flex w-full items-center justify-center md:mt-5">
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || 'y&m coffee'}</span>
+                    <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || '淞品土雞'}</span>
                     <Link
                       to={href}
                       className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[#211d1c] bg-transparent px-5 text-sm font-medium text-[#211d1c] transition-colors duration-300 hover:bg-[#211d1c] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#211d1c]/30"
                     >
                       {localizedCtaLabel}
                     </Link>
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || 'you and me'}</span>
+                    <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || '淞品品牌'}</span>
                   </div>
                 </div>
               </div>
@@ -1038,3 +1037,4 @@ export default function Homepage() {
     </div>
   );
 }
+

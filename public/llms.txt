@@ -1,32 +1,30 @@
 # Sonpin
 
-> Official storefront and brand content for Sonpin.
+> 淞品土雞官方網站與品牌內容。
 
 ## Canonical site
-- https://sonpin.netlify.app/
+- https://sonpin.tw/
 
 ## High-value pages
-- https://sonpin.netlify.app/shop
-- https://sonpin.netlify.app/story
-- https://sonpin.netlify.app/about
-- https://sonpin.netlify.app/contact
-- https://sonpin.netlify.app/faq
-- https://sonpin.netlify.app/shipping
+- https://sonpin.tw/
+- https://sonpin.tw/products
+- https://sonpin.tw/about
+- https://sonpin.tw/culture
+- https://sonpin.tw/process
+- https://sonpin.tw/service
+- https://sonpin.tw/store
+- https://sonpin.tw/media
+- https://sonpin.tw/contact
 
 ## Product URLs
-- Product pages use this canonical pattern:
-  - https://sonpin.netlify.app/product/{slug}
+- 商品頁面採用：
+  - https://sonpin.tw/products/{categorySlug}/{slug}
 
 ## Content hints for AI retrieval
 - Language: Traditional Chinese (zh-TW)
-- Domain: Specialty coffee, gift boxes, brewing tools
-- Product pages include:
-  - Story blocks
-  - Flavor notes
-  - Origin/process/roast metadata
-  - Structured schema markup
+- Domain: 土雞精、雞肉禮盒、門市資訊、品牌故事、媒體報導
+- 商品與內容頁可直接抓取標題、摘要、圖片、內文與結構化資料。
 
 ## Crawl policy
 - Public marketing + catalog pages may be indexed and summarized.
 - Respect robots.txt and sitemap.xml for route discovery.
-

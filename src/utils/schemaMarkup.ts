@@ -8,7 +8,7 @@ export function organizationSchema() {
     name: ORG_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/LOGO-1.png`,
-    description: '精品咖啡禮盒品牌，嚴選產地直送豆款，結合精美包裝工藝，獻給每一個值得被珍視的場合。',
+    description: '淞品土雞品牌，提供土雞精、雞肉禮盒、門市資訊與品牌內容。',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
@@ -25,7 +25,7 @@ export function localBusinessSchema() {
     name: ORG_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/LOGO-1.png`,
-    description: '精品咖啡禮盒品牌，提供咖啡豆、掛耳包、精品禮盒等高品質咖啡相關商品。',
+    description: '淞品土雞品牌，提供土雞精、雞肉禮盒與門市商品資訊。',
     priceRange: 'NT$$$',
     currenciesAccepted: 'TWD',
     paymentAccepted: '信用卡, 銀行轉帳, 貨到付款',
@@ -43,7 +43,7 @@ export function websiteSchema() {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/shop?q={search_term_string}`,
+        urlTemplate: `${SITE_URL}/products?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, Shield, Truck, Gift, ShoppingBag } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
@@ -7,6 +7,7 @@ import ProductImage from '../components/ProductImage';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, collectionPageSchema } from '../utils/schemaMarkup';
 import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
+import { resolveSonpinProductImages } from '../lib/productImages';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 
 type SortKey = 'newest' | 'price_asc' | 'price_desc';
@@ -32,12 +33,11 @@ const CATEGORY_TABS: Array<{ id: string | null; name: string }> = [
   { id: 'other-products', name: '其他商品' },
 ];
 
-const PROMISES = [
-  { icon: Gift, title: '質感禮盒', text: '適合節慶送禮與企業訂購' },
-  { icon: Truck, title: '快速出貨', text: '完成付款後儘快安排配送' },
-  { icon: Shield, title: '安心品質', text: '嚴選食材，穩定工法' },
+const PROMISES: Array<{ id: string; icon: typeof Gift; title: string; text: string }> = [
+  { id: 'gift', icon: Gift, title: '質感禮盒', text: '適合節慶與企業送禮' },
+  { id: 'shipping', icon: Truck, title: '快速出貨', text: '完成付款後盡快安排配送' },
+  { id: 'quality', icon: Shield, title: '安心品質', text: '嚴選食材，穩定工法' },
 ];
-
 const PRODUCT_ORDER_SETTING_KEY = 'product_order';
 
 const getProductPath = (slug: string, categorySlug: string) => `/products/${categorySlug === 'main-products' ? '6' : '7'}/${slug}`;
@@ -62,7 +62,7 @@ const toFallbackProduct = (item: (typeof FALLBACK_PRODUCTS)[number]): ShopProduc
   description: item.description || '',
   price: item.price,
   sale_price: item.sale_price ?? null,
-  images: item.images || [],
+  images: resolveSonpinProductImages(item),
   category_slug: item.category_id,
   category_name: item.category_id === 'main-products' ? '主打商品' : '其他商品',
   is_active: true,
@@ -76,14 +76,14 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '商品介紹',
-    description: '淞品土雞商品介紹與禮盒選購。',
-    keywords: '商品介紹,淞品土雞,禮盒,主打商品,其他商品',
+    title: '商品介紹', 
+    description: '瀏覽淞品商品介紹、主打商品與其他商品，快速找到想購買的土雞與伴手禮。', 
+    keywords: '商品介紹,主打商品,其他商品,土雞,伴手禮,淞品', 
     schema: [
-      collectionPageSchema('淞品土雞商品介紹'),
+      collectionPageSchema('商品介紹'),
       breadcrumbSchema([
         { name: '首頁', url: window.location.origin },
-        { name: '商品介紹', url: `${window.location.origin}/products` },
+        { name: '商品介紹', url: window.location.origin + '/products' },
       ]),
     ],
   });
@@ -136,7 +136,12 @@ export default function Shop() {
             description: item.description || '',
             price: Number(item.price || 0),
             sale_price: item.sale_price === null || item.sale_price === undefined ? null : Number(item.sale_price),
-            images: normalizeImages(item.images),
+            images: resolveSonpinProductImages({
+              name: item.name,
+              slug: item.slug,
+              category_slug: item.categories?.slug,
+              images: normalizeImages(item.images),
+            }),
             category_slug: item.categories?.slug || 'other-products',
             category_name: item.categories?.name || '',
             is_active: item.is_active !== false,
@@ -199,7 +204,7 @@ export default function Shop() {
   const categoryCount = (id: string | null) => (id ? products.filter((item) => item.category_slug === id).length : products.length);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">載入商品中...</div>;
+    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">載入商品中...</div>
   }
 
   return (
@@ -216,7 +221,7 @@ export default function Shop() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">商品介紹</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Gift Collection</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Product Collection</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
               商品介紹
             </h1>
@@ -238,7 +243,7 @@ export default function Shop() {
             <div className="flex flex-wrap gap-2">
               {CATEGORY_TABS.map((tab) => (
                 <button
-                  key={tab.name}
+                  key={tab.id ?? 'all'}
                   type="button"
                   onClick={() => setCategory(tab.id)}
                   className={`border px-4 py-2 text-xs tracking-[0.16em] transition-all ${
@@ -254,8 +259,8 @@ export default function Shop() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              {PROMISES.map(({ icon: Icon, title, text }) => (
-                <div key={title} className="flex items-center gap-3 border border-stone-200 bg-white px-4 py-3">
+              {PROMISES.map(({ id, icon: Icon, title, text }) => (
+                <div key={id} className="flex items-center gap-3 border border-stone-200 bg-white px-4 py-3">
                   <div className="flex h-9 w-9 items-center justify-center bg-stone-900 text-white">
                     <Icon className="h-4 w-4" />
                   </div>
@@ -271,8 +276,8 @@ export default function Shop() {
               <div className="flex gap-2">
                 {[
                   { key: 'newest' as const, label: '最新' },
-                  { key: 'price_asc' as const, label: '價格低到高' },
-                  { key: 'price_desc' as const, label: '價格高到低' },
+                  { key: 'price_asc' as const, label: '價格 低到高' },
+                  { key: 'price_desc' as const, label: '價格 高到低' },
                 ].map((option) => (
                   <button
                     key={option.key}
@@ -287,7 +292,7 @@ export default function Shop() {
                   </button>
                 ))}
               </div>
-              <div className="text-xs text-stone-400">{filteredProducts.length} 件商品</div>
+              <div className="text-xs text-stone-400">{filteredProducts.length} 項商品</div>
             </div>
           </div>
         </section>
@@ -295,7 +300,7 @@ export default function Shop() {
         <section className="container mx-auto px-6 pb-16">
           {filteredProducts.length === 0 ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
-              找不到符合條件的商品
+              目前沒有符合條件的商品
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

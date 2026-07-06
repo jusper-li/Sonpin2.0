@@ -43,7 +43,7 @@ export default function ServiceDetailPage() {
               </Link>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Share</p>
-            <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.08em] text-stone-900 md:text-5xl">
+            <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
               {item.title}
             </h1>
           </div>

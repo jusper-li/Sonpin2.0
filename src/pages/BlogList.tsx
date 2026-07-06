@@ -37,9 +37,9 @@ export default function BlogList() {
   const locale = pickByLang(currentLanguage, 'zh-TW', 'en-US', 'ja-JP', 'ko-KR');
 
   useSEO({
-    title: activeCategory?.name || t('blog.title', '專欄文章'),
-    description: activeCategory?.description || t('blog.description', '閱讀 Sonpin 的最新文章與品牌故事。'),
-    keywords: t('blog.keywords', 'Sonpin,專欄文章,品牌故事,咖啡資訊,風味筆記'),
+    title: activeCategory?.name || t('blog.title', '?????????'),
+    description: activeCategory?.description || t('blog.description', '??????????????????????'),
+    keywords: t('blog.keywords', '????,????,????,????,????'),
   });
 
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function BlogList() {
                 </h1>
                 <div className="mt-7 h-px w-14 bg-[#cfa87a]/70" />
                 <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-                  {activeCategory?.description || t('blog.subheading', '閱讀品牌最新消息、咖啡知識與風味故事。')}
+                  {activeCategory?.description || t('blog.subheading', '???????????????????')}
                 </p>
               </div>
 

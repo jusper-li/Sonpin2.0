@@ -86,8 +86,8 @@ export default function StoryPage() {
 
   useSEO({
     title: seoTitle,
-    description: page?.meta_description || t('story.seo.description', '了解 Sonpin 的品牌故事。'),
-    keywords: t('story.seo.keywords', '品牌故事,Sonpin,關於我們'),
+    description: page?.meta_description || t('story.seo.description', '????????????'),
+    keywords: t('story.seo.keywords', '????,????,????'),
   });
 
   return (
@@ -204,7 +204,7 @@ export default function StoryPage() {
               {t('story.cta.title', '成為故事的一部分')}
             </h2>
             <p className="text-[#9f8a7b] font-light mb-10 leading-relaxed">
-              {t('story.cta.description', '讓咖啡、禮盒與送禮體驗都以溫柔的方式，陪你度過日常與重要時刻。')}
+              {t('story.cta.description', '????????????????????????????')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

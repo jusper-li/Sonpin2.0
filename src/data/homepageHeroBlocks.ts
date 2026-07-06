@@ -1,4 +1,4 @@
-import { FALLBACK_PRODUCTS } from './fallbackProducts';
+﻿import { FALLBACK_PRODUCTS } from './fallbackProducts';
 
 export const HOMEPAGE_HERO_BLOCKS_SETTING_KEY = 'homepage_hero_blocks';
 
@@ -129,10 +129,11 @@ export function resolveHomepageHeroBlock(
   return {
     id: block.id,
     title,
-    subtitle: block.mode === 'product' ? '精選商品' : '自訂焦點',
+    subtitle: '精選商品',
     description: product?.summary || '',
     image,
     href,
     sort_order: block.sort_order,
   };
 }
+

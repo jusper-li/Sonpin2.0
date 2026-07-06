@@ -26,7 +26,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://sonpin.tw/story</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://sonpin.tw/culture</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/process</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -81,6 +91,116 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sonpin.tw/service/72</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/service/73</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/77</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/80</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/81</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/82</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/84</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/85</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/86</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/87</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/88</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/78/115</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/40</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/66</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/83</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/90</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/91</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/92</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/93</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sonpin.tw/media/79/231</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sonpin.tw/products/6/sonpin-drip-essence</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -121,17 +241,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/products/7/sonpin-smoked-small-plate</loc>
+    <loc>https://sonpin.tw/products/7/sonpin-salted-plate</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/products/7/sonpin-salted-small-plate</loc>
+    <loc>https://sonpin.tw/products/7/sonpin-smoked-plate</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/products/7/sonpin-chicken-feet</loc>
+    <loc>https://sonpin.tw/products/7/sonpin-braised-chicken-feet</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -141,7 +261,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/products/7/sonpin-chicken-intestines</loc>
+    <loc>https://sonpin.tw/products/7/sonpin-chicken-intestine</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -186,17 +306,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/product/sonpin-smoked-small-plate</loc>
+    <loc>https://sonpin.tw/product/sonpin-salted-plate</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/product/sonpin-salted-small-plate</loc>
+    <loc>https://sonpin.tw/product/sonpin-smoked-plate</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/product/sonpin-chicken-feet</loc>
+    <loc>https://sonpin.tw/product/sonpin-braised-chicken-feet</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -206,7 +326,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sonpin.tw/product/sonpin-chicken-intestines</loc>
+    <loc>https://sonpin.tw/product/sonpin-chicken-intestine</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

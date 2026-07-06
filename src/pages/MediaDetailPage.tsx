@@ -4,7 +4,9 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
-import { getMediaArticle, getMediaGroup } from '../data/mediaContent';
+import { getMediaGroup } from '../data/mediaContent';
+import { loadMediaArticle } from '../lib/media';
+import { useEffect, useState } from 'react';
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('zh-TW', {
@@ -15,7 +17,23 @@ const formatDate = (value: string) =>
 
 export default function MediaDetailPage() {
   const { groupSlug = '', articleSlug = '' } = useParams();
-  const article = getMediaArticle(groupSlug, articleSlug);
+  const [article, setArticle] = useState<Awaited<ReturnType<typeof loadMediaArticle>>>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const data = await loadMediaArticle(groupSlug, articleSlug);
+      if (!cancelled) setArticle(data);
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupSlug, articleSlug]);
+
   const group = getMediaGroup(groupSlug);
   const currentPageUrl = `${window.location.origin}/media/${groupSlug}/${articleSlug}`;
   const externalUrl =
@@ -25,7 +43,7 @@ export default function MediaDetailPage() {
 
   useSEO({
     title: article?.title || '相關報導',
-    description: article?.excerpt || '淞品土雞專賣店的新聞與影音內容。',
+    description: article?.excerpt || '淞品土雞媒體報導內容',
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
@@ -42,7 +60,7 @@ export default function MediaDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">找不到這則內容。</p>
+          <p className="text-sm text-stone-500">找不到文章內容</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
@@ -98,7 +116,7 @@ export default function MediaDetailPage() {
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'Media'}
             </p>
-            <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.08em] text-stone-900 md:text-5xl">
+            <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
               {article.title}
             </h1>
             <div className="mt-7 flex flex-wrap items-center gap-4 text-xs tracking-[0.16em] text-stone-400">
@@ -137,7 +155,12 @@ export default function MediaDetailPage() {
                 </div>
               ) : null}
 
-              {article.bodyParagraphs.length > 0 ? (
+              {article.htmlContent ? (
+                <div
+                  className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]"
+                  dangerouslySetInnerHTML={{ __html: article.htmlContent }}
+                />
+              ) : article.bodyParagraphs.length > 0 ? (
                 <div className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]">
                   {article.bodyParagraphs.map((paragraph) => (
                     <p key={paragraph} className="whitespace-pre-line">
@@ -147,7 +170,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>原站內容以影音或圖片為主，本站保留原始標題與來源。</p>
+                  <p>目前尚無完整內容。</p>
                 </div>
               )}
 

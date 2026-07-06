@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import Login from '../components/Login';
 import Sidebar from '../components/Sidebar';
@@ -21,12 +21,34 @@ import PermissionManagement from '../components/modules/PermissionManagement';
 import KnowledgeBaseManagement from '../components/modules/KnowledgeBaseManagement';
 import AITraining from '../components/modules/AITraining';
 import StaticPageManagement from '../components/modules/StaticPageManagement';
+import VersionLogManagement from '../components/modules/VersionLogManagement';
+import { recordAdminAuditEvent } from '../lib/adminAudit';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function AdminPanel() {
   const { t } = useLanguage();
   const { admin, isLoading } = useAuth();
   const [activeModule, setActiveModule] = useState('dashboard');
+  const lastAuditKeyRef = useRef('');
+
+  useEffect(() => {
+    if (!admin) return;
+
+    const auditKey = `${admin.id}:${activeModule}`;
+    if (lastAuditKeyRef.current === auditKey) return;
+    lastAuditKeyRef.current = auditKey;
+
+    void recordAdminAuditEvent({
+      action: 'check',
+      entityTable: 'backoffice_module',
+      entityId: activeModule,
+      metadata: {
+        module: activeModule,
+        admin_id: admin.id,
+        source: 'sidebar-navigation',
+      },
+    });
+  }, [admin, activeModule]);
 
   if (isLoading) {
     return (
@@ -81,6 +103,8 @@ function AdminPanel() {
         return <PermissionManagement />;
       case 'static-pages':
         return <StaticPageManagement />;
+      case 'version-logs':
+        return <VersionLogManagement />;
       default:
         return <Dashboard />;
     }

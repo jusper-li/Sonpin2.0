@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Save, Trash2, X, Eye, Globe, FileText, Search, CreditCard as Edit } from 'lucide-react';
+import { BarChart3, Eye, FileText, Globe, Plus, Save, Search, ToggleLeft, ToggleRight, Trash2, X, CreditCard as Edit } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import ImageUpload from '../ImageUpload';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -16,15 +16,40 @@ interface SEOSetting {
   schema_markup: any;
 }
 
+interface SiteSettingRow {
+  id: string | number;
+  setting_key: string;
+  setting_value: any;
+}
+
+interface GoogleAnalyticsSetting {
+  enabled: boolean;
+  measurement_id: string;
+  stream_name: string;
+  stream_url: string;
+  stream_id: string;
+}
+
+const GOOGLE_ANALYTICS_SETTING_KEY = 'google_analytics';
+
+const DEFAULT_GOOGLE_ANALYTICS: GoogleAnalyticsSetting = {
+  enabled: true,
+  measurement_id: 'G-JVFN8M2DXT',
+  stream_name: '淞品土雞 - GA4',
+  stream_url: 'http://www.sonpin.tw/',
+  stream_id: '5044756741',
+};
+
 export default function SEOManagement() {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [seoSettings, setSeoSettings] = useState<SEOSetting[]>([]);
+  const [googleAnalytics, setGoogleAnalytics] = useState<GoogleAnalyticsSetting>(DEFAULT_GOOGLE_ANALYTICS);
   const [loading, setLoading] = useState(true);
+  const [savingAnalytics, setSavingAnalytics] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingSeo, setEditingSeo] = useState<SEOSetting | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-
   const [seoForm, setSeoForm] = useState({
     page_path: '',
     title: '',
@@ -42,12 +67,34 @@ export default function SEOManagement() {
 
   const loadSeoSettings = async () => {
     try {
-      const { data, error } = await supabase.from('seo_settings').select('*').order('page_path');
-      if (error) throw error;
-      setSeoSettings((data || []) as SEOSetting[]);
+      const [seoResponse, analyticsResponse] = await Promise.all([
+        supabase.from('seo_settings').select('*').order('page_path'),
+        supabase
+          .from('site_settings')
+          .select('id,setting_key,setting_value')
+          .eq('setting_key', GOOGLE_ANALYTICS_SETTING_KEY)
+          .maybeSingle(),
+      ]);
+
+      if (seoResponse.error) throw seoResponse.error;
+      if (analyticsResponse.error) throw analyticsResponse.error;
+
+      setSeoSettings((seoResponse.data || []) as SEOSetting[]);
+
+      const analyticsRow = analyticsResponse.data as SiteSettingRow | null;
+      const analyticsValue = (analyticsRow?.setting_value || {}) as Partial<GoogleAnalyticsSetting>;
+      setGoogleAnalytics({
+        ...DEFAULT_GOOGLE_ANALYTICS,
+        ...analyticsValue,
+        enabled: Boolean(analyticsValue.enabled ?? DEFAULT_GOOGLE_ANALYTICS.enabled),
+        measurement_id: String(analyticsValue.measurement_id || DEFAULT_GOOGLE_ANALYTICS.measurement_id).trim(),
+        stream_name: String(analyticsValue.stream_name || DEFAULT_GOOGLE_ANALYTICS.stream_name).trim(),
+        stream_url: String(analyticsValue.stream_url || DEFAULT_GOOGLE_ANALYTICS.stream_url).trim(),
+        stream_id: String(analyticsValue.stream_id || DEFAULT_GOOGLE_ANALYTICS.stream_id).trim(),
+      });
     } catch (error) {
       console.error('Failed to load SEO settings:', error);
-      alert(t('seo_management.load_failed', '載入 SEO 設定失敗'));
+      alert('載入 SEO 資料失敗。');
     } finally {
       setLoading(false);
     }
@@ -56,46 +103,100 @@ export default function SEOManagement() {
   const saveSeoSetting = async () => {
     try {
       if (!seoForm.page_path.trim()) {
-        alert(t('seo_management.require_path', '請填寫頁面路徑'));
+        alert('請輸入頁面路徑。');
         return;
       }
       if (!seoForm.title.trim()) {
-        alert(t('seo_management.require_title', '請填寫頁面標題'));
+        alert('請輸入標題。');
         return;
       }
 
+      const payload = {
+        page_path: seoForm.page_path.trim(),
+        title: seoForm.title.trim(),
+        description: seoForm.description.trim(),
+        keywords: seoForm.keywords.trim(),
+        og_image: seoForm.og_image.trim() || null,
+        canonical_url: seoForm.canonical_url.trim() || null,
+        robots: seoForm.robots.trim() || 'index, follow',
+        schema_markup: seoForm.schema_markup,
+      };
+
       if (editingSeo) {
-        const { error } = await supabase.from('seo_settings').update(seoForm).eq('id', editingSeo.id);
+        const { error } = await supabase.from('seo_settings').update(payload).eq('id', editingSeo.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('seo_settings').insert([seoForm]);
+        const { error } = await supabase.from('seo_settings').insert([payload]);
         if (error) throw error;
       }
 
       await loadSeoSettings();
       closeForm();
-      alert(t('seo_management.save_success', '儲存成功'));
+      alert('SEO 設定已儲存。');
     } catch (error) {
       console.error('Failed to save SEO setting:', error);
-      alert(
-        t('seo_management.save_failed', '儲存失敗')
-          + ': '
-          + (error instanceof Error ? error.message : t('seo_management.unknown_error', '未知錯誤'))
-      );
+      alert(`儲存 SEO 設定失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    }
+  };
+
+  const saveGoogleAnalyticsSetting = async () => {
+    if (!googleAnalytics.measurement_id.trim()) {
+      alert('請輸入 GA4 Measurement ID。');
+      return;
+    }
+
+    setSavingAnalytics(true);
+    try {
+      const { data: existingRow, error: existingError } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', GOOGLE_ANALYTICS_SETTING_KEY)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      const payload: GoogleAnalyticsSetting = {
+        enabled: Boolean(googleAnalytics.enabled),
+        measurement_id: googleAnalytics.measurement_id.trim(),
+        stream_name: googleAnalytics.stream_name.trim(),
+        stream_url: googleAnalytics.stream_url.trim(),
+        stream_id: googleAnalytics.stream_id.trim(),
+      };
+
+      if (existingRow?.id) {
+        const { error } = await supabase.from('site_settings').update({ setting_value: payload }).eq('id', existingRow.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('site_settings').insert([
+          {
+            setting_key: GOOGLE_ANALYTICS_SETTING_KEY,
+            setting_value: payload,
+          },
+        ]);
+        if (error) throw error;
+      }
+
+      await loadSeoSettings();
+      alert('Google Analytics 設定已更新。');
+    } catch (error) {
+      console.error('Failed to save Google Analytics setting:', error);
+      alert(`儲存 GA4 設定失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    } finally {
+      setSavingAnalytics(false);
     }
   };
 
   const deleteSeoSetting = async (id: string) => {
-    if (!confirm(t('seo_management.delete_confirm', '確定要刪除此 SEO 設定嗎？'))) return;
+    if (!confirm('確定要刪除這筆 SEO 設定嗎？')) return;
 
     try {
       const { error } = await supabase.from('seo_settings').delete().eq('id', id);
       if (error) throw error;
       await loadSeoSettings();
-      alert(t('seo_management.delete_success', '刪除成功'));
+      alert('SEO 設定已刪除。');
     } catch (error) {
       console.error('Failed to delete SEO setting:', error);
-      alert(t('seo_management.delete_failed', '刪除失敗'));
+      alert('刪除 SEO 設定失敗。');
     }
   };
 
@@ -125,6 +226,7 @@ export default function SEOManagement() {
         schema_markup: null,
       });
     }
+
     setShowPreview(false);
     setShowForm(true);
   };
@@ -145,22 +247,22 @@ export default function SEOManagement() {
   );
 
   if (loading) {
-    return <div className="p-6">{t('common.loading', '載入中...')}</div>;
+    return <div className="p-6">載入中...</div>;
   }
 
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('seo_management.title', 'SEO 管理')}</h1>
-          <p className="mt-2 text-slate-600">{t('seo_management.subtitle', '管理頁面 SEO 設定與優化')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">SEO 管理</h1>
+          <p className="mt-2 text-slate-600">集中管理頁面 SEO 與後台可切換的網站分析設定。</p>
         </div>
         <button
           onClick={() => openForm()}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white transition-colors hover:bg-slate-800"
         >
           <Plus className="h-4 w-4" />
-          {t('seo_management.add', '新增頁面')}
+          新增 SEO
         </button>
       </div>
 
@@ -168,40 +270,122 @@ export default function SEOManagement() {
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <Globe className="h-5 w-5 text-blue-700" />
-            <h3 className="font-bold text-blue-900">{t('seo_management.tip_title', 'SEO 最佳實踐')}</h3>
+            <h3 className="font-bold text-blue-900">SEO 建議</h3>
           </div>
           <ul className="space-y-1 text-sm text-blue-800">
-            <li>{t('seo_management.tip_1', '標題保持在 50-60 字元')}</li>
-            <li>{t('seo_management.tip_2', '描述保持在 150-160 字元')}</li>
-            <li>{t('seo_management.tip_3', '每頁使用唯一的標題和描述')}</li>
-            <li>{t('seo_management.tip_4', '包含目標關鍵字')}</li>
+            <li>標題建議控制在 50-60 字元內。</li>
+            <li>描述建議控制在 150-160 字元內。</li>
+            <li>關鍵字請以品牌與主題為主。</li>
+            <li>每個頁面都盡量有唯一的 canonical URL。</li>
           </ul>
         </div>
 
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <FileText className="h-5 w-5 text-green-700" />
-            <h3 className="font-bold text-green-900">{t('seo_management.schema_title', '結構化資料')}</h3>
+            <h3 className="font-bold text-green-900">Schema 說明</h3>
           </div>
           <ul className="space-y-1 text-sm text-green-800">
-            <li>{t('seo_management.schema_1', '使用 Schema.org 標記')}</li>
-            <li>{t('seo_management.schema_2', '產品頁面使用 Product')}</li>
-            <li>{t('seo_management.schema_3', '文章使用 Article')}</li>
-            <li>{t('seo_management.schema_4', '組織資訊使用 Organization')}</li>
+            <li>可直接儲存 JSON-LD 結構化資料。</li>
+            <li>商品頁建議使用 Product schema。</li>
+            <li>內容頁可使用 Article schema。</li>
+            <li>品牌首頁可搭配 Organization / WebSite。</li>
           </ul>
         </div>
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <Eye className="h-5 w-5 text-amber-700" />
-            <h3 className="font-bold text-amber-900">{t('seo_management.image_title', '圖片優化')}</h3>
+            <h3 className="font-bold text-amber-900">OG 圖片</h3>
           </div>
           <ul className="space-y-1 text-sm text-amber-800">
-            <li>{t('seo_management.image_1', 'OG 圖片: 1200x630px')}</li>
-            <li>{t('seo_management.image_2', '使用描述性檔名')}</li>
-            <li>{t('seo_management.image_3', '壓縮圖片大小')}</li>
-            <li>{t('seo_management.image_4', '添加 alt 屬性')}</li>
+            <li>建議尺寸：1200 x 630 px。</li>
+            <li>圖片請保留品牌主視覺與主要產品。</li>
+            <li>避免使用過於複雜或裁切過大的版面。</li>
+            <li>盡量使用網站內可長期保留的圖片。</li>
           </ul>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <BarChart3 className="h-5 w-5 text-slate-700" />
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">網站分析 / GA4</h2>
+            <p className="text-sm text-slate-600">集中管理 Google Analytics，之後只要在這裡改 ID 就能切換。</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            {googleAnalytics.enabled ? <ToggleRight className="h-6 w-6 text-emerald-600" /> : <ToggleLeft className="h-6 w-6 text-slate-400" />}
+            <div>
+              <div className="font-medium text-slate-900">啟用 GA4</div>
+              <div className="text-xs text-slate-500">關閉後前台就不會載入 Google tag。</div>
+            </div>
+            <input
+              type="checkbox"
+              className="ml-auto h-4 w-4"
+              checked={googleAnalytics.enabled}
+              onChange={(e) => setGoogleAnalytics({ ...googleAnalytics, enabled: e.target.checked })}
+            />
+          </label>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="mb-1 text-sm font-medium text-slate-900">Measurement ID</div>
+            <input
+              type="text"
+              value={googleAnalytics.measurement_id}
+              onChange={(e) => setGoogleAnalytics({ ...googleAnalytics, measurement_id: e.target.value })}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm"
+              placeholder="G-XXXXXXXXXX"
+            />
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="mb-1 text-sm font-medium text-slate-900">串流名稱</div>
+            <input
+              type="text"
+              value={googleAnalytics.stream_name}
+              onChange={(e) => setGoogleAnalytics({ ...googleAnalytics, stream_name: e.target.value })}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="淞品土雞 - GA4"
+            />
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="mb-1 text-sm font-medium text-slate-900">串流網址</div>
+            <input
+              type="url"
+              value={googleAnalytics.stream_url}
+              onChange={(e) => setGoogleAnalytics({ ...googleAnalytics, stream_url: e.target.value })}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="https://www.sonpin.tw/"
+            />
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="mb-1 text-sm font-medium text-slate-900">串流 ID</div>
+            <input
+              type="text"
+              value={googleAnalytics.stream_id}
+              onChange={(e) => setGoogleAnalytics({ ...googleAnalytics, stream_id: e.target.value })}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="5044756741"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-slate-500">前台會優先讀取這組設定。若 Measurement ID 留空或關閉，GA 不會載入。</p>
+          <button
+            onClick={saveGoogleAnalyticsSetting}
+            disabled={savingAnalytics}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
+            {savingAnalytics ? '儲存中...' : '儲存 GA4 設定'}
+          </button>
         </div>
       </div>
 
@@ -211,7 +395,7 @@ export default function SEOManagement() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder={t('seo_management.search_placeholder', '搜尋頁面...')}
+              placeholder="搜尋頁面路徑或標題..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-4 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
@@ -223,19 +407,15 @@ export default function SEOManagement() {
           {filteredSettings.length === 0 ? (
             <div className="p-12 text-center">
               <Globe className="mx-auto mb-4 h-16 w-16 text-slate-300" />
-              <h3 className="mb-2 text-lg font-bold text-slate-900">{t('seo_management.empty_title', '尚未設定 SEO')}</h3>
-              <p className="mb-4 text-slate-600">
-                {searchTerm
-                  ? t('seo_management.empty_filtered', '找不到符合的頁面設定')
-                  : t('seo_management.empty_default', '開始為您的頁面添加 SEO 設定')}
-              </p>
+              <h3 className="mb-2 text-lg font-bold text-slate-900">尚未建立 SEO 設定</h3>
+              <p className="mb-4 text-slate-600">{searchTerm ? '找不到符合的項目。' : '目前還沒有任何頁面 SEO 設定。'}</p>
               {!searchTerm && (
                 <button
                   onClick={() => openForm()}
                   className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white transition-colors hover:bg-slate-800"
                 >
                   <Plus className="h-4 w-4" />
-                  {t('seo_management.add_first', '新增第一個頁面')}
+                  建立第一筆 SEO
                 </button>
               )}
             </div>
@@ -259,17 +439,21 @@ export default function SEOManagement() {
                     <h3 className="mb-2 text-lg font-bold text-slate-900">{seo.title}</h3>
                     {seo.description && <p className="mb-2 line-clamp-2 text-sm text-slate-600">{seo.description}</p>}
                     <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                      {seo.keywords && <span>{t('seo_management.keywords', '關鍵字')}: {seo.keywords}</span>}
+                      {seo.keywords && (
+                        <span>
+                          關鍵字: {seo.keywords}
+                        </span>
+                      )}
                       {seo.og_image && (
                         <span className="flex items-center gap-1">
                           <Globe className="h-3 w-3" />
-                          {t('seo_management.og_image', '有 OG 圖片')}
+                          OG 圖片
                         </span>
                       )}
                       {seo.canonical_url && (
                         <span className="flex items-center gap-1">
                           <FileText className="h-3 w-3" />
-                          {t('seo_management.canonical', '有 Canonical URL')}
+                          Canonical URL
                         </span>
                       )}
                     </div>
@@ -299,9 +483,7 @@ export default function SEOManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 py-8">
           <div className="mx-4 w-full max-w-3xl rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-6">
-              <h2 className="text-2xl font-bold text-slate-900">
-                {editingSeo ? t('seo_management.edit_title', '編輯 SEO 設定') : t('seo_management.add_title', '新增 SEO 設定')}
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">{editingSeo ? '編輯 SEO 設定' : '新增 SEO 設定'}</h2>
               <button onClick={closeForm} className="rounded-lg p-2 transition-colors hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>
@@ -310,7 +492,7 @@ export default function SEOManagement() {
             <div className="max-h-[calc(100vh-16rem)] space-y-6 overflow-y-auto p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">{t('seo_management.page_path', '頁面路徑')} *</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">頁面路徑 *</label>
                   <input
                     type="text"
                     value={seoForm.page_path}
@@ -319,59 +501,50 @@ export default function SEOManagement() {
                     placeholder="/about"
                     required
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.page_path_hint', '例如: /, /products, /products/6/example')}</p>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    {t('seo_management.title', '頁面標題')} * <span className="font-normal text-slate-500">({seoForm.title.length}/60)</span>
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">標題 *</label>
                   <input
                     type="text"
                     value={seoForm.title}
                     onChange={(e) => setSeoForm({ ...seoForm, title: e.target.value })}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                    placeholder={t('seo_management.title_placeholder', '精確描述頁面內容')}
+                    placeholder="淞品土雞｜關於我們"
                     maxLength={60}
                     required
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.title_hint', '建議 50-60 個字元')}</p>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Meta 描述 <span className="font-normal text-slate-500">({seoForm.description.length}/160)</span>
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Meta 描述</label>
                   <textarea
                     value={seoForm.description}
                     onChange={(e) => setSeoForm({ ...seoForm, description: e.target.value })}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
                     rows={3}
                     maxLength={160}
-                    placeholder={t('seo_management.description_placeholder', '吸引用戶點擊的描述文字')}
+                    placeholder="簡短描述頁面內容"
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.description_hint', '建議 150-160 個字元')}</p>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">{t('seo_management.keywords', '關鍵字')}</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">關鍵字</label>
                   <input
                     type="text"
                     value={seoForm.keywords}
                     onChange={(e) => setSeoForm({ ...seoForm, keywords: e.target.value })}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                    placeholder={t('seo_management.keywords_placeholder', '關鍵字1, 關鍵字2, 關鍵字3')}
+                    placeholder="淞品土雞,品牌故事,土雞禮盒"
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.keywords_hint', '用逗號分隔多個關鍵字')}</p>
                 </div>
 
                 <div className="col-span-2">
                   <ImageUpload
                     value={seoForm.og_image}
                     onChange={(url) => setSeoForm({ ...seoForm, og_image: url })}
-                    label={t('seo_management.og_image_label', 'OG 圖片 (社群分享圖)')}
+                    label="OG 圖片"
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.og_image_hint', '建議尺寸: 1200x630 像素')}</p>
                 </div>
 
                 <div className="col-span-2">
@@ -381,29 +554,26 @@ export default function SEOManagement() {
                     value={seoForm.canonical_url}
                     onChange={(e) => setSeoForm({ ...seoForm, canonical_url: e.target.value })}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                    placeholder="https://example.com/original-page"
+                    placeholder="https://sonpin.tw/about"
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.canonical_hint', '指定此頁面的正規網址（避免重複內容）')}</p>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">{t('seo_management.robots', 'Robots 設定')}</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Robots</label>
                   <select
                     value={seoForm.robots}
                     onChange={(e) => setSeoForm({ ...seoForm, robots: e.target.value })}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
                   >
-                    <option value="index, follow">{t('seo_management.robots_index_follow', 'index, follow（允許索引和追蹤連結）')}</option>
-                    <option value="noindex, follow">{t('seo_management.robots_noindex_follow', 'noindex, follow（不索引但追蹤連結）')}</option>
-                    <option value="index, nofollow">{t('seo_management.robots_index_nofollow', 'index, nofollow（索引但不追蹤連結）')}</option>
-                    <option value="noindex, nofollow">{t('seo_management.robots_noindex_nofollow', 'noindex, nofollow（不索引不追蹤）')}</option>
+                    <option value="index, follow">index, follow</option>
+                    <option value="noindex, follow">noindex, follow</option>
+                    <option value="index, nofollow">index, nofollow</option>
+                    <option value="noindex, nofollow">noindex, nofollow</option>
                   </select>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    {t('seo_management.schema_markup', 'Schema.org 結構化資料 (JSON-LD)')}
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Schema.org JSON-LD</label>
                   <textarea
                     value={seoForm.schema_markup ? JSON.stringify(seoForm.schema_markup, null, 2) : ''}
                     onChange={(e) => {
@@ -416,29 +586,23 @@ export default function SEOManagement() {
                     }}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
                     rows={6}
-                    placeholder='{"@context": "https://schema.org", "@type": "Product", "name": "Product Name"}'
+                    placeholder='{"@context":"https://schema.org","@type":"Product","name":"Product Name"}'
                   />
-                  <p className="mt-1 text-xs text-slate-500">{t('seo_management.schema_hint', 'JSON-LD 格式的結構化資料')}</p>
                 </div>
               </div>
 
               <div className="border-t border-slate-200 pt-4">
                 <button onClick={() => setShowPreview(!showPreview)} className="flex items-center gap-2 text-slate-700 hover:text-slate-900">
                   <Eye className="h-4 w-4" />
-                  {showPreview ? t('seo_management.hide_preview', '隱藏') : t('seo_management.show_preview', '顯示')}
-                  {t('seo_management.preview_label', '搜尋結果預覽')}
+                  {showPreview ? '隱藏預覽' : '顯示預覽'}
                 </button>
 
                 {showPreview && (
                   <div className="mt-4 rounded-lg bg-slate-50 p-4">
                     <div className="max-w-2xl">
-                      <div className="mb-1 text-xl text-blue-700 hover:underline">
-                        {seoForm.title || t('seo_management.title_fallback', '頁面標題')}
-                      </div>
-                      <div className="mb-1 text-sm text-green-700">https://example.com{seoForm.page_path || '/'}</div>
-                      <div className="text-sm text-slate-600">
-                        {seoForm.description || t('seo_management.description_fallback', '頁面描述會顯示在這裡...')}
-                      </div>
+                      <div className="mb-1 text-xl text-blue-700 hover:underline">{seoForm.title || 'SEO 標題'}</div>
+                      <div className="mb-1 text-sm text-green-700">https://sonpin.tw{seoForm.page_path || '/'}</div>
+                      <div className="text-sm text-slate-600">{seoForm.description || '頁面描述預覽...'}</div>
                     </div>
                   </div>
                 )}
@@ -447,11 +611,11 @@ export default function SEOManagement() {
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-200 p-6">
               <button onClick={closeForm} className="rounded-lg px-4 py-2 text-slate-700 hover:bg-slate-100">
-                {t('common.cancel', '取消')}
+                取消
               </button>
               <button onClick={saveSeoSetting} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800">
                 <Save className="h-4 w-4" />
-                {t('common.save', '儲存')}
+                儲存
               </button>
             </div>
           </div>
