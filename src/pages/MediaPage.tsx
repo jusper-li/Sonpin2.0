@@ -9,7 +9,6 @@ import { loadMediaArticles } from '../lib/media';
 
 const defaultGroupSlug = '79';
 const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
-  '78': new Set(['81']),
   '79': new Set(['66', '40']),
 };
 const mediaSectionTitle = '相關報導';
@@ -120,7 +119,7 @@ export default function MediaPage() {
                     <h2 className="text-base leading-7 text-stone-800 transition-colors group-hover:text-amber-800">
                       {article.title}
                     </h2>
-                    <p className="mt-3 text-sm leading-7 text-stone-500">{article.excerpt}</p>
+                    {article.excerpt && <p className="mt-3 text-sm leading-7 text-stone-500">{article.excerpt}</p>}
                   </div>
                 </Link>
               );

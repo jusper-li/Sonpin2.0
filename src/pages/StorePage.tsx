@@ -68,6 +68,30 @@ const sortStores = (items: StoreView[]) =>
     return a.name.localeCompare(b.name, 'zh-Hant');
   });
 
+const StoreImage = ({ src, alt }: { src?: string; alt: string }) => {
+  if (!src) {
+    return (
+      <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-[#f4ecdf] to-[#eadfd1]">
+        <MapPin className="h-12 w-12 text-[#8e6448]/70" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="aspect-[4/3] overflow-hidden bg-stone-100">
+      <img
+        src={src}
+        alt={alt}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none';
+        }}
+      />
+    </div>
+  );
+};
+
 export default function StorePage() {
   const [stores, setStores] = useState<StoreRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,14 +202,7 @@ export default function StorePage() {
                   <div className="grid gap-6 lg:grid-cols-2">
                     {northStores.map((store) => (
                       <article key={store.name} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                        <div className="aspect-[4/3] overflow-hidden bg-stone-100">
-                          <img
-                            src={store.image || store.images?.[0] || ''}
-                            alt={store.name}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
+                        <StoreImage src={store.image || store.images?.[0]} alt={store.name} />
                         <div className="p-6">
                           <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
                           <p className="mt-2 text-sm text-[#9f8a7b]">{store.city}</p>
@@ -242,15 +259,24 @@ export default function StorePage() {
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {(store.images || []).slice(0, 4).map((image) => (
-                            <img
-                              key={image}
-                              src={image}
-                              alt={store.name}
-                              className="h-full w-full rounded-2xl object-cover"
-                              loading="lazy"
-                            />
-                          ))}
+                          {(store.images || []).length > 0 ? (
+                            (store.images || []).slice(0, 4).map((image) => (
+                              <img
+                                key={image}
+                                src={image}
+                                alt={store.name}
+                                className="h-full w-full rounded-2xl object-cover"
+                                loading="lazy"
+                                onError={(event) => {
+                                  event.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[#f4ecdf] to-[#eadfd1]">
+                              <MapPin className="h-10 w-10 text-[#8e6448]/70" />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </article>

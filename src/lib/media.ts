@@ -32,6 +32,11 @@ const extractSlugParts = (slug: string) => {
   };
 };
 
+const MEDIA_GROUP_ORDER: Record<string, string[]> = {
+  '79': ['231', '91', '92', '90', '93', '83'],
+  '78': ['115', '86', '80', '87', '88', '85', '81', '77', '84', '82'],
+};
+
 const inferVideoIframeUrl = (content?: string | null) => {
   if (!content) return '';
   const match =
@@ -99,7 +104,32 @@ export const loadMediaArticles = async (): Promise<LoadedMediaArticle[]> => {
     }
   });
 
-  return Array.from(uniqueArticles.values());
+  const sorted = Array.from(uniqueArticles.values()).sort((a, b) => {
+    const groupOrderA = MEDIA_GROUP_ORDER[a.groupSlug] || [];
+    const groupOrderB = MEDIA_GROUP_ORDER[b.groupSlug] || [];
+    const groupIndexA = groupOrderA.indexOf(a.articleSlug);
+    const groupIndexB = groupOrderB.indexOf(b.articleSlug);
+
+    if (a.groupSlug === b.groupSlug && groupIndexA !== -1 && groupIndexB !== -1 && groupIndexA !== groupIndexB) {
+      return groupIndexA - groupIndexB;
+    }
+
+    if (a.groupSlug !== b.groupSlug) {
+      if (a.groupSlug === '79') return -1;
+      if (b.groupSlug === '79') return 1;
+      if (a.groupSlug === '78') return -1;
+      if (b.groupSlug === '78') return 1;
+      return b.date.localeCompare(a.date);
+    }
+
+    if (groupIndexA !== -1 && groupIndexB !== -1) {
+      return groupIndexA - groupIndexB;
+    }
+
+    return b.date.localeCompare(a.date);
+  });
+
+  return sorted;
 };
 
 export const loadMediaArticle = async (groupSlug: string, articleSlug: string) => {
