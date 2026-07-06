@@ -60,7 +60,7 @@ export const loadMediaArticles = async (): Promise<LoadedMediaArticle[]> => {
       if (!uniqueArticles.has(key)) {
         uniqueArticles.set(key, {
           ...article,
-          htmlContent: buildHtmlFromParagraphs(article.bodyParagraphs),
+          htmlContent: article.htmlContent || buildHtmlFromParagraphs(article.bodyParagraphs),
         });
       }
     });
@@ -101,7 +101,9 @@ export const loadMediaArticles = async (): Promise<LoadedMediaArticle[]> => {
         date: formatDate(dbArticle.published_at) || localArticle.date,
         excerpt: dbArticle.excerpt || localArticle.excerpt,
         featuredImage: localArticle.featuredImage || dbArticle.featured_image || '',
-        htmlContent: dbArticle.content?.trim() || buildHtmlFromParagraphs(mergedParagraphs),
+        // Media pages should keep the bundled scraped HTML as the primary source,
+        // because the Supabase article content may be partial while migration is still in progress.
+        htmlContent: localArticle.htmlContent || dbArticle.content?.trim() || buildHtmlFromParagraphs(mergedParagraphs),
       };
     });
 
@@ -125,7 +127,7 @@ export const loadMediaArticles = async (): Promise<LoadedMediaArticle[]> => {
       if (!uniqueArticles.has(key)) {
         uniqueArticles.set(key, {
           ...article,
-          htmlContent: buildHtmlFromParagraphs(article.bodyParagraphs),
+          htmlContent: article.htmlContent || buildHtmlFromParagraphs(article.bodyParagraphs),
         });
       }
     });

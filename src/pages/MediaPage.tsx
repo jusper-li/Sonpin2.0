@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
@@ -10,15 +10,17 @@ import { loadMediaArticles } from '../lib/media';
 
 const defaultGroupSlug = '79';
 const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
+  '78': new Set(['81']),
   '79': new Set(['66', '40']),
 };
+const mediaSectionTitle = '相關報導';
+const mediaSectionDescription = '淞品土雞相關報導與新聞公告';
 
 export default function MediaPage() {
   const { categorySlug } = useParams();
   const { pathname } = useLocation();
   const isVideoPage = categorySlug === '78' || pathname.replace(/\/+$/, '') === '/media/78';
   const groupSlug = isVideoPage ? '78' : defaultGroupSlug;
-  const group = getMediaGroup(groupSlug) || getMediaGroup(defaultGroupSlug);
   const [articles, setArticles] = useState<Awaited<ReturnType<typeof loadMediaArticles>>>([]);
 
   useEffect(() => {
@@ -46,12 +48,12 @@ export default function MediaPage() {
   const pageArticles = useMemo(() => articles, [articles]);
 
   useSEO({
-    title: group?.title || '????',
-    description: `${group?.title || '????'} - ?????????????`,
-    keywords: '????,????,????,????',
+    title: mediaSectionTitle,
+    description: mediaSectionDescription,
+    keywords: '相關報導,報章雜誌,影音報導,淞品土雞',
     schema: breadcrumbSchema([
-      { name: '??', url: window.location.origin },
-      { name: group?.title || '????', url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
+      { name: '首頁', url: window.location.origin },
+      { name: mediaSectionTitle, url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
     ]),
   });
 
@@ -64,16 +66,16 @@ export default function MediaPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                擐?
+                首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '?賊??勗?'}</span>
+              <span className="text-stone-700">{mediaSectionTitle}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
-              {group?.label || 'News'}
+              {mediaSectionTitle}
             </p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
-              {group?.title || '?賊??勗?'}
+              {mediaSectionTitle}
             </h1>
           </div>
         </section>
@@ -88,7 +90,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              ?梁???
+              報章雜誌
             </Link>
             <Link
               to="/media/78"
@@ -98,7 +100,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              敶梢?勗?
+              影音報導
             </Link>
           </div>
 

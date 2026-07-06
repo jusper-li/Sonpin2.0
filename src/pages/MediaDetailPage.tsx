@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock, ExternalLink, Play } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
@@ -6,7 +7,6 @@ import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { getMediaGroup } from '../data/mediaContent';
 import { loadMediaArticle } from '../lib/media';
-import { useEffect, useState } from 'react';
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('zh-TW', {
@@ -36,21 +36,18 @@ export default function MediaDetailPage() {
 
   const group = getMediaGroup(groupSlug);
   const currentPageUrl = `${window.location.origin}/media/${groupSlug}/${articleSlug}`;
-  const externalUrl =
-    article?.kind === 'video' && article.iframeUrl
-      ? `https://www.youtube.com/watch?v=${article.iframeUrl.split('/embed/')[1]?.split('?')[0] || ''}`
-      : article?.sourceUrl || '';
+  const externalUrl = article?.sourceUrl || '';
 
   useSEO({
     title: article?.title || '相關報導',
-    description: article?.excerpt || '淞品土雞媒體報導內容',
+    description: article?.excerpt || '淞品土雞相關報導與新聞內容',
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
       ? breadcrumbSchema([
           { name: '首頁', url: window.location.origin },
           { name: '相關報導', url: `${window.location.origin}/media` },
-          { name: group?.title || '影音報導', url: `${window.location.origin}/media/${groupSlug}` },
+          { name: group?.title || '相關報導', url: `${window.location.origin}/media/${groupSlug}` },
         ])
       : undefined,
   });
@@ -60,7 +57,7 @@ export default function MediaDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">找不到文章內容</p>
+          <p className="text-sm text-stone-500">載入文章中...</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
@@ -111,7 +108,7 @@ export default function MediaDetailPage() {
                 相關報導
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '影音報導'}</span>
+              <span className="text-stone-700">{group?.title || '相關報導'}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'Media'}
@@ -141,7 +138,7 @@ export default function MediaDetailPage() {
 
         <section className="container mx-auto px-6 py-14">
           <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-            {showVideoFirst ? videoBlock : article.featuredImage ? (
+            {!article.htmlContent && (showVideoFirst ? videoBlock : article.featuredImage) ? (
               <div className="bg-stone-100">
                 <img src={article.featuredImage} alt={article.title} className="h-auto w-full object-cover" loading="eager" decoding="async" />
               </div>
@@ -170,7 +167,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>目前尚無完整內容。</p>
+                  <p>目前沒有可顯示的內容。</p>
                 </div>
               )}
 
