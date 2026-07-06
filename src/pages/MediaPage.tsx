@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { getMediaGroup } from '../data/mediaContent';
@@ -64,16 +64,16 @@ export default function MediaPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                擐?
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '相關報導'}</span>
+              <span className="text-stone-700">{group?.title || '?賊??勗?'}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'News'}
             </p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
-              {group?.title || '相關報導'}
+              {group?.title || '?賊??勗?'}
             </h1>
           </div>
         </section>
@@ -88,7 +88,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              報章雜誌
+              ?梁???
             </Link>
             <Link
               to="/media/78"
@@ -98,7 +98,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              影音報導
+              敶梢?勗?
             </Link>
           </div>
 
@@ -128,7 +128,7 @@ export default function MediaPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

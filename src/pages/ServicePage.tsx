@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { SERVICE_SHARES } from '../data/serviceContent';
@@ -63,7 +63,7 @@ export default function ServicePage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

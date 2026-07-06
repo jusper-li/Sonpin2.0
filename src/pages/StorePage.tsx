@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Clock, MapPin, Phone } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, localBusinessSchema } from '../utils/schemaMarkup';
 import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
@@ -272,7 +272,7 @@ export default function StorePage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

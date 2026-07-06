@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Check,
@@ -27,11 +27,10 @@ import {
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
-import ProductPageCardRenderer from '../components/product-page/ProductPageCardRenderer';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, productSchema } from '../utils/schemaMarkup';
 import { FALLBACK_PRODUCTS } from '../data/fallbackProducts';
@@ -39,6 +38,7 @@ import { resolveSonpinProductImages } from '../lib/productImages';
 import { extractProductPageDocument, type ExtractedProductPageDocument } from '../lib/productPageCards';
 import { normalizeLang } from '../lib/language';
 import { shouldTranslateProductPage, translateHtmlContentWithT, translateProductPageDocumentWithT } from '../lib/productPageLiveTranslation';
+const ProductPageCardRenderer = lazy(() => import('../components/product-page/ProductPageCardRenderer'));
 
 interface Product {
   id: string;
@@ -388,7 +388,9 @@ function ProductInfoSections({
           </h2>
         </div>
         {productPage.document ? (
-          <ProductPageCardRenderer document={productPage.document} />
+          <Suspense fallback={null}>
+            <ProductPageCardRenderer document={productPage.document} />
+          </Suspense>
         ) : (
           <div className="rounded-2xl border border-[#eadfd1] bg-[#fffaf2] p-5 md:p-6">
             {productPage.fallbackHtml ? (
@@ -1000,7 +1002,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-10 lg:mt-14">
-            <ProductInfoSections product={product} productPage={activeProductPage} />
+            <Suspense fallback={null}><ProductInfoSections product={product} productPage={activeProductPage} /></Suspense>
           </div>
         </section>
 
@@ -1128,8 +1130,9 @@ export default function ProductDetail() {
         )}
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }
+
 

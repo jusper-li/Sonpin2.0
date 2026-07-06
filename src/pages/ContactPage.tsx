@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle, Clock, Mail, Phone, ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -37,12 +37,12 @@ export default function ContactPage() {
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: '客服中心',
-    description: page?.meta_description || '淞品土雞專賣店客服、聯絡與匯款資訊。',
-    keywords: '客服中心,聯絡淞品,淞品土雞,萬華,滴雞精',
+    title: '????',
+    description: page?.meta_description || '??????????????',
+    keywords: '????,????,????,????,????',
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '客服中心', url: `${window.location.origin}/contact` },
+      { name: '??', url: window.location.origin },
+      { name: '????', url: `${window.location.origin}/contact` },
     ]),
   });
 
@@ -143,7 +143,7 @@ export default function ContactPage() {
     event.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.subject || !form.message) {
-      setError('請填寫姓名、Email、主旨與訊息內容。');
+      setError('??????Email???????');
       return;
     }
     setSubmitted(true);
@@ -159,15 +159,15 @@ export default function ContactPage() {
           <div className="container mx-auto px-6">
             <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
               <Link to="/" className="transition-colors hover:text-[#fffaf2]">
-                首頁
+                擐?
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">客服中心</span>
+              <span className="text-[#f4ecdf]">摰Ｘ?銝剖?</span>
             </div>
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#cfa87a]">Contact Us</p>
-            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">客服中心</h1>
+            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">摰Ｘ?銝剖?</h1>
             <p className="max-w-2xl text-base leading-relaxed font-light text-[#eadfd1]">
-              {intro?.content || '如需訂購、確認匯款或詢問門市與商品資訊，歡迎與我們聯絡。'}
+              {intro?.content || '??????????????????'}
             </p>
           </div>
         </section>
@@ -177,7 +177,7 @@ export default function ContactPage() {
             <div className="space-y-8 md:col-span-2">
               {translating && (
                 <div className="inline-flex items-center rounded-full border border-[#eadfd1]/60 bg-[#fffaf2]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  翻譯中
+                  蝧餉陌銝?
                 </div>
               )}
 
@@ -198,7 +198,7 @@ export default function ContactPage() {
                   <Phone className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">訂購專線</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">閮頃撠?</p>
                   <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
                     {siteInfo.contact_phone}
                   </a>
@@ -210,9 +210,9 @@ export default function ContactPage() {
                   <Clock className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">服務時間</p>
-                  <p className="font-light text-[#2b221d]">週二至週日上午 09:00 - 17:00</p>
-                  <p className="text-sm font-light text-[#9f8a7b]">週一公休</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">????</p>
+                  <p className="font-light text-[#2b221d]">?曹??喲望銝? 09:00 - 17:00</p>
+                  <p className="text-sm font-light text-[#9f8a7b]">?曹??砌?</p>
                 </div>
               </div>
 
@@ -234,16 +234,16 @@ export default function ContactPage() {
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#f4ecdf]">
                     <CheckCircle className="h-10 w-10 text-[#8e6448]" />
                   </div>
-                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
+                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">撌脤閮</h2>
                   <p className="mb-8 max-w-sm leading-relaxed text-[#9f8a7b]">
-                    我們已收到您的聯繫表單，若有需要會盡快回覆您。
+                    ?歇?嗅?函??舐鼠銵典嚗??閬??∪翰???具?
                   </p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
                     className="text-sm font-light text-[#8e6448] hover:underline"
                   >
-                    重新填寫
+                    ?憛怠神
                   </button>
                 </div>
               ) : (
@@ -257,13 +257,13 @@ export default function ContactPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        姓名 <span className="text-[#a97a4f]">*</span>
+                        憪? <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="請輸入姓名"
+                        placeholder="?????"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -283,7 +283,7 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">電話</label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">?餉店</label>
                       <input
                         type="tel"
                         value={form.phone}
@@ -294,13 +294,13 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        主旨 <span className="text-[#a97a4f]">*</span>
+                        銝餅 <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        placeholder="請輸入聯絡主旨"
+                        placeholder="?????"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -308,13 +308,13 @@ export default function ContactPage() {
 
                   <div>
                     <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                      訊息內容 <span className="text-[#a97a4f]">*</span>
+                      閮?批捆 <span className="text-[#a97a4f]">*</span>
                     </label>
                     <textarea
                       rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="請輸入想詢問的內容"
+                      placeholder="?????"
                       className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                     />
                   </div>
@@ -323,7 +323,7 @@ export default function ContactPage() {
                     type="submit"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[#fffaf2] transition-colors hover:bg-[#5f4636]"
                   >
-                    送出訊息
+                    ?閮
                   </button>
                 </form>
               )}
@@ -332,7 +332,7 @@ export default function ContactPage() {
         </div>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

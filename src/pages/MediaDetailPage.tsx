@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock, ExternalLink, Play } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { getMediaGroup } from '../data/mediaContent';
@@ -68,7 +68,7 @@ export default function MediaDetailPage() {
             返回列表
           </Link>
         </main>
-        <SiteFooter />
+        <DeferredSiteFooter />
       </div>
     );
   }
@@ -205,7 +205,7 @@ export default function MediaDetailPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 
 type PaymentState = 'paid' | 'failed' | 'pending' | 'unknown';
@@ -132,7 +132,7 @@ export default function CheckoutResult() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

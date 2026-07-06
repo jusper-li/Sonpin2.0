@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { getStaticPageFallback, StaticPageSection } from '../data/staticPages';
 import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -109,12 +109,12 @@ export default function StaticPage() {
       day: 'numeric',
     });
 
-  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '淞品土雞專賣店';
+  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '????';
 
   useSEO({
     title: seoTitle,
-    description: page?.meta_description || t('static.seo.description', '淞品土雞專賣店的品牌內容與服務資訊。'),
-    keywords: `${page?.title || '淞品土雞專賣店'},淞品,土雞`,
+    description: page?.meta_description || t('static.seo.description', '????????????'),
+    keywords: `${page?.title || '????'},????,???`,
   });
 
   return (
@@ -131,16 +131,16 @@ export default function StaticPage() {
         {!loading && notFound && (
           <div className="container mx-auto px-6 py-40 text-center">
             <h1 className="mb-4 text-3xl font-light text-[#2b221d]">
-              {t('static.not_found.title', '找不到頁面')}
+              {t('static.not_found.title', '?????')}
             </h1>
             <p className="mb-8 text-[#9f8a7b]">
-              {t('static.not_found.description', '您瀏覽的內容不存在，請回到首頁重新選擇。')}
+              {t('static.not_found.description', '?????????????')}
             </p>
             <Link
               to="/"
               className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
             >
-              {t('common.home', '首頁')}
+              {t('common.home', '擐?')}
               <ChevronRight size={16} />
             </Link>
           </div>
@@ -152,12 +152,12 @@ export default function StaticPage() {
               <div className="container mx-auto px-6">
                 {translating && (
                   <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[#fffaf2]">
-                    翻譯中
+                    蝧餉陌銝?
                   </div>
                 )}
                 <div className="mb-6 flex items-center gap-2 text-sm text-[#9f8a7b]">
                   <Link to="/" className="transition-colors hover:text-[#cfa87a]">
-                    {t('common.home', '首頁')}
+                    {t('common.home', '擐?')}
                   </Link>
                   <ChevronRight size={14} />
                   <span className="text-[#eadfd1]">{page.title}</span>
@@ -169,7 +169,7 @@ export default function StaticPage() {
                   </p>
                 )}
                 <p className="mt-6 text-sm text-[#9f8a7b]">
-                  {t('static.updated_at', '最後更新：')}
+                  {t('static.updated_at', '?敺?堆?')}
                   {formatDate(page.updated_at)}
                 </p>
               </div>
@@ -200,22 +200,22 @@ export default function StaticPage() {
               ))}
 
               <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#eadfd1] pt-8 sm:flex-row">
-                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '其他頁面')}</p>
+                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '?嗡??')}</p>
                 <div className="flex flex-wrap items-center justify-center gap-4">
                   <Link to="/privacy" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    隱私權政策
+                    ?梁?甈蝑?
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/terms" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    服務條款
+                    ??璇狡
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/shipping" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    購物須知
+                    鞈潛?
                   </Link>
                   <span className="text-[#eadfd1]">|</span>
                   <Link to="/returns" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
-                    退換貨政策
+                    ??疏?輻?
                   </Link>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function StaticPage() {
         )}
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { CartProvider } from './contexts/CartContext';
 import { MemberAuthProvider } from './contexts/MemberAuthContext';
 import ScrollToTop from './components/ScrollToTop';
-import GoogleAnalytics from './components/GoogleAnalytics';
 
 const Homepage = lazy(() => import('./pages/Homepage'));
 const Backoffice = lazy(() => import('./pages/Backoffice'));
@@ -29,6 +28,7 @@ const StoryPage = lazy(() => import('./pages/StoryPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const BlogList = lazy(() => import('./pages/BlogList'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const GoogleAnalytics = lazy(() => import('./components/GoogleAnalytics'));
 const FloatingAIChat = lazy(() => import('./components/FloatingAIChat'));
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
 
@@ -50,11 +50,11 @@ function GlobalWidgets() {
   if (isBackoffice) return null;
 
   return (
-    <>
+    <Suspense fallback={null}>
       <GoogleAnalytics />
       <FloatingAIChat />
       <CookieConsent />
-    </>
+    </Suspense>
   );
 }
 

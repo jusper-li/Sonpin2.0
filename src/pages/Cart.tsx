@@ -3,7 +3,7 @@ import { ShoppingBag, Trash2, Plus, Minus, ChevronLeft, Gift, Shield, Truck } fr
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
 
@@ -41,7 +41,7 @@ export default function Cart() {
             </Link>
           </div>
         </main>
-        <SiteFooter />
+        <DeferredSiteFooter />
       </div>
     );
   }
@@ -227,7 +227,7 @@ export default function Cart() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

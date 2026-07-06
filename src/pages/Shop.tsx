@@ -1,8 +1,8 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, Shield, Truck, Gift, ShoppingBag } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, collectionPageSchema } from '../utils/schemaMarkup';
@@ -351,7 +351,7 @@ export default function Shop() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

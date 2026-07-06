@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { getServiceShareDetail } from '../data/serviceContent';
 
@@ -21,7 +21,7 @@ export default function ServiceDetailPage() {
         <main className="container mx-auto px-6 py-24">
           <p className="text-sm text-stone-500">找不到這篇饕客分享內容。</p>
         </main>
-        <SiteFooter />
+        <DeferredSiteFooter />
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function ServiceDetailPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

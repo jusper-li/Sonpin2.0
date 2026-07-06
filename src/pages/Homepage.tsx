@@ -1,9 +1,9 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { localBusinessSchema, organizationSchema, websiteSchema } from '../utils/schemaMarkup';
@@ -1031,7 +1031,7 @@ export default function Homepage() {
           ref={(el) => (sectionsRef.current[stageSections.length] = el)}
           className="flex min-h-screen flex-col justify-end bg-white text-stone-900"
         >
-          <SiteFooter />
+          <DeferredSiteFooter />
         </div>
       </main>
     </div>

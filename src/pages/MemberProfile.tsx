@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -66,7 +66,7 @@ export default function MemberProfile() {
   const handleSaveProfile = async () => {
     setError('');
     if (!displayName.trim()) {
-      setError(t('member.profile.error.nameRequired', '請輸入會員名稱。'));
+      setError(t('member.profile.error.nameRequired', '?????'));
       return;
     }
 
@@ -74,10 +74,10 @@ export default function MemberProfile() {
     try {
       await updateProfile({ display_name: displayName.trim(), phone: phone.trim() });
       setEditing(null);
-      setSuccessMsg(t('member.profile.success.profileSaved', '會員資料已更新。'));
+      setSuccessMsg(t('member.profile.success.profileSaved', '???????'));
       window.setTimeout(() => setSuccessMsg(''), 3000);
     } catch {
-      setError(t('member.profile.error.profileSaveFailed', '會員資料更新失敗，請稍後再試。'));
+      setError(t('member.profile.error.profileSaveFailed', '??????????????'));
     } finally {
       setIsSaving(false);
     }
@@ -86,12 +86,12 @@ export default function MemberProfile() {
   const handleSavePassword = async () => {
     setError('');
     if (newPassword.length < 6) {
-      setError(t('member.profile.error.passwordTooShort', '密碼至少需要 6 個字元。'));
+      setError(t('member.profile.error.passwordTooShort', '?????? 6 ???'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError(t('member.profile.error.passwordMismatch', '兩次輸入的密碼不一致。'));
+      setError(t('member.profile.error.passwordMismatch', '???????????'));
       return;
     }
 
@@ -101,10 +101,10 @@ export default function MemberProfile() {
       setEditing(null);
       setNewPassword('');
       setConfirmPassword('');
-      setSuccessMsg(t('member.profile.success.passwordSaved', '密碼已更新。'));
+      setSuccessMsg(t('member.profile.success.passwordSaved', '?????'));
       window.setTimeout(() => setSuccessMsg(''), 3000);
     } catch {
-      setError(t('member.profile.error.passwordSaveFailed', '密碼更新失敗，請稍後再試。'));
+      setError(t('member.profile.error.passwordSaveFailed', '????????????'));
     } finally {
       setIsSaving(false);
     }
@@ -127,8 +127,8 @@ export default function MemberProfile() {
     );
   }
 
-  const displayedName = profile?.display_name || t('member.profile.placeholder.name', '尚未填寫');
-  const displayedPhone = profile?.phone || t('member.profile.placeholder.phone', '尚未填寫');
+  const displayedName = profile?.display_name || t('member.profile.placeholder.name', '??');
+  const displayedPhone = profile?.phone || t('member.profile.placeholder.phone', '??');
 
   return (
     <div className="min-h-screen bg-[#fbf6ee]">
@@ -139,7 +139,7 @@ export default function MemberProfile() {
           <div className="mb-8 flex items-center gap-3 pt-8">
             <Link to="/" className="flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-700">
               <ArrowLeft className="h-4 w-4" />
-              {t('common.backHome', '返回首頁')}
+              {t('common.backHome', '餈?擐?')}
             </Link>
           </div>
 
@@ -150,12 +150,12 @@ export default function MemberProfile() {
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="truncate text-lg font-semibold text-white">
-                  {profile?.display_name || t('member.profile.titleFallback', '會員')}
+                  {profile?.display_name || t('member.profile.titleFallback', '????')}
                 </h1>
                 <p className="truncate text-sm text-stone-400">{user?.email}</p>
                 <div className="mt-2 flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  <span className="text-xs tracking-wide text-stone-400">Sonpin {t('member.profile.badge', '會員')}</span>
+                  <span className="text-xs tracking-wide text-stone-400">Sonpin {t('member.profile.badge', '??')}</span>
                 </div>
               </div>
               <button
@@ -163,7 +163,7 @@ export default function MemberProfile() {
                 className="flex flex-shrink-0 items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/20 hover:text-white"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                {t('member.profile.logout', '登出')}
+                    {t('member.profile.logout', '??')}
               </button>
             </div>
 
@@ -173,7 +173,7 @@ export default function MemberProfile() {
                   <ShoppingBag className="h-4 w-4 text-amber-500" />
                   <span className="text-xl font-semibold text-stone-800">{profile?.order_count ?? 0}</span>
                 </div>
-                <p className="text-xs text-stone-500">{t('member.profile.stats.orders', '累計訂單')}</p>
+                <p className="text-xs text-stone-500">{t('member.profile.stats.orders', '???')}</p>
               </div>
               <div className="p-5 text-center">
                 <div className="mb-1 flex items-center justify-center gap-2">
@@ -182,7 +182,7 @@ export default function MemberProfile() {
                     NT$ {(profile?.total_spent ?? 0).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-xs text-stone-500">{t('member.profile.stats.spent', '累計消費')}</p>
+                <p className="text-xs text-stone-500">{t('member.profile.stats.spent', '????')}</p>
               </div>
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function MemberProfile() {
           <div className="mb-5 overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-stone-50 px-6 py-4">
               <h2 className="text-sm font-semibold tracking-wide text-stone-700">
-                {t('member.profile.section.profile', '會員資料')}
+                {t('member.profile.section.profile', '????')}
               </h2>
               {editing !== 'profile' ? (
                 <button
@@ -208,7 +208,7 @@ export default function MemberProfile() {
                   className="flex items-center gap-1.5 text-xs text-stone-500 transition-colors hover:text-amber-700"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
-                  {t('member.profile.edit', '編輯')}
+                  {t('member.profile.edit', '??')}
                 </button>
               ) : (
                 <div className="flex gap-2">
@@ -218,14 +218,14 @@ export default function MemberProfile() {
                     className="flex items-center gap-1 rounded-lg bg-stone-700 px-3 py-1.5 text-xs text-white transition-all hover:bg-stone-600 disabled:opacity-60"
                   >
                     {isSaving ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Check className="h-3 w-3" />}
-                    {t('common.save', '儲存')}
+                    {t('common.save', '?脣?')}
                   </button>
                   <button
                     onClick={cancelEdit}
                     className="flex items-center gap-1 rounded-lg bg-stone-100 px-3 py-1.5 text-xs text-stone-600 transition-all hover:bg-stone-200"
                   >
                     <X className="h-3 w-3" />
-                    {t('common.cancel', '取消')}
+                    {t('common.cancel', '??')}
                   </button>
                 </div>
               )}
@@ -237,7 +237,7 @@ export default function MemberProfile() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                   <User className="h-3.5 w-3.5" />
-                  {t('member.profile.name', '會員名稱')}
+                  {t('member.profile.name', '??')}
                 </label>
                 {editing === 'profile' ? (
                   <input
@@ -254,7 +254,7 @@ export default function MemberProfile() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                   <Mail className="h-3.5 w-3.5" />
-                  {t('member.profile.email', '電子郵件')}
+                  {t('member.profile.email', '????')}
                 </label>
                 <p className="text-sm text-stone-600">{user?.email}</p>
               </div>
@@ -262,7 +262,7 @@ export default function MemberProfile() {
               <div>
                 <label className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-stone-500">
                   <Phone className="h-3.5 w-3.5" />
-                  {t('member.profile.phone', '手機號碼')}
+                  {t('member.profile.phone', '????')}
                 </label>
                 {editing === 'profile' ? (
                   <input
@@ -282,7 +282,7 @@ export default function MemberProfile() {
           <div className="mb-5 overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-stone-50 px-6 py-4">
               <h2 className="text-sm font-semibold tracking-wide text-stone-700">
-                {t('member.profile.section.password', '密碼管理')}
+                {t('member.profile.section.password', '????')}
               </h2>
               {editing !== 'password' ? (
                 <button
@@ -293,7 +293,7 @@ export default function MemberProfile() {
                   className="flex items-center gap-1.5 text-xs text-stone-500 transition-colors hover:text-amber-700"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
-                  {t('member.profile.password.edit', '修改密碼')}
+                  {t('member.profile.password.edit', '????')}
                 </button>
               ) : (
                 <div className="flex gap-2">
@@ -303,14 +303,14 @@ export default function MemberProfile() {
                     className="flex items-center gap-1 rounded-lg bg-stone-700 px-3 py-1.5 text-xs text-white transition-all hover:bg-stone-600 disabled:opacity-60"
                   >
                     {isSaving ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Check className="h-3 w-3" />}
-                    {t('common.save', '儲存')}
+                    {t('common.save', '?脣?')}
                   </button>
                   <button
                     onClick={cancelEdit}
                     className="flex items-center gap-1 rounded-lg bg-stone-100 px-3 py-1.5 text-xs text-stone-600 transition-all hover:bg-stone-200"
                   >
                     <X className="h-3 w-3" />
-                    {t('common.cancel', '取消')}
+                    {t('common.cancel', '??')}
                   </button>
                 </div>
               )}
@@ -322,7 +322,7 @@ export default function MemberProfile() {
                   {error && editing === 'password' && <p className="text-xs text-red-500">{error}</p>}
                   <div>
                     <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-stone-500">
-                      {t('member.profile.password.new', '新密碼')}
+                      {t('member.profile.password.new', '???')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
@@ -330,14 +330,14 @@ export default function MemberProfile() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder={t('member.profile.password.placeholder', '至少 6 個字元')}
+                        placeholder={t('member.profile.password.placeholder', '?? 6 ???')}
                         className="w-full rounded-xl border border-stone-200 bg-stone-50 py-2.5 pl-10 pr-4 text-sm text-stone-800 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-stone-500">
-                      {t('member.profile.password.confirm', '確認新密碼')}
+                      {t('member.profile.password.confirm', '?????')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
@@ -345,7 +345,7 @@ export default function MemberProfile() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder={t('member.profile.password.confirmPlaceholder', '再次輸入新密碼')}
+                        placeholder={t('member.profile.password.confirmPlaceholder', '???????')}
                         className="w-full rounded-xl border border-stone-200 bg-stone-50 py-2.5 pl-10 pr-4 text-sm text-stone-800 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
                       />
                     </div>
@@ -354,9 +354,9 @@ export default function MemberProfile() {
               ) : (
                 <div className="flex items-center gap-3 text-stone-500">
                   <Lock className="h-4 w-4 text-stone-300" />
-                  <span className="text-sm">{t('member.profile.password.hidden', '密碼已遮蔽')}</span>
+                    <span className="text-sm">{t('member.profile.password.hidden', '?????')}</span>
                   <span className="text-xs text-stone-400">
-                    {t('member.profile.password.note', '若要更改請點擊右上角修改密碼')}
+                    {t('member.profile.password.note', '???????????')}
                   </span>
                 </div>
               )}
@@ -371,7 +371,7 @@ export default function MemberProfile() {
               <div className="flex items-center gap-3">
                 <ShoppingBag className="h-4 w-4 text-amber-500" />
                 <span className="text-sm font-medium text-stone-700">
-                  {t('member.profile.shopLink', '前往禮盒商城')}
+                  {t('member.profile.shopLink', '????')}
                 </span>
               </div>
               <ChevronRight className="h-4 w-4 text-stone-300 transition-colors group-hover:text-amber-400" />
@@ -384,7 +384,7 @@ export default function MemberProfile() {
                 <div className="flex items-center gap-3">
                   <LogOut className="h-4 w-4 text-stone-400 transition-colors group-hover:text-red-400" />
                   <span className="text-sm font-medium text-stone-600 transition-colors group-hover:text-red-500">
-                    {t('member.profile.logout', '登出')}
+                    {t('member.profile.logout', '??')}
                   </span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-stone-300 transition-colors group-hover:text-red-300" />
@@ -394,7 +394,7 @@ export default function MemberProfile() {
         </div>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

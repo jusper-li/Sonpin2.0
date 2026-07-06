@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -13,34 +13,34 @@ interface StaticPageData extends TranslatableStaticPage {}
 
 const CULTURE_IMAGE = '/sonpin-images/20250917152151.jpg';
 
-const bankTransferNotice = `訂購專�?�?2-2338-0018
-轉帳?�行�?永�??��??�華?��? ?�行代碼�?807
-轉帳帳�?�?05-001-0014900-4
-?��?：�??��??�?�份?��??�司
-統編�?7522811
+const bankTransferNotice = `訂購專線：02-2338-0018
+轉帳銀行：永豐銀行 萬華分行　銀行代碼：807
+轉帳帳號：105-001-0014900-4
+戶名：淞品生技股份有限公司
+統編：27522811
 
-(PS. 轉帳?�匯款�??��??��??��?~?��??��???:00~17:00?��?來電確�?，以便出貨�??�恩??`;
+(PS. 轉帳或匯款完成請於星期一至星期日上午 9:00~17:00 務必來電確認，以便出貨，感恩。)`;
 
 const CULTURE_FALLBACK: StaticPageData = {
   slug: 'culture',
-  title: '購物?�知',
-  meta_description: '淞�??��?購物?�知?�退?�貨規�??�匯款�?訊�?,
+  title: '購物須知',
+  meta_description: '淞品土雞專賣店購物須知與退換貨規範。',
   sections: [
     {
       type: 'intro',
-      title: '購物?�知',
+      title: '購物須知',
       content:
-        '?��?保�?�?9條�?定�?網路?�購?��?享�?7?�猶豫�??�?�貨之�??�。�??�公?�產?�為?�鮮?��??��?，除了�??�本身�??�疵?��??�內容�?訂單不符?�可?�貨�?，�?經�?封、�??��?消費?�造�?之�??��?形、失溫�?保�?不良導致變質，以?��??�人主�??��?（�?�?��大小、色澤、口?�、�??�歡?��?好�?）�??�收?��??��??��??��??�臨?��?消�??�無法退?�貨??,
+        '依消費者保護法第 19 條規定，網路購物享有 7 天猶豫期，但猶豫期並非試用期。食品基於衛生安全考量，除商品本身瑕疵或內容與訂單不符外，已拆封、已食用、因保存不良導致變質，或因個人主觀因素（口感、色澤、香氣等）恕不接受退換。',
     },
     {
       type: 'section',
-      title: '?�送�???,
+      title: '配送資訊',
       content:
-        '請注?��?網路購物訂單?��?後�?請耐�?等候�??�統一?�送�??�市�??�為?��??�送�?，無法�?定�?市�?貨。\n\n如�??�市購買�??��??��?市購買�??��??��??�購，�?謝�?\n\n?�公?�產?�已?��??��?責任?�。\n食�?業登?��??��?Q-127522811-00001-3??,
+        '請留意網路購物訂單以宅配配送為主，請耐心等候物流安排。若有門市自取需求，請先與我們聯繫確認門市現貨與取貨時間。',
     },
     {
       type: 'section',
-      title: '轉帳資�?',
+      title: '轉帳資訊',
       content: bankTransferNotice,
     },
   ],
@@ -55,12 +55,12 @@ export default function CulturePage() {
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: '購物?�知',
+    title: '購物須知',
     description: page.meta_description,
-    keywords: '購物?�知,?�?�貨,?�送�???轉帳資�?,淞�??��?',
+    keywords: '購物須知,退換貨,配送資訊,匯款資訊,淞品土雞',
     schema: breadcrumbSchema([
-      { name: '首�?', url: window.location.origin },
-      { name: '購物?�知', url: `${window.location.origin}/culture` },
+      { name: '首頁', url: window.location.origin },
+      { name: '購物須知', url: `${window.location.origin}/culture` },
     ]),
   });
 
@@ -128,33 +128,33 @@ export default function CulturePage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <div className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首�?
+                首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">購物?�知</span>
+              <span className="text-stone-700">購物須知</span>
             </div>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Notice</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              購物?�知
+              購物須知
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">{page.meta_description}</p>
+            {loading ? (
+              <p className="mt-4 text-xs tracking-[0.18em] text-stone-400">Loading...</p>
+            ) : translating ? (
+              <p className="mt-4 text-xs tracking-[0.18em] text-stone-400">{t('common.translating', '翻譯中')}</p>
+            ) : null}
           </div>
         </section>
 
         <section className="container mx-auto px-6 py-12">
           <div className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-            <img src={CULTURE_IMAGE} alt="購物?�知證�??�件" className="h-auto w-full object-cover" loading="lazy" />
+            <img src={CULTURE_IMAGE} alt="購物須知照片" className="h-auto w-full object-cover" loading="lazy" />
           </div>
         </section>
 
         {intro && (
           <section className="border-b border-[#eadfd1] bg-[#f4ecdf]">
             <div className="container mx-auto max-w-4xl px-6 py-16">
-              {translating && (
-                <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  {t('common.translating', '翻譯�?)}
-                </div>
-              )}
               <h2 className="mb-4 text-center text-2xl font-light text-[#2b221d] md:text-3xl">{intro.title}</h2>
               <p className="whitespace-pre-line text-base leading-8 text-[#6d4f3d] md:text-lg">{intro.content}</p>
             </div>
@@ -179,8 +179,7 @@ export default function CulturePage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }
-

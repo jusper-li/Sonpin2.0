@@ -1,29 +1,41 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import Login from '../components/Login';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import Dashboard from '../components/Dashboard';
-import MemberManagement from '../components/modules/MemberManagement';
-import ProductManagement from '../components/modules/ProductManagement';
-import OrderManagement from '../components/modules/OrderManagement';
-import ArticleManagement from '../components/modules/ArticleManagement';
-import StoreManagement from '../components/modules/StoreManagement';
-import FAQManagement from '../components/modules/FAQManagement';
-import HomepageManagement from '../components/modules/HomepageManagement';
-import PaymentManagement from '../components/modules/PaymentManagement';
-import SocialManagement from '../components/modules/SocialManagement';
-import LanguageManagement from '../components/modules/LanguageManagement';
-import SEOManagement from '../components/modules/SEOManagement';
-import AIChat from '../components/modules/AIChat';
-import AIAnalytics from '../components/modules/AIAnalytics';
-import PermissionManagement from '../components/modules/PermissionManagement';
-import KnowledgeBaseManagement from '../components/modules/KnowledgeBaseManagement';
-import AITraining from '../components/modules/AITraining';
-import StaticPageManagement from '../components/modules/StaticPageManagement';
-import VersionLogManagement from '../components/modules/VersionLogManagement';
 import { recordAdminAuditEvent } from '../lib/adminAudit';
 import { useLanguage } from '../contexts/LanguageContext';
+
+const Dashboard = lazy(() => import('../components/Dashboard'));
+const MemberManagement = lazy(() => import('../components/modules/MemberManagement'));
+const ProductManagement = lazy(() => import('../components/modules/ProductManagement'));
+const OrderManagement = lazy(() => import('../components/modules/OrderManagement'));
+const ArticleManagement = lazy(() => import('../components/modules/ArticleManagement'));
+const StoreManagement = lazy(() => import('../components/modules/StoreManagement'));
+const FAQManagement = lazy(() => import('../components/modules/FAQManagement'));
+const HomepageManagement = lazy(() => import('../components/modules/HomepageManagement'));
+const PaymentManagement = lazy(() => import('../components/modules/PaymentManagement'));
+const SocialManagement = lazy(() => import('../components/modules/SocialManagement'));
+const LanguageManagement = lazy(() => import('../components/modules/LanguageManagement'));
+const SEOManagement = lazy(() => import('../components/modules/SEOManagement'));
+const AIChat = lazy(() => import('../components/modules/AIChat'));
+const AIAnalytics = lazy(() => import('../components/modules/AIAnalytics'));
+const PermissionManagement = lazy(() => import('../components/modules/PermissionManagement'));
+const KnowledgeBaseManagement = lazy(() => import('../components/modules/KnowledgeBaseManagement'));
+const AITraining = lazy(() => import('../components/modules/AITraining'));
+const StaticPageManagement = lazy(() => import('../components/modules/StaticPageManagement'));
+const VersionLogManagement = lazy(() => import('../components/modules/VersionLogManagement'));
+
+function ModuleLoading() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-700" />
+        <p className="text-sm tracking-[0.2em] text-slate-500">載入模組中...</p>
+      </div>
+    </div>
+  );
+}
 
 function AdminPanel() {
   const { t } = useLanguage();
@@ -116,7 +128,9 @@ function AdminPanel() {
       <div className="flex-1 flex flex-col">
         <Header />
         <main className="flex-1 overflow-y-auto">
-          {renderModule()}
+          <Suspense fallback={<ModuleLoading />}>
+            {renderModule()}
+          </Suspense>
         </main>
       </div>
     </div>

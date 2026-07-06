@@ -4,7 +4,7 @@ import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucid
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
@@ -238,7 +238,7 @@ export default function Checkout() {
             </div>
           </div>
         </main>
-        <SiteFooter />
+        <DeferredSiteFooter />
       </div>
     );
   }
@@ -520,7 +520,7 @@ export default function Checkout() {
           </div>
         </form>
       </main>
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }

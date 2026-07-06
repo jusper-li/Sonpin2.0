@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, Search } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
+import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { loadBlogData, type LoadedBlogArticle } from '../lib/blog';
 import type { BlogArticleCategoryMap } from '../lib/blog';
@@ -121,10 +121,10 @@ export default function BlogList() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                {t('common.home', '首頁')}
+                {t('common.home', '擐?')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{t('blog.title', '專欄文章')}</span>
+              <span className="text-stone-700">{t('blog.title', '撠???')}</span>
             </nav>
 
             <div className="grid gap-10 md:grid-cols-[1fr_360px] md:items-end">
@@ -133,7 +133,7 @@ export default function BlogList() {
                   Journal
                 </p>
                 <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-                  {activeCategory?.name || t('blog.heading', 'Sonpin 專欄文章')}
+                  {activeCategory?.name || t('blog.heading', 'Sonpin 撠???')}
                 </h1>
                 <div className="mt-7 h-px w-14 bg-[#cfa87a]/70" />
                 <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
@@ -147,7 +147,7 @@ export default function BlogList() {
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder={t('blog.search', '搜尋文章')}
+                  placeholder={t('blog.search', '????')}
                   className="w-full border border-[#d8c8b6] bg-[#fffaf2]/90 py-3.5 pl-11 pr-4 text-sm text-stone-700 outline-none transition-all placeholder:text-stone-300 focus:border-[#a97a4f] focus:bg-white focus:ring-4 focus:ring-[#d8bda4]/40"
                 />
               </div>
@@ -155,7 +155,7 @@ export default function BlogList() {
 
             {translating && (
               <div className="mt-6 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                {t('common.translating', '翻譯中')}
+                  {t('common.translating', '???')}
               </div>
             )}
           </div>
@@ -171,7 +171,7 @@ export default function BlogList() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              {t('blog.all', '全部')}
+              {t('blog.all', '?券')}
               <span className="ml-2 opacity-60">{articles.length}</span>
             </Link>
             {categories.map((category) => (
@@ -206,7 +206,7 @@ export default function BlogList() {
             </div>
           ) : visibleArticles.length === 0 ? (
             <div className="py-24 text-center">
-              <p className="text-sm tracking-[0.16em] text-stone-400">{t('blog.empty', '目前沒有可顯示的文章。')}</p>
+              <p className="text-sm tracking-[0.16em] text-stone-400">{t('blog.empty', '???????')}</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -252,7 +252,7 @@ export default function BlogList() {
                       to={`/blog/posts/${article.slug}`}
                       className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.2em] text-stone-700 transition-colors hover:border-amber-600 hover:text-amber-700"
                     >
-                      {t('blog.read', '閱讀文章')}
+                      {t('blog.read', '?梯???')}
                       <ChevronRight className="h-3 w-3" />
                     </Link>
                   </div>
@@ -263,7 +263,7 @@ export default function BlogList() {
         </section>
       </main>
 
-      <SiteFooter />
+      <DeferredSiteFooter />
     </div>
   );
 }
