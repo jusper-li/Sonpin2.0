@@ -8,7 +8,6 @@ import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
-import { getStaticPageFallback } from '../data/staticPages';
 
 interface StaticPageData extends TranslatableStaticPage {}
 
@@ -29,36 +28,26 @@ export default function ContactPage() {
   const { currentLanguage } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(null);
-  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: 'service@sonpin.tw', contact_phone: '02-2338-0018' });
+  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: '', contact_phone: '' });
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: '????',
-    description: page?.meta_description || '??????????????',
-    keywords: '????,????,????,????,????',
+    title: page?.title || '客服中心',
+    description: page?.meta_description || '',
+    keywords: '客服中心,聯絡我們,淞品土雞,門市資訊',
     schema: breadcrumbSchema([
-      { name: '??', url: window.location.origin },
-      { name: '????', url: `${window.location.origin}/contact` },
+      { name: '首頁', url: window.location.origin },
+      { name: '客服中心', url: `${window.location.origin}/contact` },
     ]),
   });
 
   useEffect(() => {
     const loadPage = async () => {
       if (!isSupabaseContentEnabled) {
-        const fallback = getStaticPageFallback('contact');
-        if (fallback) {
-          setPage({
-            slug: fallback.slug,
-            title: fallback.title,
-            meta_description: fallback.meta_description,
-            sections: fallback.sections,
-            updated_at: fallback.updated_at,
-          });
-        }
         setLoading(false);
         return;
       }
@@ -73,17 +62,6 @@ export default function ContactPage() {
         if (data) {
           setSourcePage(data as StaticPageData);
           setPage(data as StaticPageData);
-        } else {
-          const fallback = getStaticPageFallback('contact');
-          if (fallback) {
-            setPage({
-              slug: fallback.slug,
-              title: fallback.title,
-              meta_description: fallback.meta_description,
-              sections: fallback.sections,
-              updated_at: fallback.updated_at,
-            });
-          }
         }
       } finally {
         setLoading(false);
@@ -100,12 +78,12 @@ export default function ContactPage() {
           .maybeSingle();
         if (data?.setting_value) {
           setSiteInfo({
-            contact_email: data.setting_value.contact_email || 'service@sonpin.tw',
-            contact_phone: data.setting_value.contact_phone || '02-2338-0018',
+            contact_email: data.setting_value.contact_email || '',
+            contact_phone: data.setting_value.contact_phone || '',
           });
         }
       } catch {
-        setSiteInfo({ contact_email: 'service@sonpin.tw', contact_phone: '02-2338-0018' });
+        setSiteInfo({ contact_email: '', contact_phone: '' });
       }
     };
 
@@ -143,12 +121,36 @@ export default function ContactPage() {
     event.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.subject || !form.message) {
-      setError('??????Email???????');
+      setError('請填寫姓名、Email、主旨與訊息內容。');
       return;
     }
     setSubmitted(true);
     setForm({ name: '', email: '', phone: '', subject: '', message: '' });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+        <SiteHeader />
+        <main className="flex-1">
+          <section className="container mx-auto px-6 py-24 text-stone-500">載入中...</section>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
+
+  if (!page) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+        <SiteHeader />
+        <main className="flex-1">
+          <section className="container mx-auto px-6 py-24 text-stone-500">目前沒有可顯示的頁面內容。</section>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
@@ -159,15 +161,15 @@ export default function ContactPage() {
           <div className="container mx-auto px-6">
             <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
               <Link to="/" className="transition-colors hover:text-[#fffaf2]">
-                擐?
+                首頁
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">摰Ｘ?銝剖?</span>
+              <span className="text-[#f4ecdf]">客服中心</span>
             </div>
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#cfa87a]">Contact Us</p>
-            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">摰Ｘ?銝剖?</h1>
-            <p className="max-w-2xl text-base leading-relaxed font-light text-[#eadfd1]">
-              {intro?.content || '??????????????????'}
+            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title}</h1>
+            <p className="max-w-2xl text-base font-light leading-relaxed text-[#eadfd1]">
+              {intro?.content || ''}
             </p>
           </div>
         </section>
@@ -177,7 +179,7 @@ export default function ContactPage() {
             <div className="space-y-8 md:col-span-2">
               {translating && (
                 <div className="inline-flex items-center rounded-full border border-[#eadfd1]/60 bg-[#fffaf2]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  蝧餉陌銝?
+                  翻譯中
                 </div>
               )}
 
@@ -198,7 +200,7 @@ export default function ContactPage() {
                   <Phone className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">閮頃撠?</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">聯絡電話</p>
                   <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
                     {siteInfo.contact_phone}
                   </a>
@@ -210,9 +212,9 @@ export default function ContactPage() {
                   <Clock className="h-5 w-5 text-[#8e6448]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">????</p>
-                  <p className="font-light text-[#2b221d]">?曹??喲望銝? 09:00 - 17:00</p>
-                  <p className="text-sm font-light text-[#9f8a7b]">?曹??砌?</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">服務時間</p>
+                  <p className="font-light text-[#2b221d]">週二至週日 上午 09:00 - 17:00</p>
+                  <p className="text-sm font-light text-[#9f8a7b]">週一公休</p>
                 </div>
               </div>
 
@@ -234,16 +236,16 @@ export default function ContactPage() {
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#f4ecdf]">
                     <CheckCircle className="h-10 w-10 text-[#8e6448]" />
                   </div>
-                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">撌脤閮</h2>
+                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
                   <p className="mb-8 max-w-sm leading-relaxed text-[#9f8a7b]">
-                    ?歇?嗅?函??舐鼠銵典嚗??閬??∪翰???具?
+                    我們已收到您的訊息，會盡快透過 Email 或電話與您聯繫。
                   </p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
                     className="text-sm font-light text-[#8e6448] hover:underline"
                   >
-                    ?憛怠神
+                    再傳送一則
                   </button>
                 </div>
               ) : (
@@ -257,13 +259,13 @@ export default function ContactPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        憪? <span className="text-[#a97a4f]">*</span>
+                        姓名 <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="?????"
+                        placeholder="王小明"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -283,7 +285,7 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">?餉店</label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">電話</label>
                       <input
                         type="tel"
                         value={form.phone}
@@ -294,13 +296,13 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        銝餅 <span className="text-[#a97a4f]">*</span>
+                        主旨 <span className="text-[#a97a4f]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        placeholder="?????"
+                        placeholder="請輸入主旨"
                         className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                       />
                     </div>
@@ -308,13 +310,13 @@ export default function ContactPage() {
 
                   <div>
                     <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                      閮?批捆 <span className="text-[#a97a4f]">*</span>
+                      訊息內容 <span className="text-[#a97a4f]">*</span>
                     </label>
                     <textarea
                       rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="?????"
+                      placeholder="請簡單描述您的需求"
                       className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
                     />
                   </div>
@@ -323,7 +325,7 @@ export default function ContactPage() {
                     type="submit"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[#fffaf2] transition-colors hover:bg-[#5f4636]"
                   >
-                    ?閮
+                    送出訊息
                   </button>
                 </form>
               )}

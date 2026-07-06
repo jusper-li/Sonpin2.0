@@ -285,7 +285,25 @@ export const MEDIA_GROUPS = {
   },
 } as const;
 
-export const getMediaGroup = (slug: string) => MEDIA_GROUPS[slug as keyof typeof MEDIA_GROUPS] || null;
+export const getMediaGroup = (slug: string) => {
+  if (slug === '79') {
+    return {
+      slug: '79',
+      title: '報章雜誌',
+      label: '報章雜誌',
+    };
+  }
+
+  if (slug === '78') {
+    return {
+      slug: '78',
+      title: '影音報導',
+      label: '影音報導',
+    };
+  }
+
+  return MEDIA_GROUPS[slug as keyof typeof MEDIA_GROUPS] || null;
+};
 
 export const getMediaArticlesByGroup = (groupSlug: string) =>
   MEDIA_ARTICLES.filter((article) => article.groupSlug === groupSlug);

@@ -18,13 +18,17 @@ const formatDate = (value: string) =>
 export default function MediaDetailPage() {
   const { groupSlug = '', articleSlug = '' } = useParams();
   const [article, setArticle] = useState<Awaited<ReturnType<typeof loadMediaArticle>>>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       const data = await loadMediaArticle(groupSlug, articleSlug);
-      if (!cancelled) setArticle(data);
+      if (!cancelled) {
+        setArticle(data);
+        setLoading(false);
+      }
     };
 
     void load();
@@ -40,7 +44,7 @@ export default function MediaDetailPage() {
 
   useSEO({
     title: article?.title || '相關報導',
-    description: article?.excerpt || '淞品土雞相關報導與新聞內容',
+    description: article?.excerpt || '淞品土雞相關報導與新聞內容。',
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
@@ -52,12 +56,30 @@ export default function MediaDetailPage() {
       : undefined,
   });
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+        <SiteHeader />
+        <main className="container mx-auto px-6 py-24 pt-28">
+          <p className="text-sm text-stone-500">載入中...</p>
+          <Link
+            to="/media"
+            className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
+          >
+            返回列表
+          </Link>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
+
   if (!article) {
     return (
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">載入文章中...</p>
+          <p className="text-sm text-stone-500">找不到文章內容。</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
@@ -128,7 +150,7 @@ export default function MediaDetailPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 transition-colors hover:text-[#8e6448]"
                 >
-                  原始來源
+                  原文連結
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
@@ -167,7 +189,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>目前沒有可顯示的內容。</p>
+                  <p>目前尚無內文。</p>
                 </div>
               )}
 

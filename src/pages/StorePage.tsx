@@ -20,42 +20,22 @@ type StoreRow = {
   images: string[];
 };
 
-type StoreGroup = 'north' | 'factory';
-
 type StoreView = {
   name: string;
+  city: string;
   phone: string;
   address: string;
   hours?: string;
   image?: string;
   images?: string[];
+  email?: string | null;
 };
-
-const FALLBACK_NORTH_STORES: StoreView[] = [
-  {
-    name: '松品永和門市',
-    phone: '02-8021-1072',
-    address: '新北市永和區中和路509號',
-    hours: '09:00~19:00（每週一公休，年節除外，售完為止）',
-    image: '/sonpin-images/176658686210.jpg',
-  },
-  {
-    name: '松品新店門市',
-    phone: '02-29111398',
-    address: '新北市新店區中正路246號',
-    hours: '08:00-18:00（每週一公休，年節除外，售完為止）',
-    image: '/sonpin-images/154079895498.jpg',
-  },
-];
-
-const FALLBACK_FACTORY_IMAGES = ['/sonpin-images/153285065447.jpg', '/sonpin-images/153285183849.jpg'];
 
 const formatOpeningHours = (value: unknown) => {
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) return value.filter((item) => typeof item === 'string').join('\n');
   if (value && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>);
-    return entries
+    return Object.entries(value as Record<string, unknown>)
       .map(([key, item]) => {
         if (typeof item === 'string') return `${key}：${item}`;
         if (Array.isArray(item)) return `${key}：${item.filter((entry) => typeof entry === 'string').join('、')}`;
@@ -68,26 +48,27 @@ const formatOpeningHours = (value: unknown) => {
 
 const normalizeStore = (row: StoreRow): StoreView => ({
   name: row.name,
+  city: row.city,
   phone: row.phone,
   address: row.address,
   hours: formatOpeningHours(row.opening_hours),
   images: Array.isArray(row.images) ? row.images.filter((item): item is string => typeof item === 'string') : [],
+  email: row.email,
 });
 
 export default function StorePage() {
-  const [activeTab, setActiveTab] = useState<StoreGroup>('north');
   const [stores, setStores] = useState<StoreRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '店頭資訊',
-    description: '淞品土雞各門市資訊、電話、地址與營業時間。',
-    keywords: '店頭資訊,門市,淞品土雞,電話,地址,營業時間',
+    title: '門市資訊',
+    description: '淞品土雞門市與工廠資訊，包含地址、電話與營業時間。',
+    keywords: '門市資訊,淞品土雞,門市地址,營業時間',
     schema: [
       localBusinessSchema(),
       breadcrumbSchema([
         { name: '首頁', url: window.location.origin },
-        { name: '店頭資訊', url: `${window.location.origin}/store` },
+        { name: '門市資訊', url: `${window.location.origin}/store` },
       ]),
     ],
   });
@@ -115,7 +96,7 @@ export default function StorePage() {
         setStores((data || []) as StoreRow[]);
       } catch (error) {
         if (!isMissingSupabaseTableError(error) && !isSupabaseNetworkError(error)) {
-          console.warn('Using fallback store data:', error);
+          console.warn('Failed to load store data:', error);
         }
         setStores([]);
       } finally {
@@ -132,45 +113,18 @@ export default function StorePage() {
 
   const normalizedStores = useMemo(() => stores.map(normalizeStore), [stores]);
 
-  const northStores = useMemo<StoreView[]>(() => {
-    if (normalizedStores.length === 0) return FALLBACK_NORTH_STORES;
-    return normalizedStores.filter((_, index) => {
-      const source = stores[index];
-      const city = (source?.city || '').trim();
-      return city !== 'factory' && city !== '工廠';
-    });
-  }, [normalizedStores, stores]);
+  const northStores = useMemo<StoreView[]>(
+    () => normalizedStores.filter((store) => store.city !== 'factory'),
+    [normalizedStores],
+  );
 
-  const factoryStores = useMemo<StoreView[]>(() => {
-    if (normalizedStores.length === 0) {
-      return [
-        {
-          name: '淞品中央工廠',
-          phone: '02-2338-0018',
-          address: '淞品中央工廠',
-          hours: '週一至週五 09:00 - 18:00',
-          images: FALLBACK_FACTORY_IMAGES,
-        },
-      ];
-    }
-
-    return normalizedStores
-      .map((store, index) => ({ store, source: stores[index] }))
-      .filter(({ source }) => {
-        const city = (source?.city || '').trim();
-        return city === 'factory' || city === '工廠';
-      })
-      .map(({ store }) => ({
-        name: store.name,
-        phone: store.phone,
-        address: store.address,
-        hours: store.hours,
-        images: store.images && store.images.length > 0 ? store.images : FALLBACK_FACTORY_IMAGES,
-      }));
-  }, [normalizedStores, stores]);
+  const factoryStores = useMemo<StoreView[]>(
+    () => normalizedStores.filter((store) => store.city === 'factory'),
+    [normalizedStores],
+  );
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">門市資料載入中...</div>;
+    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">載入中...</div>;
   }
 
   return (
@@ -185,106 +139,106 @@ export default function StorePage() {
                 首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">店頭資訊</span>
+              <span className="text-stone-700">門市資訊</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Stores</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              店頭資訊
+              門市資訊
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-              淞品土雞各門市與工廠資訊，方便您快速找到最近的服務據點。
+              這裡列出淞品土雞的門市與中央工廠資訊，包含電話、地址與營業時間。
             </p>
           </div>
         </section>
 
         <section className="container mx-auto px-6 py-10">
-          <div className="mb-8 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab('north')}
-              className={`border px-4 py-2 text-xs tracking-[0.16em] transition-all ${
-                activeTab === 'north'
-                  ? 'border-stone-900 bg-stone-900 text-white'
-                  : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
-              }`}
-            >
-              北部
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('factory')}
-              className={`border px-4 py-2 text-xs tracking-[0.16em] transition-all ${
-                activeTab === 'factory'
-                  ? 'border-stone-900 bg-stone-900 text-white'
-                  : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
-              }`}
-            >
-              工廠
-            </button>
-          </div>
-
-          {activeTab === 'north' ? (
-            <div className="grid gap-6 lg:grid-cols-2">
-              {northStores.map((store) => (
-                <article key={store.name} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                  <div className="aspect-[4/3] overflow-hidden bg-stone-100">
-                    <img src={store.image || store.images?.[0] || ''} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
-                  </div>
-                  <div className="p-6">
-                    <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
-                    <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
-                      <p className="flex items-start gap-3">
-                        <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                        <span>{store.phone}</span>
-                      </p>
-                      <p className="flex items-start gap-3">
-                        <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                        <span>{store.address}</span>
-                      </p>
-                      {store.hours && (
-                        <p className="flex items-start gap-3">
-                          <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                          <span className="whitespace-pre-line">{store.hours}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              ))}
+          {normalizedStores.length === 0 ? (
+            <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
+              目前沒有可顯示的門市資料。
             </div>
           ) : (
-            <div className="space-y-6">
-              {factoryStores.map((store) => (
-                <article key={`${store.name}-${store.address}`} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                  <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
-                    <div>
-                      <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
-                      <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
-                        <p className="flex items-start gap-3">
-                          <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                          <span>{store.phone}</span>
-                        </p>
-                        <p className="flex items-start gap-3">
-                          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                          <span>{store.address}</span>
-                        </p>
-                        {store.hours && (
-                          <p className="flex items-start gap-3">
-                            <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                            <span className="whitespace-pre-line">{store.hours}</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {(store.images || []).slice(0, 4).map((image) => (
-                        <img key={image} src={image} alt={store.name} className="h-full w-full rounded-2xl object-cover" loading="lazy" />
-                      ))}
-                    </div>
+            <>
+              {northStores.length > 0 && (
+                <div className="mb-10">
+                  <div className="mb-4 inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                    門市
                   </div>
-                </article>
-              ))}
-            </div>
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    {northStores.map((store) => (
+                      <article key={store.name} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                        <div className="aspect-[4/3] overflow-hidden bg-stone-100">
+                          <img src={store.image || store.images?.[0] || ''} alt={store.name} className="h-full w-full object-cover" loading="lazy" />
+                        </div>
+                        <div className="p-6">
+                          <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
+                          <p className="mt-2 text-sm text-[#9f8a7b]">{store.city}</p>
+                          <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
+                            <p className="flex items-start gap-3">
+                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <span>{store.phone}</span>
+                            </p>
+                            <p className="flex items-start gap-3">
+                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <span>{store.address}</span>
+                            </p>
+                            {store.hours && (
+                              <p className="flex items-start gap-3">
+                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                                <span className="whitespace-pre-line">{store.hours}</span>
+                              </p>
+                            )}
+                            {store.email && (
+                              <p className="text-sm text-[#9f8a7b]">{store.email}</p>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {factoryStores.length > 0 && (
+                <div className="space-y-6">
+                  <div className="inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                    中央工廠
+                  </div>
+                  {factoryStores.map((store) => (
+                    <article key={`${store.name}-${store.address}`} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                      <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
+                        <div>
+                          <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
+                          <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
+                            <p className="flex items-start gap-3">
+                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <span>{store.phone}</span>
+                            </p>
+                            <p className="flex items-start gap-3">
+                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <span>{store.address}</span>
+                            </p>
+                            {store.hours && (
+                              <p className="flex items-start gap-3">
+                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                                <span className="whitespace-pre-line">{store.hours}</span>
+                              </p>
+                            )}
+                            {store.email && (
+                              <p className="text-sm text-[#9f8a7b]">{store.email}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {(store.images || []).slice(0, 4).map((image) => (
+                            <img key={image} src={image} alt={store.name} className="h-full w-full rounded-2xl object-cover" loading="lazy" />
+                          ))}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

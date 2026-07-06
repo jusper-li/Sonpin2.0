@@ -18,61 +18,26 @@ const ABOUT_IMAGES = [
   '/sonpin-images/20180730135448.jpg',
 ];
 
-const bankTransferNotice = `閮頃撠?嚗?2-2338-0018
-頧董?銵?瘞貉??銵??祈?? ?銵誨蝣潘?807
-頧董撣唾?嚗?05-001-0014900-4
-?嗅?嚗?????∩遢???砍
-蝯梁楊嚗?7522811
-
-(PS. 頧董?甈曉????潭???~???乩???:00~17:00??靘蝣箄?嚗誑靘踹鞎剁????`;
-
-const ABOUT_FALLBACK: StaticPageData = {
-  slug: 'about',
-  title: '?瘛?',
-  meta_description: '??????????????????',
-  sections: [
-    {
-      type: 'intro',
-      title: '????',
-      content:
-        '??????????????????????????????????????????',
-    },
-    {
-      type: 'section',
-      title: '??蝺?絲',
-      content:
-        '???????????????????????????????????????',
-    },
-    {
-      type: 'section',
-      title: '?舀狡鞈?',
-      content: bankTransferNotice,
-    },
-  ],
-  updated_at: '2026-07-03T00:00:00+00:00',
-};
-
 export default function AboutPage() {
   const { currentLanguage, t } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
-  const [page, setPage] = useState<StaticPageData>(ABOUT_FALLBACK);
-  const [, setLoading] = useState(true);
+  const [page, setPage] = useState<StaticPageData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: '?瘛?',
-    description: page.meta_description,
-    keywords: '?瘛?,????,??蝺?絲,瘛???,?祈銝偌撣',
+    title: page?.title || '關於淞品',
+    description: page?.meta_description || '',
+    keywords: '關於淞品,品牌故事,淞品土雞,門市資訊',
     schema: breadcrumbSchema([
-      { name: '擐?', url: window.location.origin },
-      { name: '?瘛?', url: `${window.location.origin}/about` },
+      { name: '首頁', url: window.location.origin },
+      { name: '關於淞品', url: `${window.location.origin}/about` },
     ]),
   });
 
   useEffect(() => {
     const loadPage = async () => {
       if (!isSupabaseContentEnabled) {
-        setPage(ABOUT_FALLBACK);
         setLoading(false);
         return;
       }
@@ -86,10 +51,8 @@ export default function AboutPage() {
           .maybeSingle();
 
         if (data) {
-          setSourcePage(data);
-          setPage(data);
-        } else {
-          setPage(ABOUT_FALLBACK);
+          setSourcePage(data as StaticPageData);
+          setPage(data as StaticPageData);
         }
       } finally {
         setLoading(false);
@@ -120,9 +83,33 @@ export default function AboutPage() {
     void run();
   }, [currentLanguage, sourcePage]);
 
-  const sections = page.sections || [];
+  const sections = page?.sections || [];
   const intro = sections.find((section) => section.type === 'intro');
   const rest = sections.filter((section) => section.type !== 'intro');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+        <SiteHeader />
+        <main className="flex-1">
+          <section className="container mx-auto px-6 py-24 text-stone-500">載入中...</section>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
+
+  if (!page) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+        <SiteHeader />
+        <main className="flex-1">
+          <section className="container mx-auto px-6 py-24 text-stone-500">目前沒有可顯示的頁面內容。</section>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
@@ -133,14 +120,14 @@ export default function AboutPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <div className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                擐?
+                首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">?瘛?</span>
+              <span className="text-stone-700">關於淞品</span>
             </div>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">About</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              ?瘛?
+              {page.title}
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">{page.meta_description}</p>
           </div>
@@ -150,7 +137,7 @@ export default function AboutPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {ABOUT_IMAGES.map((src, index) => (
               <figure key={src} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                <img src={src} alt={`瘛?隞晶?抒? ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                <img src={src} alt={`關於淞品照片 ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
               </figure>
             ))}
           </div>
@@ -162,7 +149,7 @@ export default function AboutPage() {
               <iframe
                 className="h-full w-full"
                 src={ABOUT_VIDEO_URL}
-                title="瘛?隞晶敶梁?"
+                title="關於淞品影片"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
@@ -176,7 +163,7 @@ export default function AboutPage() {
             <div className="container mx-auto max-w-4xl px-6 py-16">
               {translating && (
                 <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                  {t('common.translating', '???')}
+                  {t('common.translating', '翻譯中')}
                 </div>
               )}
               <p className="text-center text-lg leading-relaxed text-[#6d4f3d] md:text-xl">{intro.content}</p>
