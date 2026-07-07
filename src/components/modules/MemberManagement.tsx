@@ -34,7 +34,7 @@ interface Member {
 interface OrderLite {
   id: string;
   member_id: string | null;
-  total_amount: number;
+  total: number;
   status: string;
   created_at: string;
 }
@@ -83,7 +83,7 @@ export default function MemberManagement() {
     try {
       const [membersRes, ordersRes] = await Promise.all([
         supabase.from('members').select('*').order('created_at', { ascending: false }),
-        supabase.from('orders').select('id, member_id, total_amount, status, created_at'),
+        supabase.from('orders').select('id, member_id, total, status, created_at'),
       ]);
 
       if (membersRes.error) throw membersRes.error;
@@ -108,7 +108,7 @@ export default function MemberManagement() {
       if (!order.member_id) continue;
       const current = map.get(order.member_id) || { orderCount: 0, totalSpent: 0 };
       current.orderCount += 1;
-      current.totalSpent += Number(order.total_amount || 0);
+      current.totalSpent += Number(order.total || 0);
       map.set(order.member_id, current);
     }
 
@@ -574,7 +574,7 @@ export default function MemberManagement() {
                           <td className="px-4 py-3 text-sm text-slate-900">{order.id.slice(0, 12)}...</td>
                           <td className="px-4 py-3 text-sm text-slate-700">{dateTime(order.created_at)}</td>
                           <td className="px-4 py-3 text-sm text-slate-700">{order.status || '-'}</td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-slate-900">{currency(Number(order.total_amount || 0))}</td>
+                          <td className="px-4 py-3 text-right text-sm font-medium text-slate-900">{currency(Number(order.total || 0))}</td>
                         </tr>
                       ))}
                       {selectedMemberOrders.length === 0 && (
