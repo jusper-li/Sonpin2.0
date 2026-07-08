@@ -12,6 +12,8 @@ export interface ShippingQuoteItem {
 }
 
 export interface ShippingQuoteBreakdownItem {
+  breakdownKey: string;
+  productId: string;
   categoryId: string;
   categoryName: string;
   quantity: number;
@@ -30,6 +32,45 @@ interface ProductShippingRow {
   shipping_category_id: string | null;
 }
 
+const normalizeQuantity = (value: number | null | undefined) => Math.max(0, Number(value || 0));
+
+const pickTierForQuantity = (quantity: number, categories: ShippingCategoryRow[]) => {
+  const candidates = categories
+    .filter((row) => row.quantity !== null && row.amount !== null)
+    .sort((a, b) => {
+      const quantityA = Number(a.quantity || 0);
+      const quantityB = Number(b.quantity || 0);
+      if (quantityA !== quantityB) return quantityA - quantityB;
+      const endA = a.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(a.quantity_to || 0);
+      const endB = b.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(b.quantity_to || 0);
+      return endA - endB;
+    });
+
+  if (candidates.length === 0) return null;
+
+  const exactMatch = candidates.find((row) => {
+    const start = Number(row.quantity || 0);
+    const end = row.quantity_to === null ? null : Number(row.quantity_to);
+    return quantity >= start && (end === null || quantity <= end);
+  });
+
+  if (exactMatch) return exactMatch;
+
+  const floorMatch = [...candidates]
+    .reverse()
+    .find((row) => quantity >= Number(row.quantity || 0));
+
+  return floorMatch || candidates[0];
+};
+
+const formatQuantityLabel = (row: ShippingCategoryRow | null) => {
+  if (!row) return '';
+
+  const start = Math.max(1, Number(row.quantity || 1));
+  const end = row.quantity_to === null ? null : Math.max(start, Number(row.quantity_to || 0));
+  return end === null ? `${start}+` : `${start}-${end}`;
+};
+
 export function calculateShippingQuote(
   items: ShippingQuoteItem[],
   products: ProductShippingRow[],
@@ -37,76 +78,49 @@ export function calculateShippingQuote(
 ): ShippingQuoteResult {
   const productById = new Map(products.map((product) => [product.id, product]));
   const categoryById = new Map(categories.map((category) => [category.id, category]));
-  const grouped = new Map<
-    string,
-    {
-      categoryName: string;
-      quantity: number;
-      matchingCategories: ShippingCategoryRow[];
-    }
-  >();
+  const categoriesByName = new Map<string, ShippingCategoryRow[]>();
 
-  for (const item of items) {
-    const product = productById.get(item.productId);
-    const categoryId = product?.shipping_category_id;
-    if (!categoryId) continue;
+  for (const category of categories) {
+    const groupName = category.name.trim();
+    if (!groupName) continue;
 
-    const category = categoryById.get(categoryId);
-    if (!category) continue;
-
-    const quantity = Math.max(0, Number(item.quantity || 0));
-    if (quantity <= 0) continue;
-
-    const groupKey = category.name.trim();
-    if (!groupKey) continue;
-
-    const existing = grouped.get(groupKey);
-    if (existing) {
-      existing.quantity += quantity;
-      if (!existing.matchingCategories.some((row) => row.id === category.id)) {
-        existing.matchingCategories.push(category);
-      }
-      continue;
-    }
-
-    grouped.set(groupKey, {
-      categoryName: category.name,
-      quantity,
-      matchingCategories: [category],
-    });
+    const existing = categoriesByName.get(groupName) || [];
+    existing.push(category);
+    categoriesByName.set(groupName, existing);
   }
 
-  const breakdown = Array.from(grouped.values())
-    .map((entry) => {
-      const candidates = entry.matchingCategories
-        .filter((row) => row.quantity !== null && row.amount !== null)
-        .sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
+  const breakdown = items
+    .map((item) => {
+      const quantity = normalizeQuantity(item.quantity);
+      if (quantity <= 0) return null;
 
-      const chosen =
-        candidates.find((row) => {
-          const start = Number(row.quantity || 0);
-          const end = row.quantity_to === null ? null : Number(row.quantity_to);
-          return entry.quantity >= start && (end === null || entry.quantity <= end);
-        }) ||
-        candidates[0] ||
-        null;
+      const product = productById.get(item.productId);
+      const categoryId = product?.shipping_category_id;
+      if (!categoryId) return null;
 
-      const fee = Math.max(0, Number(chosen?.amount || 0));
-      const start = Number(chosen?.quantity || 1);
-      const end = chosen?.quantity_to;
+      const category = categoryById.get(categoryId);
+      if (!category) return null;
+
+      const groupName = category.name.trim();
+      if (!groupName) return null;
+
+      const matchingCategories = categoriesByName.get(groupName) || [category];
+      const chosen = pickTierForQuantity(quantity, matchingCategories) || category;
+      const fee = Math.max(0, Number(chosen.amount || 0));
+      const quantityLabel = formatQuantityLabel(chosen);
 
       return {
-        categoryId: chosen?.id || candidates[0]?.id || entry.categoryName,
-        categoryName: entry.categoryName,
-        quantity: entry.quantity,
-        quantityLabel:
-          end === null || end === undefined
-            ? `${start}+`
-            : `${start}-${Math.max(start, Number(end))}`,
-        fee,
+        breakdownKey: `${item.productId}:${chosen.id}`,
+        productId: item.productId,
+        categoryId: chosen.id,
+        categoryName: groupName,
+        quantity,
+        quantityLabel,
         amount: fee,
+        fee,
       };
     })
+    .filter((item): item is ShippingQuoteBreakdownItem => item !== null)
     .sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'zh-Hant'));
 
   return {

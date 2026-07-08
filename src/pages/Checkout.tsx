@@ -353,9 +353,10 @@ export default function Checkout() {
                   {shippingBreakdown.length > 0 && (
                     <div className="space-y-2 rounded-xl bg-stone-50 px-3 py-3 text-xs text-stone-500">
                       {shippingBreakdown.map((item) => (
-                        <div key={item.categoryId} className="flex items-center justify-between gap-3">
+                        <div key={item.breakdownKey} className="flex items-center justify-between gap-3">
                           <span className="truncate">
-                            {item.categoryName} x {item.quantity}
+                            {item.categoryName}
+                            {item.quantityLabel ? ` · ${item.quantityLabel}` : ''} x {item.quantity}
                           </span>
                           <span>{formatCurrency(item.fee)}</span>
                         </div>
