@@ -56,6 +56,15 @@ interface Specification {
   options: string[];
 }
 
+interface ShippingCategoryOption {
+  id: string;
+  name: string;
+  quantity: number;
+  quantity_to: number | null;
+  amount: number;
+  is_active: boolean;
+}
+
 type FallbackProduct = (typeof FALLBACK_PRODUCTS)[number];
 
 const PRODUCT_ORDER_SETTING_KEY = 'product_order';
@@ -191,12 +200,56 @@ const sortProductsByOrder = (items: Product[], order: string[]) => {
   });
 };
 
+const formatShippingTier = (row: ShippingCategoryOption) => {
+  const start = Math.max(1, Number(row.quantity || 1));
+  const end = row.quantity_to === null ? null : Math.max(start, Number(row.quantity_to || 0));
+  const range = end === null ? `${start}+` : `${start}-${end}`;
+  return `${range} / NT$ ${Number(row.amount || 0).toLocaleString('zh-TW')}`;
+};
+
+const groupShippingCategories = (rows: ShippingCategoryOption[]) => {
+  const groups = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      rows: ShippingCategoryOption[];
+    }
+  >();
+
+  for (const row of rows) {
+    const name = row.name.trim();
+    if (!name) continue;
+
+    const existing =
+      groups.get(name) || {
+        id: row.id,
+        name,
+        rows: [],
+      };
+
+    existing.rows.push(row);
+    existing.rows.sort((a, b) => {
+      const quantityA = Number(a.quantity || 0);
+      const quantityB = Number(b.quantity || 0);
+      if (quantityA !== quantityB) return quantityA - quantityB;
+      const endA = a.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(a.quantity_to || 0);
+      const endB = b.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(b.quantity_to || 0);
+      return endA - endB;
+    });
+    existing.id = existing.rows[0]?.id || existing.id;
+    groups.set(name, existing);
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+};
+
 export default function ProductManagement() {
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [shippingCategories, setShippingCategories] = useState<Array<{ id: string; name: string; quantity: number; amount: number; is_active: boolean }>>([]);
+  const [shippingCategories, setShippingCategories] = useState<ShippingCategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -325,7 +378,7 @@ export default function ProductManagement() {
     try {
       const { data, error } = await supabase
         .from('shipping_categories')
-        .select('id, name, quantity, amount, is_active')
+        .select('id, name, quantity, quantity_to, amount, is_active')
         .order('name');
 
       if (error) throw error;
@@ -338,6 +391,8 @@ export default function ProductManagement() {
       console.error('Failed to load shipping categories:', error);
     }
   };
+
+  const shippingCategoryGroups = groupShippingCategories(shippingCategories);
 
   const loadProductOrder = async () => {
     try {
@@ -1645,9 +1700,9 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                     >
                       <option value="">選擇運費分類</option>
-                      {shippingCategories.map((shippingCategory) => (
-                        <option key={shippingCategory.id} value={shippingCategory.id}>
-                          {shippingCategory.name}（{shippingCategory.quantity} 件 / NT$ {shippingCategory.amount}）
+                      {shippingCategoryGroups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name} - {group.rows.map(formatShippingTier).join('； ')}
                         </option>
                       ))}
                     </select>
