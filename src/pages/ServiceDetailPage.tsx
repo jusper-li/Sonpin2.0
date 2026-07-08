@@ -1,25 +1,63 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
-import { getServiceShareDetail } from '../data/serviceContent';
+import { isSupabaseContentEnabled } from '../lib/supabase';
+import { getFallbackServiceContent, loadServiceContent, type ServiceContentPayload } from '../lib/serviceContentStore';
 
 export default function ServiceDetailPage() {
   const { slug = '' } = useParams();
-  const item = getServiceShareDetail(slug);
+  const [content, setContent] = useState<ServiceContentPayload | null>(() => (isSupabaseContentEnabled ? null : getFallbackServiceContent()));
+  const [loading, setLoading] = useState(isSupabaseContentEnabled);
+
+  useEffect(() => {
+    if (!isSupabaseContentEnabled) {
+      return;
+    }
+
+    let alive = true;
+
+    const run = async () => {
+      const result = await loadServiceContent();
+      if (!alive) return;
+      setContent(result.content);
+      setLoading(false);
+    };
+
+    void run();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const item = content?.details?.[slug] || null;
 
   useSEO({
-    title: item?.title || '饕客分享',
-    description: item?.paragraphs?.[0] || '淞品土雞專賣店的食記與媒體分享。',
+    title: item?.title || '服務分享',
+    description: item?.paragraphs?.[0] || '瀏覽最新的服務分享與門市資訊。',
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+        <SiteHeader />
+        <main className="container mx-auto px-6 py-24">
+          <p className="text-sm text-stone-500">載入服務內容中…</p>
+        </main>
+        <DeferredSiteFooter />
+      </div>
+    );
+  }
 
   if (!item) {
     return (
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">找不到這篇饕客分享內容。</p>
+          <p className="text-sm text-stone-500">找不到這則服務分享。</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -39,7 +77,7 @@ export default function ServiceDetailPage() {
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/service" className="transition-colors hover:text-stone-700">
-                饕客分享
+                服務分享
               </Link>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Share</p>
