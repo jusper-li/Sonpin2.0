@@ -2,19 +2,23 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Trash2, Plus, Minus, ChevronLeft, Gift, Shield, Truck } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useShippingQuote } from '../hooks/useShippingQuote';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
 
+const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
+
 export default function Cart() {
   const { t } = useLanguage();
   const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
+  const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
 
   const cartPromises = [
-    { icon: Truck, label: t('cart.promise.shipping.title', '全台免運'), text: t('cart.promise.shipping.desc', '本次訂單免收運費') },
-    { icon: Gift, label: t('cart.promise.gift.title', '禮盒包裝'), text: t('cart.promise.gift.desc', '可於結帳備註送禮需求') },
-    { icon: Shield, label: t('cart.promise.after.title', '安心售後'), text: t('cart.promise.after.desc', '品質問題協助處理') },
+    { icon: Truck, label: t('cart.promise.shipping.title', '運費自動計算'), text: t('cart.promise.shipping.desc', '依商品分類與數量自動套用運費') },
+    { icon: Gift, label: t('cart.promise.gift.title', '完整出貨'), text: t('cart.promise.gift.desc', '商品出貨前會再次確認內容') },
+    { icon: Shield, label: t('cart.promise.after.title', '售後協助'), text: t('cart.promise.after.desc', '如有問題可聯繫客服協助處理') },
   ];
 
   if (items.length === 0) {
@@ -28,16 +32,16 @@ export default function Cart() {
             </div>
             <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[#8e6448]/70 mb-3">Cart</p>
             <h1 className="text-2xl font-light text-stone-700 mb-3 tracking-[0.15em]">
-              {t('cart.empty.title', '購物車是空的')}
+              {t('cart.empty.title', '購物車目前是空的')}
             </h1>
             <p className="text-sm text-stone-400 tracking-wide mb-8 font-light">
-              {t('cart.empty.description', '快去挑選您喜歡的商品吧')}
+              {t('cart.empty.description', '先到商品頁把喜歡的商品加入購物車')}
             </p>
             <Link
               to="/shop"
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#2b221d] hover:bg-[#5b4637] text-[#fffaf2] transition-all duration-300 text-xs tracking-[0.2em] uppercase font-medium"
             >
-              {t('cart.go_shop', '前往商城')}
+              {t('cart.go_shop', '前往購物')}
             </Link>
           </div>
         </main>
@@ -45,6 +49,8 @@ export default function Cart() {
       </div>
     );
   }
+
+  const orderTotal = total + shippingTotal;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
@@ -176,25 +182,37 @@ export default function Cart() {
                 <div className="space-y-3.5 mb-6">
                   <div className="flex justify-between text-sm text-stone-500 tracking-wide font-light">
                     <span>{t('cart.subtotal', '商品小計')}</span>
-                    <span>NT$ {total.toLocaleString()}</span>
+                    <span>{formatCurrency(total)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-stone-500 tracking-wide font-light">
                     <span>{t('cart.shipping', '運費')}</span>
-                    <span>{t('cart.shipping.free', '免運費')}</span>
+                    <span>{shippingLoading ? '計算中...' : formatCurrency(shippingTotal)}</span>
                   </div>
+                  {shippingBreakdown.length > 0 && (
+                    <div className="space-y-2 rounded-lg bg-[#fffaf2] px-3 py-3 text-xs text-stone-500">
+                      {shippingBreakdown.map((item) => (
+                        <div key={item.categoryId} className="flex items-center justify-between gap-3">
+                          <span className="truncate">
+                            {item.categoryName} x {item.quantity}
+                          </span>
+                          <span>{formatCurrency(item.fee)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="border-t border-[#d8c8b6] pt-4 mt-4">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-xs text-stone-500 tracking-[0.1em] uppercase font-medium">{t('cart.total', '總計')}</span>
-                      <span className="text-xl font-semibold text-stone-700">NT$ {total.toLocaleString()}</span>
+                      <span className="text-xs text-stone-500 tracking-[0.1em] uppercase font-medium">
+                        {t('cart.total', '合計')}
+                      </span>
+                      <span className="text-xl font-semibold text-stone-700">{formatCurrency(orderTotal)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-6 h-px bg-[#cfa87a]/50" />
-                  <p className="text-xs text-stone-400 tracking-wide font-light">
-                    {t('cart.shipping.note', '免費配送全台灣')}
-                  </p>
+                  <p className="text-xs text-stone-400 tracking-wide font-light">運費依商品分類與數量自動計算</p>
                 </div>
 
                 <div className="space-y-2.5 mb-6">
@@ -213,14 +231,14 @@ export default function Cart() {
                   to="/checkout"
                   className="w-full block py-3.5 bg-[#2b221d] hover:bg-[#5b4637] text-[#fffaf2] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
                 >
-                  {t('cart.checkout', '前往結帳')}
+                  前往結帳
                 </Link>
 
                 <Link
                   to="/shop"
                   className="w-full block mt-3 py-3.5 text-stone-500 hover:text-stone-700 text-center transition-all duration-300 border border-[#d8c8b6] hover:border-[#a97a4f] text-xs tracking-[0.15em] uppercase font-light"
                 >
-                  {t('cart.continue', '繼續購物')}
+                  繼續購物
                 </Link>
               </div>
             </div>

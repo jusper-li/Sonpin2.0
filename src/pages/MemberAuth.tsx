@@ -5,6 +5,7 @@ import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { supabase } from '../lib/supabase';
 
 type TabType = 'login' | 'register' | 'verify' | 'forgot';
+
 const RESEND_COOLDOWN_SECONDS = 60;
 const RESEND_STORAGE_PREFIX = 'member-verification-resend:';
 
@@ -40,19 +41,15 @@ export default function MemberAuth() {
 
   useEffect(() => {
     if (!pendingVerificationEmail) return;
-
     try {
-      const saved = window.localStorage.getItem(
-        `${RESEND_STORAGE_PREFIX}${pendingVerificationEmail.trim().toLowerCase()}`
-      );
+      const saved = window.localStorage.getItem(`${RESEND_STORAGE_PREFIX}${pendingVerificationEmail.trim().toLowerCase()}`);
       if (!saved) return;
-
       const savedUntil = Number(saved);
       if (Number.isFinite(savedUntil) && savedUntil > Date.now()) {
         setResendCooldownUntil(savedUntil);
       }
     } catch {
-      // Ignore storage errors and fall back to in-memory cooldown.
+      // Ignore storage errors.
     }
   }, [pendingVerificationEmail]);
 
@@ -61,12 +58,8 @@ export default function MemberAuth() {
   const startResendCooldown = (targetEmail: string) => {
     const cooldownUntil = Date.now() + RESEND_COOLDOWN_SECONDS * 1000;
     setResendCooldownUntil(cooldownUntil);
-
     try {
-      window.localStorage.setItem(
-        `${RESEND_STORAGE_PREFIX}${targetEmail.trim().toLowerCase()}`,
-        String(cooldownUntil)
-      );
+      window.localStorage.setItem(`${RESEND_STORAGE_PREFIX}${targetEmail.trim().toLowerCase()}`, String(cooldownUntil));
     } catch {
       // Ignore storage errors.
     }
@@ -98,7 +91,7 @@ export default function MemberAuth() {
     const message = String(authError?.message || '');
 
     if (code === 'email_not_confirmed' || message.includes('Email not confirmed')) {
-      return '請先完成信箱驗證。';
+      return '電子郵件尚未驗證，請先完成驗證。';
     }
     if (code === 'invalid_credentials' || message.includes('Invalid login credentials')) {
       return '登入失敗，請確認電子郵件與密碼。';
@@ -107,10 +100,10 @@ export default function MemberAuth() {
       return '電子郵件格式不正確。';
     }
     if (code === 'too_many_requests' || authError?.status === 429) {
-      return '嘗試次數過多，請稍後再試。';
+      return '發送過於頻繁，請稍後再試。';
     }
     if (code === 'signup_disabled' || code === 'email_provider_disabled') {
-      return '目前暫不開放會員註冊。';
+      return '目前暫不開放註冊。';
     }
     return fallback;
   };
@@ -118,7 +111,6 @@ export default function MemberAuth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedEmail = email.trim();
-
     if (!trimmedEmail || !password.trim()) {
       setError('請輸入電子郵件與密碼。');
       return;
@@ -140,18 +132,16 @@ export default function MemberAuth() {
     e.preventDefault();
     setError('');
 
+    if (!displayName.trim()) {
+      setError('請輸入會員名稱。');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('兩次輸入的密碼不一致。');
       return;
     }
-
     if (password.length < 6) {
-      setError('密碼至少需要 6 個字元。');
-      return;
-    }
-
-    if (!displayName.trim()) {
-      setError('請輸入會員名稱。');
+      setError('密碼至少需要 6 碼。');
       return;
     }
 
@@ -161,7 +151,6 @@ export default function MemberAuth() {
     setIsSubmitting(true);
     try {
       const { session } = await signUp(trimmedEmail, password, trimmedName);
-
       if (session) {
         setSuccessMsg('註冊成功，正在前往會員頁面。');
         window.setTimeout(() => navigate('/member/profile'), 1200);
@@ -171,13 +160,13 @@ export default function MemberAuth() {
       setPendingVerificationEmail(trimmedEmail);
       setVerificationCode('');
       startResendCooldown(trimmedEmail);
-      setSuccessMsg('請輸入寄到信箱的 6 位驗證碼。');
+      setSuccessMsg('註冊成功，請到信箱輸入 6 碼驗證碼。');
       setTab('verify');
     } catch (err) {
       const message = String(err instanceof Error ? err.message : '');
       const code = String((err as { code?: string } | null)?.code || '').toLowerCase();
       if (code === 'email_exists' || message.includes('already registered') || message.includes('already been registered')) {
-        setError('這個電子郵件已經註冊過了。');
+        setError('電子郵件已存在，請改用登入或其他信箱。');
       } else {
         setError(formatAuthError(err, '註冊失敗，請稍後再試。'));
       }
@@ -192,12 +181,11 @@ export default function MemberAuth() {
     const token = verificationCode.trim();
 
     if (!targetEmail) {
-      setError('請先輸入電子郵件。');
+      setError('請輸入電子郵件。');
       return;
     }
-
     if (token.length !== 6) {
-      setError('請輸入 6 位驗證碼。');
+      setError('請輸入 6 碼驗證碼。');
       return;
     }
 
@@ -210,12 +198,13 @@ export default function MemberAuth() {
         type: 'email',
       });
       if (verifyError) throw verifyError;
+
       setPendingVerificationEmail('');
       setVerificationCode('');
       setSuccessMsg('驗證完成，正在前往會員頁面。');
       window.setTimeout(() => navigate('/member/profile'), 800);
     } catch (err) {
-      setError(formatAuthError(err, '驗證失敗，請重新輸入驗證碼。'));
+      setError(formatAuthError(err, '驗證失敗，請稍後再試。'));
     } finally {
       setIsSubmitting(false);
     }
@@ -224,12 +213,11 @@ export default function MemberAuth() {
   const handleResendVerification = async () => {
     const targetEmail = pendingVerificationEmail.trim() || email.trim();
     if (!targetEmail) {
-      setError('請先輸入電子郵件。');
+      setError('請輸入電子郵件。');
       return;
     }
-
     if (resendSecondsLeft > 0) {
-      setError(`請在 ${resendSecondsLeft} 秒後再重寄。`);
+      setError(`請稍候 ${resendSecondsLeft} 秒後再重送驗證碼`);
       return;
     }
 
@@ -241,12 +229,13 @@ export default function MemberAuth() {
         email: targetEmail,
       });
       if (resendError) throw resendError;
+
       setPendingVerificationEmail(targetEmail);
       setVerificationCode('');
       startResendCooldown(targetEmail);
-      setSuccessMsg('驗證碼已重新寄出，請查看信箱。');
+      setSuccessMsg('驗證碼已重新寄出，請到信箱收信。');
     } catch (err) {
-      setError(formatAuthError(err, '重寄驗證碼失敗，請稍後再試。'));
+      setError(formatAuthError(err, '重新寄送驗證碼失敗，請稍後再試。'));
     } finally {
       setIsSubmitting(false);
     }
@@ -256,7 +245,7 @@ export default function MemberAuth() {
     e.preventDefault();
     const trimmedForgotEmail = forgotEmail.trim();
     if (!trimmedForgotEmail) {
-      setError('請先輸入電子郵件。');
+      setError('請輸入電子郵件。');
       return;
     }
 
@@ -269,7 +258,7 @@ export default function MemberAuth() {
       if (resetError) throw resetError;
       setForgotSent(true);
     } catch (err) {
-      setError(formatAuthError(err, '寄送密碼重設信失敗，請稍後再試。'));
+      setError(formatAuthError(err, '重設密碼信寄送失敗，請稍後再試。'));
     } finally {
       setIsSubmitting(false);
     }
@@ -283,17 +272,15 @@ export default function MemberAuth() {
     );
   }
 
-  const tabTitle =
-    tab === 'login' ? '登入' : tab === 'register' ? '加入會員' : tab === 'verify' ? '輸入驗證碼' : '忘記密碼';
-
+  const tabTitle = tab === 'login' ? '登入' : tab === 'register' ? '加入會員' : tab === 'verify' ? '輸入驗證碼' : '忘記密碼';
   const tabSubtitle =
     tab === 'login'
       ? '登入後可查看訂單、收藏與個人資料。'
       : tab === 'register'
         ? '註冊後即可快速結帳並管理會員資料。'
         : tab === 'verify'
-          ? '請輸入寄到信箱的 6 位驗證碼。'
-          : '輸入電子郵件後，我們會寄出密碼重設連結。';
+          ? '請輸入寄到信箱的 6 碼驗證碼。'
+          : '輸入信箱後，我們會寄送重設密碼連結。';
 
   return (
     <div className="flex min-h-screen bg-[#fbf6ee]">
@@ -305,7 +292,7 @@ export default function MemberAuth() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#2b221d]/70 via-[#5b4637]/50 to-[#d8bda4]/30" />
         <div className="relative z-10 flex w-full flex-col justify-between p-12">
           <Link to="/" className="inline-block">
-            <img src="/LOGO-1.png" alt="Sonpin" className="h-20 brightness-0 invert opacity-90" />
+            <img src="/LOGO-1.png" alt="Sonpin" className="h-20 opacity-95 drop-shadow-[0_2px_6px_rgba(43,34,29,0.22)]" />
           </Link>
 
           <div>
@@ -314,9 +301,9 @@ export default function MemberAuth() {
               <Coffee className="h-5 w-5 text-[#f3e6d3]" />
             </div>
             <h2 className="mb-4 text-4xl font-light leading-snug text-[#fffaf2]">
-              ????????????????
+              登入後，收藏與訂單都在這裡
               <br />
-              <span className="text-amber-300">登入後，收藏與訂單都在這裡</span>
+              <span className="text-amber-300">會員登入後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。</span>
             </h2>
             <p className="max-w-xs text-sm font-light leading-relaxed text-[#f7efe5]">
               登入會員後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。
@@ -378,7 +365,6 @@ export default function MemberAuth() {
             )}
 
             {error && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
-
             {successMsg && (
               <div className="mb-5 flex items-center gap-2 rounded-xl border border-[#e1c7b4] bg-[#f3e6d3] px-4 py-3 text-sm text-[#8e6448]">
                 <Coffee className="h-4 w-4 flex-shrink-0" />
@@ -486,7 +472,7 @@ export default function MemberAuth() {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="至少 6 個字元"
+                      placeholder="至少 6 碼"
                       required
                       className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-11 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
                     />
@@ -531,7 +517,7 @@ export default function MemberAuth() {
                 </button>
 
                 <p className="text-center text-sm text-stone-500">
-                  已經有帳號？{' '}
+                  已有帳號？{' '}
                   <button type="button" onClick={() => switchTab('login')} className="font-medium text-amber-700 transition-colors hover:text-amber-600">
                     前往登入
                   </button>
@@ -540,7 +526,7 @@ export default function MemberAuth() {
             ) : tab === 'verify' ? (
               <div className="space-y-5">
                 <div className="rounded-xl border border-[#e1d4c6] bg-white px-4 py-4 text-sm leading-relaxed text-stone-600">
-                  我們已寄出 6 位驗證碼到 <strong className="text-stone-800">{pendingVerificationEmail || email}</strong>。
+                  請輸入寄到 <strong className="text-stone-800">{pendingVerificationEmail || email}</strong> 的 6 碼驗證碼。
                 </div>
 
                 <form onSubmit={handleVerifyCode} className="space-y-5">
@@ -577,13 +563,9 @@ export default function MemberAuth() {
                     disabled={isSubmitting || resendSecondsLeft > 0}
                     className="font-medium text-amber-700 transition-colors hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {resendSecondsLeft > 0 ? `重寄驗證碼（${resendSecondsLeft}s）` : '重寄驗證碼'}
+                    {resendSecondsLeft > 0 ? `請稍候 ${resendSecondsLeft}s 後再重送` : '重送驗證碼'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => switchTab('login')}
-                    className="font-medium text-stone-500 transition-colors hover:text-stone-700"
-                  >
+                  <button type="button" onClick={() => switchTab('login')} className="font-medium text-stone-500 transition-colors hover:text-stone-700">
                     返回登入
                   </button>
                 </div>
@@ -593,9 +575,9 @@ export default function MemberAuth() {
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
                   <Mail className="h-7 w-7 text-amber-600" />
                 </div>
-                <h3 className="mb-2 text-lg font-medium text-stone-800">重設信已寄出</h3>
+                <h3 className="mb-2 text-lg font-medium text-stone-800">重設密碼連結已寄出</h3>
                 <p className="mb-6 text-sm leading-relaxed text-stone-500">
-                  我們已寄送密碼重設連結到 <strong>{forgotEmail}</strong>，請前往信箱查看。
+                  重設密碼連結已寄送到 <strong>{forgotEmail}</strong>，請前往信箱完成設定。
                 </p>
                 <button type="button" onClick={() => switchTab('login')} className="text-sm font-medium text-amber-700 transition-colors hover:text-amber-600">
                   返回登入
@@ -634,7 +616,7 @@ export default function MemberAuth() {
                 </button>
 
                 <p className="text-center text-sm text-stone-500">
-                  想起密碼了嗎？{' '}
+                  想起密碼了？{' '}
                   <button type="button" onClick={() => switchTab('login')} className="font-medium text-amber-700 transition-colors hover:text-amber-600">
                     返回登入
                   </button>

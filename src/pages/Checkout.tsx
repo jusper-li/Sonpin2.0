@@ -4,47 +4,19 @@ import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucid
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
+import { useShippingQuote } from '../hooks/useShippingQuote';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
 
-const formatCurrency = (amount: number) => `NT$ ${amount.toLocaleString()}`;
-
-const submitNewebpayForm = (
-  paymentUrl: string,
-  merchantId: string,
-  tradeInfo: string,
-  tradeSha: string,
-  version: string
-) => {
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = paymentUrl;
-
-  const fields: Record<string, string> = {
-    MerchantID: merchantId,
-    TradeInfo: tradeInfo,
-    TradeSha: tradeSha,
-    Version: version,
-  };
-
-  Object.entries(fields).forEach(([name, value]) => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  });
-
-  document.body.appendChild(form);
-  form.submit();
-};
+const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 export default function Checkout() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
+  const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null);
   const [formData, setFormData] = useState({
@@ -54,7 +26,7 @@ export default function Checkout() {
     address: '',
     city: '',
     postalCode: '',
-    paymentMethod: 'credit_card',
+    paymentMethod: 'bank_transfer',
     notes: '',
   });
 
@@ -65,22 +37,20 @@ export default function Checkout() {
   }, [items, navigate]);
 
   const paymentOptions = [
-    { value: 'credit_card', label: t('checkout.payment.creditCard', '信用卡付款') },
     { value: 'bank_transfer', label: t('checkout.payment.transfer', '銀行轉帳（匯款後出貨）') },
-    { value: 'cash_on_delivery', label: t('checkout.payment.cod', '貨到付款') },
   ];
 
   const deliveryPromise = [
-    { icon: Lock, label: t('checkout.promise.secure', '安全加密結帳') },
-    { icon: Truck, label: t('checkout.promise.shipping', '全台免運配送') },
-    { icon: Gift, label: t('checkout.promise.gift', '可備註禮盒需求') },
+    { icon: Lock, label: t('checkout.promise.secure', '安全付款') },
+    { icon: Truck, label: t('checkout.promise.shipping', '依運費分類自動計算運費') },
+    { icon: Gift, label: t('checkout.promise.gift', '完整商品出貨') },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,8 +58,14 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      if (shippingLoading) {
+        throw new Error('Shipping quote is still loading');
+      }
+
       const orderNumber = `ORD-${Date.now()}`;
       const orderId = crypto.randomUUID();
+      const shippingAmount = Number(shippingTotal || 0);
+      const finalTotal = total + shippingAmount;
 
       const { error: orderError } = await supabase.from('orders').insert({
         id: orderId,
@@ -97,8 +73,8 @@ export default function Checkout() {
         status: 'pending',
         subtotal: total,
         tax: 0,
-        shipping: 0,
-        total,
+        shipping: shippingAmount,
+        total: finalTotal,
         payment_status: 'pending',
         shipping_address: {
           name: formData.name,
@@ -127,8 +103,8 @@ export default function Checkout() {
 
       const { error: paymentError } = await supabase.from('payments').insert({
         order_id: orderId,
-        amount: total,
-        method: formData.paymentMethod,
+        amount: finalTotal,
+        method: 'bank_transfer',
         status: 'pending',
         metadata: {
           customer_name: formData.name,
@@ -137,28 +113,6 @@ export default function Checkout() {
       });
 
       if (paymentError) throw paymentError;
-
-      if (formData.paymentMethod === 'credit_card') {
-        const { data: mpgData, error: mpgError } = await supabase.functions.invoke('newebpay-mpg-payment', {
-          body: {
-            orderId,
-            payerEmail: formData.email,
-            payerName: formData.name,
-          },
-        });
-
-        if (mpgError) throw mpgError;
-        if (!mpgData?.success) throw new Error(mpgData?.error || 'Failed to create NewebPay order');
-
-        submitNewebpayForm(
-          mpgData.paymentUrl,
-          mpgData.merchantId,
-          mpgData.tradeInfo,
-          mpgData.tradeSha,
-          mpgData.version || '1.6'
-        );
-        return;
-      }
 
       fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
         method: 'POST',
@@ -173,9 +127,11 @@ export default function Checkout() {
             customerName: formData.name,
             customerEmail: formData.email,
             items: orderItems,
-            total,
+            total: finalTotal,
+            shipping: shippingAmount,
+            shippingBreakdown,
             address: `${formData.address}, ${formData.city} ${formData.postalCode}`,
-            paymentMethod: formData.paymentMethod,
+            paymentMethod: 'bank_transfer',
           },
         }),
       }).catch(() => {});
@@ -184,7 +140,7 @@ export default function Checkout() {
       setOrderSuccess({ orderNumber });
     } catch (error) {
       console.error('Checkout failed:', error);
-      alert(t('checkout.error.failed', '結帳失敗，請稍後再試。'));
+      alert('結帳失敗，請稍後再試。');
     } finally {
       setLoading(false);
     }
@@ -203,37 +159,24 @@ export default function Checkout() {
             <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-green-100 bg-green-50">
               <div className="h-10 w-10 rounded-full border-4 border-green-600/80" />
             </div>
-            <p className="mb-3 text-xs tracking-[0.3em] text-amber-700 uppercase">
-              {t('checkout.success.tag', 'Order Confirmed')}
-            </p>
-            <h1 className="mb-3 text-3xl font-light text-stone-800">
-              {t('checkout.success.title', '訂單成立！')}
-            </h1>
-            <p className="mb-2 font-light text-stone-500">{t('checkout.success.subtitle', '感謝您的訂購')}</p>
+            <p className="mb-3 text-xs tracking-[0.3em] text-amber-700 uppercase">訂單已成立</p>
+            <h1 className="mb-3 text-3xl font-light text-stone-800">感謝您的訂購</h1>
+            <p className="mb-2 font-light text-stone-500">我們已收到您的訂單，稍後會寄出確認信。</p>
             <p className="mb-8 text-sm font-light text-stone-400">
-              {t(
-                'checkout.success.description',
-                '訂單確認信已寄送至您的信箱；若您選擇銀行轉帳，請依信件中的匯款資訊完成付款，我們將在確認入帳後安排出貨。'
-              )}
+              訂單編號：<span className="font-medium text-stone-700">{orderSuccess.orderNumber}</span>
             </p>
-            <div className="mb-8 inline-block w-full rounded-2xl border border-stone-100 bg-white px-6 py-5">
-              <p className="mb-2 text-xs tracking-widest text-stone-400 uppercase">
-                {t('checkout.success.orderNumberLabel', '訂單編號')}
-              </p>
-              <p className="text-lg font-medium tracking-wider text-amber-700">{orderSuccess.orderNumber}</p>
-            </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={() => navigate('/products')}
                 className="rounded-xl bg-stone-800 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-700"
               >
-                {t('checkout.success.continueShopping', '繼續選購')}
+                繼續購物
               </button>
               <button
                 onClick={() => navigate('/')}
                 className="rounded-xl border border-stone-200 bg-white px-6 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50"
               >
-                {t('checkout.success.backHome', '回到首頁')}
+                回首頁
               </button>
             </div>
           </div>
@@ -243,6 +186,9 @@ export default function Checkout() {
     );
   }
 
+  const finalShippingTotal = Number(shippingTotal || 0);
+  const finalOrderTotal = total + finalShippingTotal;
+
   return (
     <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
       <SiteHeader />
@@ -251,23 +197,19 @@ export default function Checkout() {
           <div className="container mx-auto px-6 py-10">
             <div className="mb-5 flex items-center gap-2 text-xs tracking-[0.15em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-600">
-                {t('common.home', '首頁')}
+                首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/cart" className="transition-colors hover:text-stone-600">
-                {t('cart.title', '購物車')}
+                購物車
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-600">{t('checkout.title', '結帳')}</span>
+              <span className="text-stone-600">結帳</span>
             </div>
-            <h1 className="text-4xl font-light tracking-[0.2em] text-stone-800 md:text-5xl">
-              {t('checkout.title', '結帳')}
-            </h1>
+            <h1 className="text-4xl font-light tracking-[0.2em] text-stone-800 md:text-5xl">結帳</h1>
             <div className="mt-5 flex items-center gap-3">
               <div className="h-px w-10 bg-amber-400" />
-              <p className="text-xs tracking-[0.25em] text-stone-400 uppercase">
-                {t('checkout.subtitle', 'Secure Checkout')}
-              </p>
+              <p className="text-xs tracking-[0.25em] text-stone-400 uppercase">Secure Checkout</p>
             </div>
           </div>
         </div>
@@ -278,46 +220,20 @@ export default function Checkout() {
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <User className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">
-                    {t('checkout.contact.title', '聯絡資訊')}
-                  </h2>
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">聯絡資料</h2>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={labelCls}>{t('checkout.contact.name', '姓名')} *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                      placeholder={t('checkout.contact.namePlaceholder', '請輸入姓名')}
-                    />
+                    <label className={labelCls}>姓名 *</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>{t('checkout.contact.email', '電子郵件')} *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                      placeholder={t('checkout.contact.emailPlaceholder', '請輸入電子郵件')}
-                    />
+                    <label className={labelCls}>電子郵件 *</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} required className={inputCls} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className={labelCls}>{t('checkout.contact.phone', '電話')} *</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                      placeholder={t('checkout.contact.phonePlaceholder', '請輸入電話號碼')}
-                    />
+                    <label className={labelCls}>電話 *</label>
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className={inputCls} />
                   </div>
                 </div>
               </section>
@@ -325,47 +241,21 @@ export default function Checkout() {
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">
-                    {t('checkout.shipping.title', '配送地址')}
-                  </h2>
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">配送地址</h2>
                 </div>
                 <div className="grid gap-4">
                   <div>
-                    <label className={labelCls}>{t('checkout.shipping.address', '地址')} *</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                      placeholder={t('checkout.shipping.addressPlaceholder', '請輸入地址')}
-                    />
+                    <label className={labelCls}>地址 *</label>
+                    <input type="text" name="address" value={formData.address} onChange={handleChange} required className={inputCls} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className={labelCls}>{t('checkout.shipping.city', '城市')} *</label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        required
-                        className={inputCls}
-                        placeholder={t('checkout.shipping.cityPlaceholder', '請輸入城市')}
-                      />
+                      <label className={labelCls}>城市 *</label>
+                      <input type="text" name="city" value={formData.city} onChange={handleChange} required className={inputCls} />
                     </div>
                     <div>
-                      <label className={labelCls}>{t('checkout.shipping.postalCode', '郵遞區號')} *</label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleChange}
-                        required
-                        className={inputCls}
-                        placeholder={t('checkout.shipping.postalPlaceholder', '請輸入郵遞區號')}
-                      />
+                      <label className={labelCls}>郵遞區號 *</label>
+                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required className={inputCls} />
                     </div>
                   </div>
                 </div>
@@ -374,19 +264,13 @@ export default function Checkout() {
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">
-                    {t('checkout.payment.title', '付款方式')}
-                  </h2>
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">付款方式</h2>
                 </div>
                 <div className="grid gap-3">
                   {paymentOptions.map((option) => (
                     <label
                       key={option.value}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
-                        formData.paymentMethod === option.value
-                          ? 'border-amber-300 bg-amber-50'
-                          : 'border-stone-200 bg-white hover:bg-stone-50'
-                      }`}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3"
                     >
                       <input
                         type="radio"
@@ -401,19 +285,14 @@ export default function Checkout() {
                   ))}
                 </div>
                 <p className="mt-3 text-xs leading-6 text-stone-500">
-                  {t(
-                    'checkout.payment.note',
-                    '若選擇銀行轉帳，請依照訂單確認信中的匯款資訊完成付款；確認入帳後，我們會更新付款狀態並安排出貨。'
-                  )}
+                  目前僅提供銀行轉帳付款，確認匯款後將安排出貨。
                 </p>
               </section>
 
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <Gift className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">
-                    {t('checkout.note.title', '訂單備註')}
-                  </h2>
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">備註</h2>
                 </div>
                 <textarea
                   name="notes"
@@ -421,16 +300,14 @@ export default function Checkout() {
                   onChange={handleChange}
                   rows={4}
                   className={`${inputCls} resize-none`}
-                  placeholder={t('checkout.note.placeholder', '如有特殊需求請在此說明')}
+                  placeholder="例如：請幫我多加冰袋、可聯繫後再出貨"
                 />
               </section>
             </div>
 
             <aside className="space-y-6">
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-5 text-xs font-medium tracking-[0.3em] text-stone-400 uppercase">
-                  {t('checkout.summary.title', '訂單明細')}
-                </h2>
+                <h2 className="mb-5 text-xs font-medium tracking-[0.3em] text-stone-400 uppercase">訂單明細</h2>
                 <div className="space-y-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3 border-b border-stone-100 pb-4 last:border-b-0 last:pb-0">
@@ -451,9 +328,7 @@ export default function Checkout() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-stone-800">{item.name}</p>
-                            <p className="mt-1 text-xs text-stone-400">
-                              {t('checkout.summary.quantity', '數量')} x {item.quantity}
-                            </p>
+                            <p className="mt-1 text-xs text-stone-400">數量 x {item.quantity}</p>
                           </div>
                           <p className="text-sm font-medium text-stone-700">
                             {formatCurrency((item.salePrice || item.price) * item.quantity)}
@@ -466,18 +341,30 @@ export default function Checkout() {
 
                 <div className="mt-6 space-y-3 border-t border-stone-100 pt-4 text-sm">
                   <div className="flex items-center justify-between text-stone-500">
-                    <span>{t('checkout.summary.subtotal', '商品小計')}</span>
+                    <span>商品小計</span>
                     <span>{formatCurrency(total)}</span>
                   </div>
                   <div className="flex items-center justify-between text-stone-500">
-                    <span>{t('checkout.summary.shipping', '運費')}</span>
-                    <span className="text-amber-600">{t('checkout.summary.free', '免運費')}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-stone-100 pt-3">
-                    <span className="text-sm font-medium tracking-wide text-stone-800">
-                      {t('checkout.summary.total', '總計')}
+                    <span>運費</span>
+                    <span className="text-amber-600">
+                      {shippingLoading ? '計算中...' : formatCurrency(finalShippingTotal)}
                     </span>
-                    <span className="text-lg font-semibold text-stone-900">{formatCurrency(total)}</span>
+                  </div>
+                  {shippingBreakdown.length > 0 && (
+                    <div className="space-y-2 rounded-xl bg-stone-50 px-3 py-3 text-xs text-stone-500">
+                      {shippingBreakdown.map((item) => (
+                        <div key={item.categoryId} className="flex items-center justify-between gap-3">
+                          <span className="truncate">
+                            {item.categoryName} x {item.quantity}
+                          </span>
+                          <span>{formatCurrency(item.fee)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-t border-stone-100 pt-3">
+                    <span className="text-sm font-medium tracking-wide text-stone-800">合計</span>
+                    <span className="text-lg font-semibold text-stone-900">{formatCurrency(finalOrderTotal)}</span>
                   </div>
                 </div>
               </section>
@@ -497,16 +384,16 @@ export default function Checkout() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || shippingLoading}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-stone-900 px-6 py-4 text-sm font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? (
+                {loading || shippingLoading ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    {t('checkout.submitting', '處理中...')}
+                    {shippingLoading ? '運費計算中...' : '送出訂單中...'}
                   </>
                 ) : (
-                  t('checkout.submit', '確認訂購')
+                  '送出訂單'
                 )}
               </button>
 
@@ -514,7 +401,7 @@ export default function Checkout() {
                 to="/cart"
                 className="block text-center text-sm text-stone-500 transition-colors hover:text-stone-700"
               >
-                {t('checkout.backCart', '返回購物車')}
+                回購物車
               </Link>
             </aside>
           </div>

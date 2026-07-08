@@ -16,6 +16,7 @@
   History,
   Shield,
   ShoppingCart,
+  Truck,
   Share2,
   Sparkles,
   Store,
@@ -48,11 +49,11 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
 
   const menuGroups: MenuGroup[] = [
     {
-      title: t('admin.sidebar.group.overview', '蝮質汗'),
-      items: [{ id: 'dashboard', label: t('admin.sidebar.dashboard', '??嗆'), icon: LayoutDashboard }],
+      title: t('admin.sidebar.group.overview', '總覽'),
+      items: [{ id: 'dashboard', label: t('admin.sidebar.dashboard', '儀表板'), icon: LayoutDashboard }],
     },
     {
-      title: t('admin.sidebar.group.ai', 'AI ?箄蝟餌絞'),
+      title: t('admin.sidebar.group.ai', 'AI 功能'),
       items: [
         { id: 'ai-chat', label: t('admin.sidebar.aiChat', 'AI 客服聊天'), icon: MessageSquare, badge: 'AI' },
         { id: 'knowledge-base', label: t('admin.sidebar.knowledgeBase', '知識庫管理'), icon: BookOpen },
@@ -61,26 +62,27 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
       ],
     },
     {
-      title: t('admin.sidebar.group.business', '??蝞∠?'),
+      title: t('admin.sidebar.group.business', '商務管理'),
       items: [
-        { id: 'products', label: t('admin.sidebar.products', '??蝞∠?'), icon: Package },
-        { id: 'orders', label: t('admin.sidebar.orders', '閮蝞∠?'), icon: ShoppingCart },
-        { id: 'payments', label: t('admin.sidebar.payments', '??蝞∠?'), icon: CreditCard },
+        { id: 'products', label: t('admin.sidebar.products', '商品管理'), icon: Package },
+        { id: 'shipping', label: t('admin.sidebar.shipping', '運費設定'), icon: Truck },
+        { id: 'orders', label: t('admin.sidebar.orders', '訂單管理'), icon: ShoppingCart },
+        { id: 'payments', label: t('admin.sidebar.payments', '付款管理'), icon: CreditCard },
         { id: 'stores', label: t('admin.sidebar.stores', '門市管理'), icon: Store },
-        { id: 'members', label: t('admin.sidebar.members', '?蝞∠?'), icon: Users },
+        { id: 'members', label: t('admin.sidebar.members', '會員管理'), icon: Users },
       ],
     },
     {
-      title: t('admin.sidebar.group.content', '?批捆蝞∠?'),
+      title: t('admin.sidebar.group.content', '內容管理'),
       items: [
-        { id: 'homepage', label: t('admin.sidebar.homepage', '擐?蝞∠?'), icon: Home },
-        { id: 'articles', label: t('admin.sidebar.articles', '??蝞∠?'), icon: FileText },
-        { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 蝞∠?'), icon: HelpCircle },
-        { id: 'static-pages', label: t('admin.sidebar.staticPages', '???'), icon: Layers },
+        { id: 'homepage', label: t('admin.sidebar.homepage', '首頁管理'), icon: Home },
+        { id: 'articles', label: t('admin.sidebar.articles', '文章管理'), icon: FileText },
+        { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 管理'), icon: HelpCircle },
+        { id: 'static-pages', label: t('admin.sidebar.staticPages', '靜態頁面'), icon: Layers },
       ],
     },
     {
-      title: t('admin.sidebar.group.settings', '蝟餌絞閮剖?'),
+      title: t('admin.sidebar.group.settings', '系統設定'),
       items: [
         { id: 'social', label: t('admin.sidebar.social', '社群連結'), icon: Share2 },
         { id: 'languages', label: t('admin.sidebar.languages', '語系管理'), icon: Languages },
@@ -181,7 +183,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
           className="group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
         >
           <ExternalLink className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span className="text-sm font-medium">{t('admin.sidebar.backHome', '餈??')}</span>
+          <span className="text-sm font-medium">{t('admin.sidebar.backHome', '返回首頁')}</span>
         </a>
       </div>
     </div>

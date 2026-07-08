@@ -23,6 +23,7 @@ interface Category {
 interface Product {
   id: string;
   category_id: string | null;
+  shipping_category_id: string | null;
   name: string;
   slug: string;
   summary: string;
@@ -130,6 +131,7 @@ const toSpecificationOptions = (specification: FallbackProduct['specifications']
 const toBackofficeProduct = (product: FallbackProduct): Product => ({
   id: product.id,
   category_id: product.category_id,
+  shipping_category_id: null,
   name: product.name,
   slug: product.slug,
   summary: product.summary || '',
@@ -194,6 +196,7 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [shippingCategories, setShippingCategories] = useState<Array<{ id: string; name: string; quantity: number; amount: number; is_active: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -215,6 +218,7 @@ export default function ProductManagement() {
     description: '',
     content: '',
     category_id: '',
+    shipping_category_id: '',
     price: 0,
     sale_price: null as number | null,
     cost_price: 0,
@@ -255,7 +259,7 @@ export default function ProductManagement() {
       return;
     }
 
-    await Promise.all([loadProducts(), loadCategories(), loadProductOrder()]);
+    await Promise.all([loadProducts(), loadCategories(), loadShippingCategories(), loadProductOrder()]);
     setLoading(false);
   };
 
@@ -278,6 +282,7 @@ export default function ProductManagement() {
 
       const normalizedProducts = (data || []).map(product => ({
         ...product,
+        shipping_category_id: product.shipping_category_id || null,
         images: Array.isArray(product.images) ? product.images : [],
         specifications: Array.isArray(product.specifications)
           ? product.specifications.map((spec: any) => ({
@@ -313,6 +318,24 @@ export default function ProductManagement() {
         return;
       }
       console.error('Failed to load categories:', error);
+    }
+  };
+
+  const loadShippingCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_categories')
+        .select('id, name, quantity, amount, is_active')
+        .order('name');
+
+      if (error) throw error;
+      setShippingCategories(data || []);
+    } catch (error) {
+      if (isMissingSupabaseTableError(error)) {
+        setShippingCategories([]);
+        return;
+      }
+      console.error('Failed to load shipping categories:', error);
     }
   };
 
@@ -832,6 +855,7 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         name: productForm.name.trim(),
         slug: productForm.slug.trim(),
         category_id: productForm.category_id || null,
+        shipping_category_id: productForm.shipping_category_id || null,
         sale_price: productForm.sale_price || null,
         member_price: productForm.member_price || null,
         sku: productForm.sku?.trim() || null,
@@ -1075,6 +1099,7 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         description: product.description || '',
         content: product.content || '',
         category_id: product.category_id || '',
+        shipping_category_id: product.shipping_category_id || '',
         price: product.price,
         sale_price: product.sale_price,
         cost_price: product.cost_price || 0,
@@ -1104,6 +1129,7 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         description: '',
         content: '',
         category_id: '',
+        shipping_category_id: '',
         price: 0,
         sale_price: null,
         cost_price: 0,
@@ -1608,6 +1634,21 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
                       <option value="">選擇分類</option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">運費分類</label>
+                    <select
+                      value={productForm.shipping_category_id}
+                      onChange={(e) => handleProductFormChange('shipping_category_id', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    >
+                      <option value="">選擇運費分類</option>
+                      {shippingCategories.map((shippingCategory) => (
+                        <option key={shippingCategory.id} value={shippingCategory.id}>
+                          {shippingCategory.name}（{shippingCategory.quantity} 件 / NT$ {shippingCategory.amount}）
+                        </option>
                       ))}
                     </select>
                   </div>

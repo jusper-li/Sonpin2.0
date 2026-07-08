@@ -1,4 +1,5 @@
 import { isMissingSupabaseTableError, isSupabaseNetworkError, supabase } from './supabase';
+import { getMediaArticle } from '../data/mediaContent';
 
 interface LoadedMediaArticle {
   groupSlug: string;
@@ -46,6 +47,11 @@ const inferVideoIframeUrl = (content?: string | null) => {
   return match?.[1] || '';
 };
 
+const hasVideoEmbed = (content?: string | null) => {
+  if (!content) return false;
+  return /<(iframe|object|embed)\b/i.test(content);
+};
+
 const buildMediaArticle = (article: {
   slug: string;
   title: string;
@@ -56,19 +62,29 @@ const buildMediaArticle = (article: {
 }): LoadedMediaArticle => {
   const { groupSlug, articleSlug } = extractSlugParts(article.slug);
   const htmlContent = article.content || '';
+  const localArticle = getMediaArticle(groupSlug, articleSlug);
+  const localHtmlContent = localArticle?.htmlContent || '';
+  const resolvedHtmlContent =
+    hasVideoEmbed(localHtmlContent) && !hasVideoEmbed(htmlContent)
+      ? htmlContent
+        ? `${localHtmlContent}\n\n${htmlContent}`
+        : localHtmlContent
+      : localHtmlContent.length > htmlContent.length
+        ? localHtmlContent
+        : htmlContent || localHtmlContent || '';
   return {
     groupSlug,
     articleSlug,
-    title: article.title,
+    title: article.title || localArticle?.title || '',
     date: formatDate(article.published_at),
-    excerpt: article.excerpt || '',
+    excerpt: article.excerpt || localArticle?.excerpt || '',
     bodyParagraphs: [],
-    htmlContent,
-    featuredImage: article.featured_image || '',
+    htmlContent: resolvedHtmlContent,
+    featuredImage: article.featured_image || localArticle?.featuredImage || '',
     galleryImages: [],
-    iframeUrl: inferVideoIframeUrl(htmlContent),
-    sourceUrl: '',
-    kind: groupSlug === '78' ? 'video' : 'article',
+    iframeUrl: inferVideoIframeUrl(resolvedHtmlContent),
+    sourceUrl: localArticle?.sourceUrl || '',
+    kind: localArticle?.kind || (groupSlug === '78' ? 'video' : 'article'),
     videoPlacement: groupSlug === '78' ? 'top' : undefined,
     videoMode: groupSlug === '78' ? 'embed' : undefined,
   };

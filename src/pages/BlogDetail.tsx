@@ -46,8 +46,8 @@ export default function BlogDetail() {
   const locale = pickByLang(currentLanguage, 'zh-TW', 'en-US', 'ja-JP', 'ko-KR');
 
   useSEO({
-    title: article?.title || t('blog.title', '撠???'),
-    description: article?.excerpt || t('blog.description', 'Sonpin 撠???'),
+    title: article?.title || t('blog.title', '部落格'),
+    description: article?.excerpt || t('blog.description', '淞品部落格文章與品牌故事。'),
     ogImage: article?.featured_image,
     ogType: 'article',
   });
@@ -124,13 +124,13 @@ export default function BlogDetail() {
         ) : !article ? (
           <div className="container mx-auto px-6 py-28 text-center">
             <p className="text-sm tracking-[0.18em] text-stone-400">
-              {t('blog.detail.not_found', '????????')}
+              {t('blog.detail.not_found', '找不到文章')}
             </p>
             <Link
               to="/blog"
               className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
             >
-              {t('blog.detail.back_list', '餈????”')}
+              {t('blog.detail.back_list', '返回文章列表')}
             </Link>
           </div>
         ) : (
@@ -140,11 +140,11 @@ export default function BlogDetail() {
                 <div className="container mx-auto px-6 py-12 md:py-18">
                   <nav className="mb-9 flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
                     <Link to="/" className="transition-colors hover:text-stone-700">
-                      {t('common.home', '擐?')}
+                      {t('common.home', '首頁')}
                     </Link>
                     <ChevronRight className="h-3 w-3" />
                     <Link to="/blog" className="transition-colors hover:text-stone-700">
-                      {t('blog.title', '撠???')}
+                      {t('blog.title', '部落格')}
                     </Link>
                     <ChevronRight className="h-3 w-3" />
                     <Link
@@ -161,7 +161,7 @@ export default function BlogDetail() {
                       className="mb-8 inline-flex items-center gap-2 text-xs font-medium tracking-[0.18em] text-stone-500 transition-colors hover:text-amber-700"
                     >
                       <ArrowLeft className="h-3.5 w-3.5" />
-                      {t('blog.detail.back', '餈??”')}
+                      {t('blog.detail.back', '返回列表')}
                     </Link>
                     <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
                       {stripBrandPrefix(article.category_name)}
@@ -181,7 +181,7 @@ export default function BlogDetail() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 transition-colors hover:text-[#8e6448]"
                         >
-                          {t('blog.detail.source', '??靘?')}
+                          {t('blog.detail.source', '原文來源')}
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}
@@ -194,7 +194,7 @@ export default function BlogDetail() {
                 <div className="mx-auto max-w-4xl">
                   {translating && (
                     <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                      {t('common.translating', '???')}
+                      {t('common.translating', '翻譯中...')}
                     </div>
                   )}
 
@@ -227,11 +227,11 @@ export default function BlogDetail() {
                         Related
                       </p>
                       <h2 className="text-2xl font-light tracking-[0.12em] text-stone-900">
-                        {t('blog.detail.related', '?賊???')}
+                        {t('blog.detail.related', '相關文章')}
                       </h2>
                     </div>
                     <Link to="/blog" className="text-xs tracking-[0.18em] text-stone-500 transition-colors hover:text-stone-900">
-                      {t('blog.detail.view_all', '?亦??券')}
+                      {t('blog.detail.view_all', '查看全部')}
                     </Link>
                   </div>
 

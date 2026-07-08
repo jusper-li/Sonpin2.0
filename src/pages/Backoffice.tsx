@@ -8,7 +8,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const Dashboard = lazy(() => import('../components/Dashboard'));
 const MemberManagement = lazy(() => import('../components/modules/MemberManagement'));
-const ProductManagement = lazy(() => import('../components/modules/ProductManagement'));
+const ProductManagement = lazy(() => import('../components/modules/ProductManagementClean'));
+const ShippingManagement = lazy(() => import('../components/modules/ShippingManagement'));
 const OrderManagement = lazy(() => import('../components/modules/OrderManagement'));
 const ArticleManagement = lazy(() => import('../components/modules/ArticleManagement'));
 const StoreManagement = lazy(() => import('../components/modules/StoreManagement'));
@@ -85,6 +86,8 @@ function AdminPanel() {
         return <MemberManagement />;
       case 'products':
         return <ProductManagement />;
+      case 'shipping':
+        return <ShippingManagement />;
       case 'orders':
         return <OrderManagement />;
       case 'articles':
