@@ -422,7 +422,7 @@ export default function ShippingManagement() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-700">?迂</label>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">名稱</label>
                       <input
                         type="text"
                         value={row.name}
@@ -459,7 +459,7 @@ export default function ShippingManagement() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-700">??</label>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">金額</label>
                       <input
                         type="number"
                         min={0}
@@ -476,7 +476,7 @@ export default function ShippingManagement() {
                         onChange={(e) => updateFormRow(index, 'is_active', e.target.checked)}
                         className="h-4 w-4 rounded border-slate-300 text-slate-900"
                       />
-                      ?
+                      啟用
                     </label>
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function ShippingManagement() {
                 onClick={closeForm}
                 className="rounded-lg px-4 py-2 text-slate-700 hover:bg-slate-100"
               >
-                ??
+                取消
               </button>
               <button
                 type="button"

@@ -569,7 +569,7 @@ export default function Homepage() {
         `}</style>
         <div className="ym-home-loading-panel text-center">
           <div className="ym-loading-ring mx-auto mb-4" />
-          <p className="text-sm">頛擐???</p>
+          <p className="text-sm">首頁內容載入中...</p>
         </div>
       </div>
     );
