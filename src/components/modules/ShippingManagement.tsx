@@ -158,6 +158,11 @@ export default function ShippingManagement() {
         const payload = normalizePayload(formRows[0]);
         const { error } = await supabase.from('shipping_categories').update(payload).eq('id', editingSingle.id);
         if (error) throw error;
+        if (validRows.length > 1) {
+          const extraPayload = validRows.slice(1).map(normalizePayload);
+          const { error: insertError } = await supabase.from('shipping_categories').insert(extraPayload);
+          if (insertError) throw insertError;
+        }
       } else {
         const payload = validRows.map(normalizePayload);
         const { error } = await supabase.from('shipping_categories').insert(payload);
@@ -307,24 +312,22 @@ export default function ShippingManagement() {
             </div>
 
             <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
-              {!editingSingle && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={addFormRow}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <Plus className="h-4 w-4" />
-                    新增級距列
-                  </button>
-                </div>
-              )}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={addFormRow}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  新增級距列
+                </button>
+              </div>
 
               {formRows.map((row, index) => (
                 <div key={row.id ?? index} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-4 flex items-center justify-between">
                     <div className="font-semibold text-slate-900">{editingSingle ? '運費分類' : `級距 ${index + 1}`}</div>
-                    {!editingSingle && formRows.length > 1 && (
+                    {formRows.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeFormRow(index)}
