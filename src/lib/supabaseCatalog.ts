@@ -37,7 +37,7 @@ export interface CatalogProduct {
   is_hidden: boolean;
   created_at?: string;
   updated_at?: string;
-  categories?: { id: string; name: string; slug: string } | null;
+  categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null;
   category_slug: string;
   category_name: string;
 }
@@ -55,6 +55,28 @@ const parseProductOrder = (value: unknown): string[] => {
     if (Array.isArray(maybe.ids)) return parseProductOrder(maybe.ids);
   }
   return [];
+};
+
+const resolveCategory = (value: unknown): { id: string; name: string; slug: string } | null => {
+  if (!value || typeof value !== 'object') return null;
+
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (first && typeof first === 'object') {
+      const category = first as { id?: unknown; name?: unknown; slug?: unknown };
+      if (typeof category.id === 'string' && typeof category.name === 'string' && typeof category.slug === 'string') {
+        return { id: category.id, name: category.name, slug: category.slug };
+      }
+    }
+    return null;
+  }
+
+  const category = value as { id?: unknown; name?: unknown; slug?: unknown };
+  if (typeof category.id === 'string' && typeof category.name === 'string' && typeof category.slug === 'string') {
+    return { id: category.id, name: category.name, slug: category.slug };
+  }
+
+  return null;
 };
 
 const applyProductOrder = async (products: CatalogProduct[]) => {
@@ -147,11 +169,11 @@ export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
     published_at?: string | null;
     unpublished_at?: string | null;
     is_hidden?: boolean | null;
-    categories?: Array<{ id: string; name: string; slug: string }> | null;
+    categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null;
   }>)
     .filter((item) => item.is_active !== false && item.is_hidden !== true)
     .map((item) => {
-      const category = Array.isArray(item.categories) ? item.categories[0] || null : null;
+      const category = resolveCategory(item.categories);
       const categorySlug = category?.slug || '';
       return {
         id: item.id,
