@@ -13,6 +13,15 @@ interface ShippingCategory {
   created_at?: string | null;
 }
 
+interface ShippingFormRow {
+  id?: string;
+  name: string;
+  quantity: number;
+  quantity_to: number | null;
+  amount: number;
+  is_active: boolean;
+}
+
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 const formatRange = (row: ShippingCategory) => {
@@ -21,20 +30,22 @@ const formatRange = (row: ShippingCategory) => {
   return end === null ? `${start}+` : `${start}-${end}`;
 };
 
+const createEmptyRow = (): ShippingFormRow => ({
+  name: '',
+  quantity: 1,
+  quantity_to: null,
+  amount: 0,
+  is_active: true,
+});
+
 export default function ShippingManagement() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [rows, setRows] = useState<ShippingCategory[]>([]);
-  const [editingRow, setEditingRow] = useState<ShippingCategory | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    quantity: 1,
-    quantity_to: null as number | null,
-    amount: 0,
-    is_active: true,
-  });
+  const [editingSingle, setEditingSingle] = useState<ShippingCategory | null>(null);
+  const [formRows, setFormRows] = useState<ShippingFormRow[]>([createEmptyRow()]);
 
   const load = async () => {
     setLoading(true);
@@ -42,7 +53,8 @@ export default function ShippingManagement() {
       const { data, error } = await supabase
         .from('shipping_categories')
         .select('id,name,quantity,quantity_to,amount,is_active,created_at')
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true })
+        .order('quantity', { ascending: true });
 
       if (error) throw error;
       setRows((data || []) as ShippingCategory[]);
@@ -72,60 +84,85 @@ export default function ShippingManagement() {
 
   const openForm = (row?: ShippingCategory) => {
     if (row) {
-      setEditingRow(row);
-      setForm({
-        name: row.name,
-        quantity: row.quantity,
-        quantity_to: row.quantity_to,
-        amount: row.amount,
-        is_active: row.is_active,
-      });
+      setEditingSingle(row);
+      setFormRows([
+        {
+          id: row.id,
+          name: row.name,
+          quantity: row.quantity,
+          quantity_to: row.quantity_to,
+          amount: row.amount,
+          is_active: row.is_active,
+        },
+      ]);
     } else {
-      setEditingRow(null);
-      setForm({
-        name: '',
-        quantity: 1,
-        quantity_to: null,
-        amount: 0,
-        is_active: true,
-      });
+      setEditingSingle(null);
+      setFormRows([createEmptyRow()]);
     }
     setShowForm(true);
   };
 
   const closeForm = () => {
     setShowForm(false);
-    setEditingRow(null);
+    setEditingSingle(null);
+    setFormRows([createEmptyRow()]);
+  };
+
+  const updateFormRow = (index: number, field: keyof ShippingFormRow, value: string | number | boolean | null) => {
+    setFormRows((prev) =>
+      prev.map((row, rowIndex) =>
+        rowIndex === index
+          ? {
+              ...row,
+              [field]: value,
+            }
+          : row
+      )
+    );
+  };
+
+  const addFormRow = () => {
+    setFormRows((prev) => [...prev, createEmptyRow()]);
+  };
+
+  const removeFormRow = (index: number) => {
+    setFormRows((prev) => (prev.length > 1 ? prev.filter((_, rowIndex) => rowIndex !== index) : prev));
+  };
+
+  const normalizePayload = (row: ShippingFormRow) => {
+    const start = Math.max(1, Number(row.quantity || 1));
+    const end =
+      row.quantity_to === null || row.quantity_to === undefined || row.quantity_to === 0
+        ? null
+        : Math.max(start, Number(row.quantity_to || 0));
+
+    return {
+      name: row.name.trim(),
+      quantity: start,
+      quantity_to: end,
+      amount: Math.max(0, Number(row.amount || 0)),
+      is_active: row.is_active,
+    };
   };
 
   const save = async () => {
-    if (!form.name.trim()) {
-      alert('請輸入運費分類名稱');
+    const validRows = formRows.filter((row) => row.name.trim());
+    if (validRows.length === 0) {
+      alert('請至少輸入一筆運費分類');
       return;
     }
 
     setSaving(true);
     try {
-      const start = Math.max(1, Number(form.quantity || 1));
-      const end =
-        form.quantity_to === null || form.quantity_to === undefined || form.quantity_to === 0
-          ? null
-          : Math.max(start, Number(form.quantity_to || 0));
-
-      const payload = {
-        name: form.name.trim(),
-        quantity: start,
-        quantity_to: end,
-        amount: Math.max(0, Number(form.amount || 0)),
-        is_active: form.is_active,
-      };
-
-      const query = editingRow
-        ? supabase.from('shipping_categories').update(payload).eq('id', editingRow.id)
-        : supabase.from('shipping_categories').insert(payload);
-
-      const { error } = await query;
-      if (error) throw error;
+      if (editingSingle) {
+        const payload = normalizePayload(formRows[0]);
+        const { error } = await supabase.from('shipping_categories').update(payload).eq('id', editingSingle.id);
+        if (error) throw error;
+      } else {
+        const payload = validRows.map(normalizePayload);
+        const { error } = await supabase.from('shipping_categories').insert(payload);
+        if (error) throw error;
+      }
 
       await load();
       closeForm();
@@ -259,83 +296,106 @@ export default function ShippingManagement() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <h2 className="text-xl font-bold text-slate-900">
-                {editingRow ? t('shipping_management.edit_title', '編輯運費分類') : t('shipping_management.add_title', '新增運費分類')}
+                {editingSingle ? '編輯運費分類' : '新增運費分類'}
               </h2>
               <button type="button" onClick={closeForm} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5 text-slate-500" />
               </button>
             </div>
 
-            <div className="space-y-4 px-6 py-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  {t('shipping_management.form_name', '名稱')}
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                  placeholder={t('shipping_management.form_name_placeholder', '例如 常溫宅配')}
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    {t('shipping_management.form_quantity', '起點')}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.quantity}
-                    onChange={(e) => setForm((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                  />
+            <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
+              {!editingSingle && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={addFormRow}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Plus className="h-4 w-4" />
+                    新增級距列
+                  </button>
                 </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">終點</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.quantity_to ?? ''}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        quantity_to: e.target.value === '' ? null : Number(e.target.value),
-                      }))
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                    placeholder="留空代表無上限"
-                  />
+              )}
+
+              {formRows.map((row, index) => (
+                <div key={row.id ?? index} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="font-semibold text-slate-900">{editingSingle ? '運費分類' : `級距 ${index + 1}`}</div>
+                    {!editingSingle && formRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFormRow(index)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                      >
+                        刪除這列
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">名稱</label>
+                      <input
+                        type="text"
+                        value={row.name}
+                        onChange={(e) => updateFormRow(index, 'name', e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                        placeholder="例如 常溫宅配"
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-700">起點</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={row.quantity}
+                          onChange={(e) => updateFormRow(index, 'quantity', Number(e.target.value))}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-700">終點</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={row.quantity_to ?? ''}
+                          onChange={(e) =>
+                            updateFormRow(index, 'quantity_to', e.target.value === '' ? null : Number(e.target.value))
+                          }
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                          placeholder="留空代表無上限"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">金額</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.amount}
+                        onChange={(e) => updateFormRow(index, 'amount', Number(e.target.value))}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      />
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={row.is_active}
+                        onChange={(e) => updateFormRow(index, 'is_active', e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-slate-900"
+                      />
+                      啟用
+                    </label>
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  {t('shipping_management.form_amount', '金額')}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.amount}
-                  onChange={(e) => setForm((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.checked }))}
-                  className="h-4 w-4 rounded border-slate-300 text-slate-900"
-                />
-                {t('shipping_management.form_active', '啟用')}
-              </label>
+              ))}
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
@@ -344,7 +404,7 @@ export default function ShippingManagement() {
                 onClick={closeForm}
                 className="rounded-lg px-4 py-2 text-slate-700 hover:bg-slate-100"
               >
-                {t('common.cancel', '取消')}
+                取消
               </button>
               <button
                 type="button"
@@ -353,7 +413,7 @@ export default function ShippingManagement() {
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
-                {saving ? t('common.saving', '儲存中...') : t('common.save', '儲存')}
+                {saving ? '儲存中...' : '儲存'}
               </button>
             </div>
           </div>
