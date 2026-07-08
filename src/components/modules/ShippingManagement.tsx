@@ -7,6 +7,7 @@ interface ShippingCategory {
   id: string;
   name: string;
   quantity: number;
+  quantity_to: number | null;
   amount: number;
   is_active: boolean;
   created_at?: string | null;
@@ -14,19 +15,10 @@ interface ShippingCategory {
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
-const formatQuantityRange = (row: ShippingCategory, rows: ShippingCategory[]) => {
-  const sameNameRows = rows
-    .filter((item) => item.name === row.name && item.is_active)
-    .sort((a, b) => a.quantity - b.quantity);
-  const currentIndex = sameNameRows.findIndex((item) => item.id === row.id);
-  const nextStart = sameNameRows[currentIndex + 1]?.quantity;
+const formatRange = (row: ShippingCategory) => {
   const start = Math.max(1, Number(row.quantity || 1));
-
-  if (Number.isFinite(nextStart)) {
-    return `${start}-${Math.max(start, Number(nextStart) - 1)}`;
-  }
-
-  return `${start}+`;
+  const end = row.quantity_to === null ? null : Math.max(start, Number(row.quantity_to || 0));
+  return end === null ? `${start}+` : `${start}-${end}`;
 };
 
 export default function ShippingManagement() {
@@ -39,6 +31,7 @@ export default function ShippingManagement() {
   const [form, setForm] = useState({
     name: '',
     quantity: 1,
+    quantity_to: null as number | null,
     amount: 0,
     is_active: true,
   });
@@ -48,7 +41,7 @@ export default function ShippingManagement() {
     try {
       const { data, error } = await supabase
         .from('shipping_categories')
-        .select('id,name,quantity,amount,is_active,created_at')
+        .select('id,name,quantity,quantity_to,amount,is_active,created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -58,7 +51,6 @@ export default function ShippingManagement() {
         setRows([]);
         return;
       }
-
       console.error('Failed to load shipping categories:', error);
       setRows([]);
     } finally {
@@ -84,6 +76,7 @@ export default function ShippingManagement() {
       setForm({
         name: row.name,
         quantity: row.quantity,
+        quantity_to: row.quantity_to,
         amount: row.amount,
         is_active: row.is_active,
       });
@@ -92,6 +85,7 @@ export default function ShippingManagement() {
       setForm({
         name: '',
         quantity: 1,
+        quantity_to: null,
         amount: 0,
         is_active: true,
       });
@@ -112,9 +106,16 @@ export default function ShippingManagement() {
 
     setSaving(true);
     try {
+      const start = Math.max(1, Number(form.quantity || 1));
+      const end =
+        form.quantity_to === null || form.quantity_to === undefined || form.quantity_to === 0
+          ? null
+          : Math.max(start, Number(form.quantity_to || 0));
+
       const payload = {
         name: form.name.trim(),
-        quantity: Math.max(1, Number(form.quantity || 1)),
+        quantity: start,
+        quantity_to: end,
         amount: Math.max(0, Number(form.amount || 0)),
         is_active: form.is_active,
       };
@@ -198,21 +199,11 @@ export default function ShippingManagement() {
           <table className="w-full min-w-[800px]">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  {t('shipping_management.column_name', '名稱')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  {t('shipping_management.column_quantity', '數量')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  {t('shipping_management.column_amount', '金額')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  {t('shipping_management.column_status', '狀態')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  {t('shipping_management.column_actions', '操作')}
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">名稱</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">級距</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">金額</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">狀態</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -227,7 +218,7 @@ export default function ShippingManagement() {
                 <tr key={row.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
                   <td className="px-6 py-4 text-slate-600">
-                    {formatQuantityRange(row, rows)}
+                    {formatRange(row)}
                     <div className="text-xs text-slate-400">起點 {row.quantity}</div>
                   </td>
                   <td className="px-6 py-4 text-slate-600">{formatCurrency(row.amount)}</td>
@@ -288,13 +279,14 @@ export default function ShippingManagement() {
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                  placeholder={t('shipping_management.form_name_placeholder', '例如：常溫宅配')}
+                  placeholder={t('shipping_management.form_name_placeholder', '例如 常溫宅配')}
                 />
               </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    {t('shipping_management.form_quantity', '數量')}
+                    {t('shipping_management.form_quantity', '起點')}
                   </label>
                   <input
                     type="number"
@@ -303,23 +295,38 @@ export default function ShippingManagement() {
                     onChange={(e) => setForm((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
                   />
-                  <p className="mt-2 text-xs text-slate-500">
-                    請輸入級距起點，例如 1、4、7、10，系統會自動顯示成 1-3、4-6、7-9、10+。
-                  </p>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    {t('shipping_management.form_amount', '金額')}
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">終點</label>
                   <input
                     type="number"
-                    min={0}
-                    value={form.amount}
-                    onChange={(e) => setForm((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+                    min={1}
+                    value={form.quantity_to ?? ''}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        quantity_to: e.target.value === '' ? null : Number(e.target.value),
+                      }))
+                    }
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                    placeholder="留空代表無上限"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  {t('shipping_management.form_amount', '金額')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.amount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </div>
+
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
                   type="checkbox"

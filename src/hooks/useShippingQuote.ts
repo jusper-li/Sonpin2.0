@@ -57,13 +57,14 @@ export function useShippingQuote(items: CartItem[]) {
           id: string;
           name: string;
           quantity: number | null;
+          quantity_to: number | null;
           amount: number | null;
         }> = [];
 
         if (shippingCategoryIds.length > 0) {
           const { data, error } = await supabase
             .from('shipping_categories')
-            .select('id, name, quantity, amount, is_active')
+            .select('id, name, quantity, quantity_to, amount, is_active')
             .in('id', shippingCategoryIds)
             .eq('is_active', true);
 
@@ -77,7 +78,7 @@ export function useShippingQuote(items: CartItem[]) {
           if (shippingCategoryNames.length > 0) {
             const { data: groupedCategories, error: groupedError } = await supabase
               .from('shipping_categories')
-              .select('id, name, quantity, amount, is_active')
+              .select('id, name, quantity, quantity_to, amount, is_active')
               .in('name', shippingCategoryNames)
               .eq('is_active', true)
               .order('name')

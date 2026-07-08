@@ -2,6 +2,7 @@ export interface ShippingCategoryRow {
   id: string;
   name: string;
   quantity: number | null;
+  quantity_to: number | null;
   amount: number | null;
 }
 
@@ -82,21 +83,26 @@ export function calculateShippingQuote(
         .sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
 
       const chosen =
-        candidates
-          .filter((row) => Number(row.quantity || 0) <= entry.quantity)
-          .at(-1) ||
+        candidates.find((row) => {
+          const start = Number(row.quantity || 0);
+          const end = row.quantity_to === null ? null : Number(row.quantity_to);
+          return entry.quantity >= start && (end === null || entry.quantity <= end);
+        }) ||
         candidates[0] ||
         null;
 
       const fee = Math.max(0, Number(chosen?.amount || 0));
       const start = Number(chosen?.quantity || 1);
-      const nextStart = candidates.find((row) => Number(row.quantity || 0) > start)?.quantity;
+      const end = chosen?.quantity_to;
 
       return {
         categoryId: chosen?.id || candidates[0]?.id || entry.categoryName,
         categoryName: entry.categoryName,
         quantity: entry.quantity,
-        quantityLabel: nextStart ? `${start}-${Math.max(start, Number(nextStart) - 1)}` : `${start}+`,
+        quantityLabel:
+          end === null || end === undefined
+            ? `${start}+`
+            : `${start}-${Math.max(start, Number(end))}`,
         fee,
         amount: fee,
       };

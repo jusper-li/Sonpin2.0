@@ -1,4 +1,4 @@
-/*
+﻿/*
   Add configurable shipping categories and link products to them.
   Checkout can then calculate shipping automatically from the products in cart.
 */
@@ -7,11 +7,13 @@ create table if not exists public.shipping_categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   quantity integer not null default 1,
+  quantity_to integer,
   amount numeric not null default 0,
   is_active boolean not null default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   constraint shipping_categories_quantity_check check (quantity > 0),
+  constraint shipping_categories_quantity_to_check check (quantity_to is null or quantity_to >= quantity),
   constraint shipping_categories_amount_check check (amount >= 0)
 );
 
@@ -64,8 +66,8 @@ end $$;
 create index if not exists idx_products_shipping_category_id
   on public.products(shipping_category_id);
 
-insert into public.shipping_categories (name, quantity, amount, is_active)
-select '常溫宅配', 1, 100, true
+insert into public.shipping_categories (name, quantity, quantity_to, amount, is_active)
+select '常溫宅配', 1, null, 100, true
 where not exists (
   select 1
   from public.shipping_categories
