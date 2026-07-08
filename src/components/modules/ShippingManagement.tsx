@@ -234,7 +234,7 @@ export default function ShippingManagement() {
       await load();
     } catch (error) {
       console.error('Failed to delete shipping category:', error);
-      alert('?芷憭望?嚗?蝔??岫');
+      alert('刪除失敗，請稍後再試');
     }
   };
 
@@ -247,7 +247,7 @@ export default function ShippingManagement() {
       await load();
     } catch (error) {
       console.error('Failed to delete shipping category group:', error);
-      alert('?芷憭望?嚗?蝔??岫');
+      alert('刪除失敗，請稍後再試');
     }
   };
 
@@ -276,7 +276,7 @@ export default function ShippingManagement() {
             className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800"
           >
             <Plus className="h-4 w-4" />
-            {t('shipping_management.add', '?啣??祥??')}
+            {t('shipping_management.add', '新增運費分類')}
           </button>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function ShippingManagement() {
               {rows.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
-                    {loading ? t('common.loading', '頛銝?..') : t('shipping_management.empty_state', '撠撱箇??祥??')}
+                    {loading ? t('common.loading', '載入中...') : t('shipping_management.empty_state', '目前沒有運費設定')}
                   </td>
                 </tr>
               )}
@@ -386,7 +386,7 @@ export default function ShippingManagement() {
           <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <h2 className="text-xl font-bold text-slate-900">
-                {editingSingle ? '蝺刻摩?祥??' : '?啣??祥??'}
+                {editingSingle ? '編輯運費設定' : '新增運費設定'}
               </h2>
               <button type="button" onClick={closeForm} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5 text-slate-500" />
@@ -401,20 +401,21 @@ export default function ShippingManagement() {
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                 >
                   <Plus className="h-4 w-4" />
-                  ?啣?蝝???                </button>
+                  新增級距列
+                </button>
               </div>
 
               {formRows.map((row, index) => (
                 <div key={row.id ?? index} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-4 flex items-center justify-between">
-                    <div className="font-semibold text-slate-900">{editingSingle ? '?祥??' : `蝝? ${index + 1}`}</div>
+                    <div className="font-semibold text-slate-900">{editingSingle ? '運費設定' : `級距 ${index + 1}`}</div>
                     {formRows.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeFormRow(index)}
                         className="text-sm text-rose-600 hover:text-rose-700"
                       >
-                        ?芷??
+                        刪除這列
                       </button>
                     )}
                   </div>
@@ -427,13 +428,13 @@ export default function ShippingManagement() {
                         value={row.name}
                         onChange={(e) => updateFormRow(index, 'name', e.target.value)}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                        placeholder="靘? 撣豢澈摰?"
+                        placeholder="輸入名稱，例如常溫宅配"
                       />
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">韏琿?</label>
+                        <label className="mb-2 block text-sm font-medium text-slate-700">起點</label>
                         <input
                           type="number"
                           min={1}
@@ -443,7 +444,7 @@ export default function ShippingManagement() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">蝯?</label>
+                        <label className="mb-2 block text-sm font-medium text-slate-700">終點</label>
                         <input
                           type="number"
                           min={1}
@@ -497,7 +498,7 @@ export default function ShippingManagement() {
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
-                {saving ? '?脣?銝?..' : '?脣?'}
+                {saving ? '儲存中...' : '儲存'}
               </button>
             </div>
           </div>
