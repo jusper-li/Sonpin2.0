@@ -255,7 +255,7 @@ export default function ShippingManagement() {
     <div className="p-6">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('shipping_management.title', '?祥閮剖?')}</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{t('shipping_management.title', '運費設定')}</h1>
           <p className="mt-2 text-slate-600">
             {t('shipping_management.subtitle', '建立商品運費分類，讓結帳時依商品自動計算運費。')}
           </p>
@@ -283,7 +283,7 @@ export default function ShippingManagement() {
 
       <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm text-slate-500">{t('shipping_management.total_count', '??蝮賣')}</div>
+          <div className="text-sm text-slate-500">{t('shipping_management.total_count', '分類總數')}</div>
           <div className="mt-2 text-3xl font-bold text-slate-900">{stats.totalCount}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -294,7 +294,7 @@ export default function ShippingManagement() {
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-900">{t('shipping_management.list_title', '?祥???”')}</h3>
+          <h3 className="text-lg font-bold text-slate-900">{t('shipping_management.list_title', '運費分類列表')}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
