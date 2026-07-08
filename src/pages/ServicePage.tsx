@@ -5,34 +5,30 @@ import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
-import { isSupabaseContentEnabled } from '../lib/supabase';
-import { getFallbackServiceContent, loadServiceContent, type ServiceContentPayload } from '../lib/serviceContentStore';
+import { loadServiceArticles, type ServiceArticleRow } from '../lib/serviceArticleStore';
+import { SERVICE_ARTICLE_SLUGS, buildServiceArticleRows } from '../lib/serviceArticleSeed';
 
 export default function ServicePage() {
-  const [content, setContent] = useState<ServiceContentPayload | null>(() => (isSupabaseContentEnabled ? null : getFallbackServiceContent()));
-  const [loading, setLoading] = useState(isSupabaseContentEnabled);
+  const [articles, setArticles] = useState<ServiceArticleRow[]>(() => buildServiceArticleRows());
+  const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '服務分享',
-    description: '瀏覽最新的服務分享與門市資訊。',
-    keywords: '服務分享,門市資訊,最新分享',
+    title: '文章列表',
+    description: '瀏覽淞品相關文章與服務資訊。',
+    keywords: '文章列表,淞品,服務文章',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
-      { name: '服務分享', url: `${window.location.origin}/service` },
+      { name: '文章列表', url: `${window.location.origin}/service` },
     ]),
   });
 
   useEffect(() => {
-    if (!isSupabaseContentEnabled) {
-      return;
-    }
-
     let alive = true;
 
     const run = async () => {
-      const result = await loadServiceContent();
+      const items = await loadServiceArticles();
       if (!alive) return;
-      setContent(result.content);
+      setArticles(items.filter((item) => SERVICE_ARTICLE_SLUGS.includes(item.slug)));
       setLoading(false);
     };
 
@@ -42,8 +38,6 @@ export default function ServicePage() {
       alive = false;
     };
   }, []);
-
-  const shares = content?.shares || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
@@ -57,11 +51,11 @@ export default function ServicePage() {
                 首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">服務分享</span>
+              <span className="text-stone-700">文章列表</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Share</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Article List</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              服務分享
+              文章列表
             </h1>
           </div>
         </section>
@@ -69,11 +63,11 @@ export default function ServicePage() {
         <section className="container mx-auto px-6 py-14">
           {loading ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] px-6 py-12 text-center text-sm text-stone-500">
-              載入服務分享中…
+              載入文章中…
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {shares.map((item) => (
+              {articles.map((item) => (
                 <Link
                   key={item.slug}
                   to={`/service/${item.slug}`}
@@ -81,7 +75,7 @@ export default function ServicePage() {
                 >
                   <div className="aspect-[4/3] overflow-hidden bg-stone-100">
                     <img
-                      src={item.image}
+                      src={item.featured_image || '/sonpin-images/153285217452.jpg'}
                       alt={item.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       loading="lazy"

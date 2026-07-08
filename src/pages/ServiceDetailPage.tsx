@@ -4,25 +4,23 @@ import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
-import { isSupabaseContentEnabled } from '../lib/supabase';
-import { getFallbackServiceContent, loadServiceContent, type ServiceContentPayload } from '../lib/serviceContentStore';
+import { loadServiceArticle, type ServiceArticleRow } from '../lib/serviceArticleStore';
+import { buildServiceArticleRows } from '../lib/serviceArticleSeed';
 
 export default function ServiceDetailPage() {
   const { slug = '' } = useParams();
-  const [content, setContent] = useState<ServiceContentPayload | null>(() => (isSupabaseContentEnabled ? null : getFallbackServiceContent()));
-  const [loading, setLoading] = useState(isSupabaseContentEnabled);
+  const [article, setArticle] = useState<ServiceArticleRow | null>(() => buildServiceArticleRows().find((item) => item.slug === slug) || null);
+  const [loading, setLoading] = useState(true);
+
+  const renderedContent = article ? stripServiceMeta(article.content) : '';
 
   useEffect(() => {
-    if (!isSupabaseContentEnabled) {
-      return;
-    }
-
     let alive = true;
 
     const run = async () => {
-      const result = await loadServiceContent();
+      const item = await loadServiceArticle(slug);
       if (!alive) return;
-      setContent(result.content);
+      setArticle(item);
       setLoading(false);
     };
 
@@ -31,13 +29,11 @@ export default function ServiceDetailPage() {
     return () => {
       alive = false;
     };
-  }, []);
-
-  const item = content?.details?.[slug] || null;
+  }, [slug]);
 
   useSEO({
-    title: item?.title || '服務分享',
-    description: item?.paragraphs?.[0] || '瀏覽最新的服務分享與門市資訊。',
+    title: article?.title || '文章列表',
+    description: article?.excerpt || '瀏覽最新的文章內容與門市資訊。',
   });
 
   if (loading) {
@@ -45,19 +41,19 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">載入服務內容中…</p>
+          <p className="text-sm text-stone-500">載入文章中…</p>
         </main>
         <DeferredSiteFooter />
       </div>
     );
   }
 
-  if (!item) {
+  if (!article) {
     return (
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">找不到這則服務分享。</p>
+          <p className="text-sm text-stone-500">找不到這篇文章。</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -77,34 +73,22 @@ export default function ServiceDetailPage() {
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/service" className="transition-colors hover:text-stone-700">
-                服務分享
+                文章列表
               </Link>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Share</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Article</p>
             <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
-              {item.title}
+              {article.title}
             </h1>
           </div>
         </section>
 
         <section className="container mx-auto px-6 py-14">
           <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-            <img src={item.banner} alt={item.title} className="h-auto w-full object-cover" loading="lazy" />
+            <img src={article.featured_image || '/sonpin-images/153285217452.jpg'} alt={article.title} className="h-auto w-full object-cover" loading="lazy" />
             <div className="p-6 md:p-8">
-              <div className="mb-6 text-sm leading-7 text-[#6d4f3d]">
-                <p className="font-medium text-[#8e6448]">{item.storeName}</p>
-                {item.phone ? <p>電話：{item.phone}</p> : null}
-                <p>地址：{item.address}</p>
-              </div>
-
               <div className="overflow-hidden rounded-2xl bg-stone-50">
-                <img src={item.image} alt={item.title} className="w-full object-cover" loading="lazy" />
-              </div>
-
-              <div className="mt-8 space-y-5 text-sm leading-8 text-[#6d4f3d]">
-                {item.paragraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
+                <div className="prose prose-stone max-w-none p-6" dangerouslySetInnerHTML={{ __html: renderedContent }} />
               </div>
             </div>
           </article>
@@ -114,4 +98,12 @@ export default function ServiceDetailPage() {
       <DeferredSiteFooter />
     </div>
   );
+}
+
+function stripServiceMeta(content: string) {
+  return content
+    .replace(/^<div class="service-article"><figure><img[^>]*><\/figure>/, '<div class="service-article">')
+    .replace(/<div class="service-article__meta">[\s\S]*?<\/div>/, '')
+    .replace(/^<div class="service-article">/, '<div class="service-article"><div class="space-y-5">')
+    .replace(/<\/div><\/div>$/, '</div></div>');
 }
