@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Gift, Search, Shield, ShoppingBag, Truck } from 'lucide-react';
+import { ChevronRight, Gift, Search, Shield, ShoppingBag, ShoppingCart, Truck } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
+import { useCart } from '../contexts/CartContext';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, collectionPageSchema } from '../utils/schemaMarkup';
 import { loadCatalogCategories, loadCatalogProducts, type CatalogCategory } from '../lib/supabaseCatalog';
@@ -34,6 +35,7 @@ const PROMISES: Array<{ id: string; icon: typeof Gift; title: string; text: stri
 const getProductPath = (slug: string, categorySlug: string) => `/products/${categorySlug === 'main-products' ? '6' : '7'}/${slug}`;
 
 export default function Shop() {
+  const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('newest');
@@ -233,6 +235,20 @@ export default function Shop() {
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredProducts.map((product) => {
                 const displayPrice = product.sale_price ?? product.price;
+                const handleAddToCart = () => {
+                  addToCart(
+                    {
+                      id: product.id,
+                      productId: product.id,
+                      name: product.name,
+                      price: product.price,
+                      salePrice: product.sale_price,
+                      image: product.images?.[0] || '',
+                      slug: product.slug,
+                    },
+                    1
+                  );
+                };
 
                 return (
                   <article key={product.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
@@ -261,13 +277,23 @@ export default function Shop() {
                             <span className="text-xs text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <Link
-                          to={getProductPath(product.slug, product.category_slug)}
-                          className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs tracking-[0.16em] text-stone-600 transition-colors hover:border-stone-900 hover:bg-stone-900 hover:text-white"
-                        >
-                          <ShoppingBag className="h-3.5 w-3.5" />
-                          查看商品
-                        </Link>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            className="inline-flex items-center gap-2 rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-xs tracking-[0.16em] text-white transition-colors hover:bg-stone-700"
+                          >
+                            <ShoppingCart className="h-3.5 w-3.5" />
+                            加入購物車
+                          </button>
+                          <Link
+                            to={getProductPath(product.slug, product.category_slug)}
+                            className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs tracking-[0.16em] text-stone-600 transition-colors hover:border-stone-900 hover:bg-stone-900 hover:text-white"
+                          >
+                            <ShoppingBag className="h-3.5 w-3.5" />
+                            查看商品
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </article>
