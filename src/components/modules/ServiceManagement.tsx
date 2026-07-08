@@ -82,7 +82,7 @@ export default function ServiceManagement() {
     <div className="p-6">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">服務分享管理</h1>
+          <h1 className="text-3xl font-bold text-slate-900">文章列表</h1>
           <p className="mt-2 text-slate-600">前台 `/service` 與 `/service/:slug` 會優先讀取這裡的設定。</p>
         </div>
         <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${source === 'supabase' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
@@ -102,7 +102,7 @@ export default function ServiceManagement() {
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">內容 JSON</h2>
+            <h2 className="text-lg font-bold text-slate-900">文章列表 JSON</h2>
             <p className="mt-1 text-sm text-slate-500">可直接編輯完整內容，儲存後會覆蓋 `site_settings.service_content`。</p>
           </div>
           <div className="flex items-center gap-2">
