@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Gift, Search, Shield, ShoppingBag, ShoppingCart, Truck } from 'lucide-react';
+import { ChevronRight, Gift, Search, Shield, ShoppingCart, Truck } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
@@ -277,22 +277,15 @@ export default function Shop() {
                             <span className="text-xs text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={handleAddToCart}
-                            className="inline-flex items-center gap-2 rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-xs tracking-[0.16em] text-white transition-colors hover:bg-stone-700"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-900 bg-stone-900 text-white transition-colors hover:bg-stone-700"
+                            aria-label={`加入購物車：${product.name}`}
                           >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                            加入購物車
+                            <ShoppingCart className="h-4 w-4" />
                           </button>
-                          <Link
-                            to={getProductPath(product.slug, product.category_slug)}
-                            className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs tracking-[0.16em] text-stone-600 transition-colors hover:border-stone-900 hover:bg-stone-900 hover:text-white"
-                          >
-                            <ShoppingBag className="h-3.5 w-3.5" />
-                            查看商品
-                          </Link>
                         </div>
                       </div>
                     </div>
