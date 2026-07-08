@@ -32,6 +32,16 @@ const PROMISES: Array<{ id: string; icon: typeof Gift; title: string; text: stri
   { id: 'quality', icon: Shield, title: '安心品質', text: '嚴選食材，穩定工法' },
 ];
 
+const STORE_ONLY_PRODUCT_SLUGS = new Set([
+  'sonpin-salted-half-chicken',
+  'sonpin-smoked-half-chicken',
+  'sonpin-salted-plate',
+  'sonpin-smoked-plate',
+  'sonpin-braised-chicken-feet',
+  'sonpin-chicken-gizzard',
+  'sonpin-chicken-intestine',
+]);
+
 const getProductPath = (slug: string, categorySlug: string) => `/products/${categorySlug === 'main-products' ? '6' : '7'}/${slug}`;
 
 export default function Shop() {
@@ -235,6 +245,7 @@ export default function Shop() {
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredProducts.map((product) => {
                 const displayPrice = product.sale_price ?? product.price;
+                const storeOnly = product.category_slug === 'other-products' || STORE_ONLY_PRODUCT_SLUGS.has(product.slug);
                 const handleAddToCart = () => {
                   addToCart(
                     {
@@ -253,7 +264,12 @@ export default function Shop() {
                 return (
                   <article key={product.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
                     <Link to={getProductPath(product.slug, product.category_slug)}>
-                      <div className="aspect-square bg-stone-100">
+                      <div className="relative aspect-square bg-stone-100">
+                        {storeOnly && (
+                          <span className="absolute left-3 top-3 z-10 rounded-full bg-stone-900/90 px-3 py-1 text-[10px] font-semibold tracking-[0.2em] text-white shadow-lg">
+                            門市限定
+                          </span>
+                        )}
                         <ProductImage
                           src={product.images?.[0]}
                           alt={product.name}
@@ -277,16 +293,20 @@ export default function Shop() {
                             <span className="text-xs text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={handleAddToCart}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-900 bg-stone-900 text-white transition-colors hover:bg-stone-700"
-                            aria-label={`加入購物車：${product.name}`}
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {storeOnly ? (
+                          <span className="text-xs tracking-[0.16em] text-stone-400">僅供門市販售</span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={handleAddToCart}
+                              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-900 bg-stone-900 text-white transition-colors hover:bg-stone-700"
+                              aria-label={`加入購物車：${product.name}`}
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </article>

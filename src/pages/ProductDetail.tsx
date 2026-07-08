@@ -218,7 +218,12 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
   return (
     <article className="group">
         <Link to={`/products/${getProductCategoryPath(product.categories?.slug)}/${product.slug}`} className="block">
-        <div className="mb-3 overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#f7efe5] transition-all group-hover:border-[#d8bda4] group-hover:shadow-lg aspect-square">
+        <div className="relative mb-3 overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#f7efe5] transition-all group-hover:border-[#d8bda4] group-hover:shadow-lg aspect-square">
+          {storeOnly && (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-stone-900/90 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-white shadow-lg">
+              門市限定
+            </span>
+          )}
           <ProductImage
             src={product.images?.[0]}
             alt={translatedName}
@@ -238,27 +243,27 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
           )}
         </div>
       </Link>
-      <button
-        onClick={() => {
-          if (storeOnly) return;
-          addToCart(
-            {
-              id: product.id,
-              productId: product.id,
-              name: translatedName,
-              price: product.price,
-              salePrice: product.sale_price,
-              image: product.images?.[0] || '',
-              slug: product.slug,
-            },
-            1
-          );
-        }}
-        disabled={storeOnly}
-        className="mt-3 w-full rounded-xl border border-[#d8c8b6] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[#fffaf2] disabled:cursor-not-allowed disabled:border-[#eadfd1] disabled:bg-[#f7efe5] disabled:text-stone-400"
-      >
-        {storeOnly ? t('product.detail.storeOnly', '僅供門市販售') : t('product.detail.related.add', '加入購物車')}
-      </button>
+      {!storeOnly && (
+        <button
+          onClick={() => {
+            addToCart(
+              {
+                id: product.id,
+                productId: product.id,
+                name: translatedName,
+                price: product.price,
+                salePrice: product.sale_price,
+                image: product.images?.[0] || '',
+                slug: product.slug,
+              },
+              1
+            );
+          }}
+          className="mt-3 w-full rounded-xl border border-[#d8c8b6] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[#fffaf2]"
+        >
+          {t('product.detail.related.add', '加入購物車')}
+        </button>
+      )}
     </article>
   );
 }
@@ -689,9 +694,16 @@ export default function ProductDetail() {
                       {t(`product.category.${product.categories.slug}`, product.categories.name)}
                     </p>
                   )}
-                  <h1 className="text-[24px] font-light leading-[1.36] tracking-normal text-stone-800 sm:text-[28px] lg:text-[32px]">
-                    {translatedName}
-                  </h1>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-[24px] font-light leading-[1.36] tracking-normal text-stone-800 sm:text-[28px] lg:text-[32px]">
+                      {translatedName}
+                    </h1>
+                    {storeOnly && (
+                      <span className="rounded-full bg-stone-900 px-3 py-1 text-[10px] font-semibold tracking-[0.2em] text-white shadow-sm">
+                        門市限定
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2 pt-1">
                   <button
@@ -828,42 +840,40 @@ export default function ProductDetail() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={storeOnly || !inStock}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-sm font-semibold transition-all duration-200 ${
-                      storeOnly
-                        ? 'cursor-not-allowed bg-stone-100 text-stone-400'
-                        : added
-                        ? 'bg-green-600 text-white'
-                        : inStock
-                          ? 'border border-stone-200 bg-stone-100 text-stone-700 hover:bg-stone-200 active:bg-stone-300'
-                          : 'cursor-not-allowed bg-stone-100 text-stone-300'
-                    }`}
-                  >
-                    {storeOnly ? (
-                      <>{purchaseUnavailableLabel}</>
-                    ) : added ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        {t('product.detail.added', '已加入購物車！')}
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="h-4 w-4" />
-                        {t('product.detail.addToCart', '加入購物車')}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleBuyNow}
-                    disabled={storeOnly || !inStock}
-                    className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-4 text-sm font-semibold text-white transition-all hover:bg-stone-700 active:bg-stone-900 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
-                  >
-                    {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
-                  </button>
-                </div>
+                {!storeOnly && (
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={!inStock}
+                      className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-sm font-semibold transition-all duration-200 ${
+                        added
+                          ? 'bg-green-600 text-white'
+                          : inStock
+                            ? 'border border-stone-200 bg-stone-100 text-stone-700 hover:bg-stone-200 active:bg-stone-300'
+                            : 'cursor-not-allowed bg-stone-100 text-stone-300'
+                      }`}
+                    >
+                      {added ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          {t('product.detail.added', '已加入購物車！')}
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="h-4 w-4" />
+                          {t('product.detail.addToCart', '加入購物車')}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleBuyNow}
+                      disabled={!inStock}
+                      className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-4 text-sm font-semibold text-white transition-all hover:bg-stone-700 active:bg-stone-900 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+                    >
+                      {inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="mb-8 grid grid-cols-2 gap-2.5">
@@ -934,46 +944,44 @@ export default function ProductDetail() {
           </section>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-3 border-t border-stone-100 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-sm lg:hidden">
-          <div className="flex min-w-[84px] flex-shrink-0 flex-col justify-center">
-            <span className="text-base font-semibold text-stone-900">NT$ {displayPrice.toLocaleString()}</span>
-            {hasDiscount && <span className="text-xs text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>}
+        {!storeOnly && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-3 border-t border-stone-100 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-sm lg:hidden">
+            <div className="flex min-w-[84px] flex-shrink-0 flex-col justify-center">
+              <span className="text-base font-semibold text-stone-900">NT$ {displayPrice.toLocaleString()}</span>
+              {hasDiscount && <span className="text-xs text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>}
+            </div>
+            <button
+              onClick={handleAddToCart}
+              disabled={!inStock}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-all ${
+                added
+                  ? 'bg-green-600 text-white'
+                  : inStock
+                    ? 'border border-stone-200 text-stone-700 hover:bg-stone-50'
+                    : 'cursor-not-allowed border border-stone-100 text-stone-300'
+              }`}
+            >
+              {added ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  {t('product.detail.addedShort', '已加入')}
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-4 w-4" />
+                  {t('product.detail.addToCart', '加入購物車')}
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={!inStock}
+              className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-3.5 text-sm font-semibold text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
+            >
+              {inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
+            </button>
           </div>
-          <button
-            onClick={handleAddToCart}
-            disabled={storeOnly || !inStock}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-all ${
-              storeOnly
-                ? 'cursor-not-allowed border border-stone-100 text-stone-300'
-                : added
-                ? 'bg-green-600 text-white'
-                : inStock
-                  ? 'border border-stone-200 text-stone-700 hover:bg-stone-50'
-                  : 'cursor-not-allowed border border-stone-100 text-stone-300'
-            }`}
-          >
-            {storeOnly ? (
-              <>{purchaseUnavailableLabel}</>
-            ) : added ? (
-              <>
-                <Check className="h-4 w-4" />
-                {t('product.detail.addedShort', '已加入')}
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                {t('product.detail.addToCart', '加入購物車')}
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleBuyNow}
-            disabled={storeOnly || !inStock}
-            className="flex flex-1 items-center justify-center rounded-xl bg-stone-800 py-3.5 text-sm font-semibold text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
-          >
-            {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
-          </button>
-        </div>
+        )}
 
         {showStickyBar && (
           <div className="fixed left-0 right-0 top-[72px] z-30 hidden border-b border-stone-100 bg-white/95 shadow-sm backdrop-blur-sm lg:block">
@@ -991,42 +999,40 @@ export default function ProductDetail() {
                 <span className="text-lg font-semibold text-stone-900">NT$ {displayPrice.toLocaleString()}</span>
                 {product.sale_price && <span className="text-sm text-stone-300 line-through">NT$ {product.price.toLocaleString()}</span>}
               </div>
-              <div className="flex flex-shrink-0 gap-2">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={storeOnly || !inStock}
-                  className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all ${
-                    storeOnly
-                      ? 'border border-stone-100 text-stone-300'
-                      : added
-                      ? 'bg-green-600 text-white'
-                      : inStock
-                        ? 'border border-stone-200 text-stone-700 hover:bg-stone-100'
-                        : 'border border-stone-100 text-stone-300'
-                  }`}
-                >
-                  {storeOnly ? (
-                    <>{purchaseUnavailableLabel}</>
-                  ) : added ? (
-                    <>
-                      <Check className="h-3.5 w-3.5" />
-                      {t('product.detail.addedShort', '已加入')}
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="h-3.5 w-3.5" />
-                      {t('product.detail.addToCart', '加入購物車')}
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleBuyNow}
-                  disabled={storeOnly || !inStock}
-                  className="rounded-lg bg-stone-800 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
-                >
-                  {storeOnly ? purchaseUnavailableLabel : inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
-                </button>
-              </div>
+              {!storeOnly && (
+                <div className="flex flex-shrink-0 gap-2">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!inStock}
+                    className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all ${
+                      added
+                        ? 'bg-green-600 text-white'
+                        : inStock
+                          ? 'border border-stone-200 text-stone-700 hover:bg-stone-100'
+                          : 'border border-stone-100 text-stone-300'
+                    }`}
+                  >
+                    {added ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        {t('product.detail.addedShort', '已加入')}
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        {t('product.detail.addToCart', '加入購物車')}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={!inStock}
+                    className="rounded-lg bg-stone-800 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-stone-700 disabled:bg-stone-200 disabled:text-stone-400"
+                  >
+                    {inStock ? t('product.detail.buyNow', '立即購買') : t('product.detail.soldOut', '缺貨中')}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
