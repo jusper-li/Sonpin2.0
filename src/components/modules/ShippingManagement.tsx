@@ -14,6 +14,21 @@ interface ShippingCategory {
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
+const formatQuantityRange = (row: ShippingCategory, rows: ShippingCategory[]) => {
+  const sameNameRows = rows
+    .filter((item) => item.name === row.name && item.is_active)
+    .sort((a, b) => a.quantity - b.quantity);
+  const currentIndex = sameNameRows.findIndex((item) => item.id === row.id);
+  const nextStart = sameNameRows[currentIndex + 1]?.quantity;
+  const start = Math.max(1, Number(row.quantity || 1));
+
+  if (Number.isFinite(nextStart)) {
+    return `${start}-${Math.max(start, Number(nextStart) - 1)}`;
+  }
+
+  return `${start}+`;
+};
+
 export default function ShippingManagement() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -211,7 +226,10 @@ export default function ShippingManagement() {
               {rows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
-                  <td className="px-6 py-4 text-slate-600">{row.quantity}</td>
+                  <td className="px-6 py-4 text-slate-600">
+                    {formatQuantityRange(row, rows)}
+                    <div className="text-xs text-slate-400">起點 {row.quantity}</div>
+                  </td>
                   <td className="px-6 py-4 text-slate-600">{formatCurrency(row.amount)}</td>
                   <td className="px-6 py-4">
                     <span
@@ -285,6 +303,9 @@ export default function ShippingManagement() {
                     onChange={(e) => setForm((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2"
                   />
+                  <p className="mt-2 text-xs text-slate-500">
+                    請輸入級距起點，例如 1、4、7、10，系統會自動顯示成 1-3、4-6、7-9、10+。
+                  </p>
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">

@@ -14,7 +14,7 @@ export interface ShippingQuoteBreakdownItem {
   categoryId: string;
   categoryName: string;
   quantity: number;
-  unitQuantity: number;
+  quantityLabel: string;
   amount: number;
   fee: number;
 }
@@ -39,11 +39,9 @@ export function calculateShippingQuote(
   const grouped = new Map<
     string,
     {
-      categoryId: string;
       categoryName: string;
       quantity: number;
-      unitQuantity: number;
-      amount: number;
+      matchingCategories: ShippingCategoryRow[];
     }
   >();
 
@@ -55,32 +53,52 @@ export function calculateShippingQuote(
     const category = categoryById.get(categoryId);
     if (!category) continue;
 
-    const unitQuantity = Math.max(1, Number(category.quantity || 1));
-    const amount = Math.max(0, Number(category.amount || 0));
     const quantity = Math.max(0, Number(item.quantity || 0));
     if (quantity <= 0) continue;
 
-    const existing = grouped.get(categoryId);
+    const groupKey = category.name.trim();
+    if (!groupKey) continue;
+
+    const existing = grouped.get(groupKey);
     if (existing) {
       existing.quantity += quantity;
+      if (!existing.matchingCategories.some((row) => row.id === category.id)) {
+        existing.matchingCategories.push(category);
+      }
       continue;
     }
 
-    grouped.set(categoryId, {
-      categoryId,
+    grouped.set(groupKey, {
       categoryName: category.name,
       quantity,
-      unitQuantity,
-      amount,
+      matchingCategories: [category],
     });
   }
 
   const breakdown = Array.from(grouped.values())
     .map((entry) => {
-      const fee = Math.ceil(entry.quantity / entry.unitQuantity) * entry.amount;
+      const candidates = entry.matchingCategories
+        .filter((row) => row.quantity !== null && row.amount !== null)
+        .sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
+
+      const chosen =
+        candidates
+          .filter((row) => Number(row.quantity || 0) <= entry.quantity)
+          .at(-1) ||
+        candidates[0] ||
+        null;
+
+      const fee = Math.max(0, Number(chosen?.amount || 0));
+      const start = Number(chosen?.quantity || 1);
+      const nextStart = candidates.find((row) => Number(row.quantity || 0) > start)?.quantity;
+
       return {
-        ...entry,
+        categoryId: chosen?.id || candidates[0]?.id || entry.categoryName,
+        categoryName: entry.categoryName,
+        quantity: entry.quantity,
+        quantityLabel: nextStart ? `${start}-${Math.max(start, Number(nextStart) - 1)}` : `${start}+`,
         fee,
+        amount: fee,
       };
     })
     .sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'zh-Hant'));

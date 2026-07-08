@@ -63,12 +63,29 @@ export function useShippingQuote(items: CartItem[]) {
         if (shippingCategoryIds.length > 0) {
           const { data, error } = await supabase
             .from('shipping_categories')
-            .select('id, name, quantity, amount')
+            .select('id, name, quantity, amount, is_active')
             .in('id', shippingCategoryIds)
             .eq('is_active', true);
 
           if (error) throw error;
           shippingCategories = data || [];
+
+          const shippingCategoryNames = Array.from(
+            new Set(shippingCategories.map((category) => category.name).filter(Boolean))
+          );
+
+          if (shippingCategoryNames.length > 0) {
+            const { data: groupedCategories, error: groupedError } = await supabase
+              .from('shipping_categories')
+              .select('id, name, quantity, amount, is_active')
+              .in('name', shippingCategoryNames)
+              .eq('is_active', true)
+              .order('name')
+              .order('quantity', { ascending: true });
+
+            if (groupedError) throw groupedError;
+            shippingCategories = groupedCategories || [];
+          }
         }
 
         const quote = calculateShippingQuote(items, products || [], shippingCategories);
