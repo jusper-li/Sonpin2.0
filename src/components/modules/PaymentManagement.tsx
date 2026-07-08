@@ -15,7 +15,6 @@ type PaymentRow = {
   created_at: string;
   order?: {
     order_number?: string;
-    customer_name?: string;
   } | null;
 };
 
@@ -47,7 +46,7 @@ export default function PaymentManagement() {
     try {
       const { data, error } = await supabase
         .from('payments')
-        .select('id,order_id,amount,method,status,gateway_name,transaction_id,paid_at,created_at,orders(order_number,customer_name)')
+        .select('id,order_id,amount,method,status,gateway_name,transaction_id,paid_at,created_at,orders(order_number,member_id)')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -151,7 +150,7 @@ export default function PaymentManagement() {
                 <tr key={row.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-900">{row.order?.order_number || '-'}</div>
-                    <div className="text-xs text-slate-500">{row.order?.customer_name || ''}</div>
+                    <div className="text-xs text-slate-500">{row.order?.member_id ? `Member ${row.order.member_id.slice(0, 8)}...` : ''}</div>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900">{formatCurrency(Number(row.amount || 0))}</td>
                   <td className="px-6 py-4 text-slate-600">{row.method || '-'}</td>
