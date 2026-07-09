@@ -27,10 +27,38 @@ type ShopProduct = {
   created_at?: string;
 };
 
-const PROMISES: Array<{ id: string; icon: typeof Gift; title: string; text: string }> = [
-  { id: 'gift', icon: Gift, title: '質感禮盒', text: '適合節慶與企業送禮' },
-  { id: 'shipping', icon: Truck, title: '快速出貨', text: '完成付款後儘快安排配送' },
-  { id: 'quality', icon: Shield, title: '安心品質', text: '嚴選食材，穩定工法' },
+const PROMISES: Array<{
+  id: string;
+  icon: typeof Gift;
+  titleKey: string;
+  textKey: string;
+  titleDefault: string;
+  textDefault: string;
+}> = [
+  {
+    id: 'gift',
+    icon: Gift,
+    titleKey: 'shop.promise.gift.title',
+    textKey: 'shop.promise.gift.text',
+    titleDefault: 'Gift box packaging',
+    textDefault: 'Suitable for holiday gifts and business presents',
+  },
+  {
+    id: 'shipping',
+    icon: Truck,
+    titleKey: 'shop.promise.shipping.title',
+    textKey: 'shop.promise.shipping.text',
+    titleDefault: 'Fast shipping',
+    textDefault: 'Ship quickly after payment is completed',
+  },
+  {
+    id: 'quality',
+    icon: Shield,
+    titleKey: 'shop.promise.quality.title',
+    textKey: 'shop.promise.quality.text',
+    titleDefault: 'Quality assurance',
+    textDefault: 'Carefully selected ingredients and stable preparation',
+  },
 ];
 
 const STORE_ONLY_PRODUCT_SLUGS = new Set([
@@ -56,14 +84,17 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: t('shop.seo.title', '商品列表'),
-    description: t('shop.seo.description', '瀏覽淞品土雞的主打商品、門市限定商品與分類內容。'),
-    keywords: t('shop.seo.keywords', '商品列表,土雞,門市限定,分類'),
+    title: t('shop.seo.title', 'Product list'),
+    description: t('shop.seo.description', 'Browse Songpin Local Chicken products by category, store-only items and featured selections.'),
+    keywords: t('shop.seo.keywords', 'Product list, local chicken, store limited, classification'),
     schema: [
-      collectionPageSchema(t('shop.seo.title', '商品列表'), t('shop.seo.description', '瀏覽淞品土雞的主打商品、門市限定商品與分類內容。')),
+      collectionPageSchema(
+        t('shop.seo.title', 'Product list'),
+        t('shop.seo.description', 'Browse Songpin Local Chicken products by category, store-only items and featured selections.'),
+      ),
       breadcrumbSchema([
-        { name: t('common.home', '首頁'), url: window.location.origin },
-        { name: t('shop.breadcrumb', '商品列表'), url: `${window.location.origin}/products` },
+        { name: t('common.home', 'Home'), url: window.location.origin },
+        { name: t('shop.breadcrumb', 'Product list'), url: `${window.location.origin}/products` },
       ]),
     ],
   });
@@ -112,7 +143,7 @@ export default function Shop() {
   }, []);
 
   const categoryTabs = useMemo(
-    () => [{ id: null, name: t('shop.category.all', '全部') }, ...categories.map((item) => ({ id: item.slug, name: t(`shop.category.${item.slug}`, item.name) }))],
+    () => [{ id: null, name: t('shop.category.all', 'All') }, ...categories.map((item) => ({ id: item.slug, name: t(`shop.category.${item.slug}`, item.name) }))],
     [categories, t],
   );
 
@@ -146,7 +177,7 @@ export default function Shop() {
   const categoryCount = (id: string | null) => (id ? products.filter((item) => item.category_slug === id).length : products.length);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('shop.loading', '商品列表載入中...')}</div>;
+    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('shop.loading', 'Product list loading...')}</div>;
   }
 
   return (
@@ -158,16 +189,16 @@ export default function Shop() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                {t('common.home', '首頁')}
+                {t('common.home', 'Home')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{t('shop.breadcrumb', '商品列表')}</span>
+              <span className="text-stone-700">{t('shop.breadcrumb', 'Product list')}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {t('shop.kicker', 'Product Collection')}
             </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              {t('shop.title', '商品列表')}
+              {t('shop.title', 'Product list')}
             </h1>
           </div>
         </section>
@@ -179,7 +210,7 @@ export default function Shop() {
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('shop.search.placeholder', '可輸入商品用途、預算或口味偏好')}
+                placeholder={t('shop.search.placeholder', 'Enter product usage, budget or taste preferences')}
                 className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-stone-300"
               />
             </div>
@@ -203,14 +234,14 @@ export default function Shop() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              {PROMISES.map(({ id, icon: Icon, title, text }) => (
+              {PROMISES.map(({ id, icon: Icon, titleKey, textKey, titleDefault, textDefault }) => (
                 <div key={id} className="flex items-center gap-3 border border-stone-200 bg-white px-4 py-3">
                   <div className="flex h-9 w-9 items-center justify-center bg-stone-900 text-white">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold tracking-[0.12em] text-stone-800">{title}</p>
-                    <p className="mt-0.5 text-xs text-stone-400">{text}</p>
+                    <p className="text-xs font-semibold tracking-[0.12em] text-stone-800">{t(titleKey, titleDefault)}</p>
+                    <p className="mt-0.5 text-xs text-stone-400">{t(textKey, textDefault)}</p>
                   </div>
                 </div>
               ))}
@@ -219,9 +250,9 @@ export default function Shop() {
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
               <div className="flex gap-2">
                 {[
-                  { key: 'newest' as const, label: t('shop.sort.newest', '最新') },
-                  { key: 'price_asc' as const, label: t('shop.sort.priceAsc', '價格 低到高') },
-                  { key: 'price_desc' as const, label: t('shop.sort.priceDesc', '價格 高到低') },
+                  { key: 'newest' as const, label: t('shop.sort.newest', 'Newest') },
+                  { key: 'price_asc' as const, label: t('shop.sort.priceAsc', 'Price low to high') },
+                  { key: 'price_desc' as const, label: t('shop.sort.priceDesc', 'Price high to low') },
                 ].map((option) => (
                   <button
                     key={option.key}
@@ -237,7 +268,7 @@ export default function Shop() {
                   </button>
                 ))}
               </div>
-              <div className="text-xs text-stone-400">{t('shop.count', `共 ${filteredProducts.length} 件商品`)}</div>
+              <div className="text-xs text-stone-400">{t('shop.count', `${filteredProducts.length} items in total`)}</div>
             </div>
           </div>
         </section>
@@ -245,7 +276,7 @@ export default function Shop() {
         <section className="container mx-auto px-6 pb-16">
           {filteredProducts.length === 0 ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
-              {t('shop.empty', '目前沒有符合條件的商品。')}
+              {t('shop.empty', 'No products match the current filters.')}
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -277,7 +308,7 @@ export default function Shop() {
                       <div className="relative aspect-square bg-stone-100">
                         {storeOnly && (
                           <span className="absolute left-3 top-3 z-10 rounded-full bg-stone-900/90 px-3 py-1 text-[10px] font-semibold tracking-[0.2em] text-white shadow-lg">
-                            {t('shop.storeOnlyBadge', '門市限定')}
+                            {t('shop.storeOnlyBadge', 'Store limited')}
                           </span>
                         )}
                         <ProductImage
@@ -290,7 +321,7 @@ export default function Shop() {
                     </Link>
                     <div className="p-5">
                       <div className="mb-2 text-[11px] tracking-[0.18em] text-stone-400">
-                        {t(`shop.category.${product.category_slug}`, product.category_name || (product.category_slug === 'main-products' ? '主打商品' : '其他商品'))}
+                        {t(`shop.category.${product.category_slug}`, product.category_name || (product.category_slug === 'main-products' ? 'Featured Products' : 'Other products'))}
                       </div>
                       <Link to={getProductPath(product.slug, product.category_slug)}>
                         <h2 className="text-base leading-7 text-stone-800">{translatedName}</h2>
@@ -304,14 +335,14 @@ export default function Shop() {
                           )}
                         </div>
                         {storeOnly ? (
-                          <span className="text-xs tracking-[0.16em] text-stone-400">{t('shop.storeOnlyNote', '僅供門市販售')}</span>
+                          <span className="text-xs tracking-[0.16em] text-stone-400">{t('shop.storeOnlyNote', 'For sale in stores only')}</span>
                         ) : (
                           <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
                               onClick={handleAddToCart}
                               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-900 bg-stone-900 text-white transition-colors hover:bg-stone-700"
-                              aria-label={t('shop.cart.addAria', `加入購物車：${translatedName}`)}
+                              aria-label={t('shop.cart.addAria', `Add to cart: ${translatedName}`)}
                             >
                               <ShoppingCart className="h-4 w-4" />
                             </button>
