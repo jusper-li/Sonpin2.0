@@ -12,13 +12,12 @@ import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStatic
 interface StaticPageData extends TranslatableStaticPage {}
 
 const PROCESS_IMAGES = ['/sonpin-images/153285065447.jpg', '/sonpin-images/153285183849.jpg'];
-
 const PROCESS_VIDEOS = ['https://www.youtube.com/embed/27K4gLy_eDg', 'https://www.youtube.com/embed/yh1SyCxqLJk'];
 
 const PROCESS_FALLBACK: StaticPageData = {
   slug: 'process',
   title: '生產製程',
-  meta_description: '了解淞品土雞從選料、處理到製成的完整流程。',
+  meta_description: '了解淞品土雞從飼養、加工到配送的一條龍生產流程。',
   sections: [],
   updated_at: '2026-07-03T00:00:00+00:00',
 };
@@ -30,13 +29,15 @@ export default function ProcessPage() {
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
+  const translatedTitle = page.title || t('process.title', '生產製程');
+
   useSEO({
-    title: '生產製程',
+    title: translatedTitle,
     description: page.meta_description,
-    keywords: '生產製程,淞品土雞,製程,雞肉加工,食品安全',
+    keywords: t('process.seo.keywords', '生產製程,品牌故事,產地,加工,配送'),
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '生產製程', url: `${window.location.origin}/process` },
+      { name: t('common.home', '首頁'), url: window.location.origin },
+      { name: translatedTitle, url: `${window.location.origin}/process` },
     ]),
   });
 
@@ -100,14 +101,14 @@ export default function ProcessPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">生產製程</span>
+              <span className="text-stone-700">{translatedTitle}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Process</p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
-              生產製程
+              {translatedTitle}
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">{page.meta_description}</p>
           </div>
@@ -120,7 +121,7 @@ export default function ProcessPage() {
                 <figure key={src} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
                   <img
                     src={src}
-                    alt={`生產製程圖片 ${index + 1}`}
+                    alt={t('process.imageAlt', `生產製程圖片 ${index + 1}`)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
@@ -135,7 +136,7 @@ export default function ProcessPage() {
                     <iframe
                       className="h-full w-full"
                       src={src}
-                      title="生產製程影片"
+                      title={t('process.videoTitle', '生產製程影片')}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
@@ -150,7 +151,7 @@ export default function ProcessPage() {
         {(loading || translating) && (
           <section className="container mx-auto px-6 py-10">
             <div className="inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-              {loading ? '載入中' : t('common.translating', '翻譯中')}
+              {loading ? t('common.loading', '載入中...') : t('common.translating', '翻譯中...')}
             </div>
           </section>
         )}
