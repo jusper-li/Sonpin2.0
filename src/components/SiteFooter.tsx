@@ -198,7 +198,7 @@ export default function SiteFooter() {
               <img
                 src="/LOGO-1.png"
                 alt="You And Me Coffee"
-                className="h-28 transition-all duration-500 group-hover:opacity-70"
+                className="block h-auto w-full max-w-[240px] object-contain transition-all duration-500 group-hover:opacity-70"
               />
             </Link>
             <p className="text-sm text-stone-500 font-light leading-loose max-w-xs mb-8 tracking-wide">
