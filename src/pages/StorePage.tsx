@@ -22,14 +22,14 @@ type StoreRow = {
 };
 
 type StoreView = {
+  id: string;
   name: string;
   city: string;
-  phone: string;
   address: string;
-  hours?: string;
-  image?: string;
-  images?: string[];
-  email?: string | null;
+  phone: string;
+  openingHours: string;
+  email: string | null;
+  images: string[];
 };
 
 const formatOpeningHours = (value: unknown) => {
@@ -46,16 +46,6 @@ const formatOpeningHours = (value: unknown) => {
   }
   return '';
 };
-
-const normalizeStore = (row: StoreRow): StoreView => ({
-  name: row.name,
-  city: row.city,
-  phone: row.phone,
-  address: row.address,
-  hours: formatOpeningHours(row.opening_hours),
-  images: Array.isArray(row.images) ? row.images.filter((item): item is string => typeof item === 'string') : [],
-  email: row.email,
-});
 
 const sortStores = (items: StoreView[]) =>
   [...items].sort((a, b) => {
@@ -144,10 +134,29 @@ export default function StorePage() {
     };
   }, []);
 
-  const normalizedStores = useMemo(() => stores.map(normalizeStore), [stores]);
+  const normalizedStores = useMemo<StoreView[]>(
+    () =>
+      stores.map((row) => ({
+        id: row.id,
+        name: row.name,
+        city: row.city,
+        address: row.address,
+        phone: row.phone,
+        openingHours: formatOpeningHours(row.opening_hours),
+        images: Array.isArray(row.images) ? row.images.filter((item): item is string => typeof item === 'string') : [],
+        email: row.email,
+      })),
+    [stores],
+  );
 
-  const northStores = useMemo<StoreView[]>(() => sortStores(normalizedStores.filter((store) => store.city !== 'factory')), [normalizedStores]);
-  const factoryStores = useMemo<StoreView[]>(() => normalizedStores.filter((store) => store.city === 'factory'), [normalizedStores]);
+  const northStores = useMemo<StoreView[]>(
+    () => sortStores(normalizedStores.filter((store) => store.city !== 'factory')),
+    [normalizedStores],
+  );
+  const factoryStores = useMemo<StoreView[]>(
+    () => normalizedStores.filter((store) => store.city === 'factory'),
+    [normalizedStores],
+  );
 
   if (loading) {
     return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('store.loading', '門市資訊載入中...')}</div>;
@@ -193,11 +202,13 @@ export default function StorePage() {
                   </div>
                   <div className="grid gap-6 lg:grid-cols-2">
                     {northStores.map((store) => (
-                      <article key={store.name} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-                        <StoreImage src={store.image || store.images?.[0]} alt={store.name} />
+                      <article key={store.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                        <StoreImage src={store.images[0]} alt={t(`store.items.${store.id}.name`, store.name)} />
                         <div className="p-6">
-                          <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
-                          <p className="mt-2 text-sm text-[#9f8a7b]">{t(`store.city.${store.city}`, store.city)}</p>
+                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <p className="mt-2 text-sm text-[#9f8a7b]">
+                            {store.city === 'factory' ? t('store.section.factory', '工廠') : t(`store.city.${store.city}`, store.city)}
+                          </p>
                           <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
@@ -205,12 +216,12 @@ export default function StorePage() {
                             </p>
                             <p className="flex items-start gap-3">
                               <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                              <span>{store.address}</span>
+                              <span>{t(`store.items.${store.id}.address`, store.address)}</span>
                             </p>
-                            {store.hours && (
+                            {store.openingHours && (
                               <p className="flex items-start gap-3">
                                 <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                                <span className="whitespace-pre-line">{store.hours}</span>
+                                <span className="whitespace-pre-line">{t(`store.items.${store.id}.openingHours`, store.openingHours)}</span>
                               </p>
                             )}
                             {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
@@ -228,10 +239,10 @@ export default function StorePage() {
                     {t('store.section.factory', '工廠')}
                   </div>
                   {factoryStores.map((store) => (
-                    <article key={`${store.name}-${store.address}`} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                    <article key={store.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
                       <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
                         <div>
-                          <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
+                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
                           <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
@@ -239,24 +250,24 @@ export default function StorePage() {
                             </p>
                             <p className="flex items-start gap-3">
                               <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                              <span>{store.address}</span>
+                              <span>{t(`store.items.${store.id}.address`, store.address)}</span>
                             </p>
-                            {store.hours && (
+                            {store.openingHours && (
                               <p className="flex items-start gap-3">
                                 <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
-                                <span className="whitespace-pre-line">{store.hours}</span>
+                                <span className="whitespace-pre-line">{t(`store.items.${store.id}.openingHours`, store.openingHours)}</span>
                               </p>
                             )}
                             {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {(store.images || []).length > 0 ? (
-                            (store.images || []).slice(0, 4).map((image) => (
+                          {store.images.length > 0 ? (
+                            store.images.slice(0, 4).map((image) => (
                               <img
                                 key={image}
                                 src={image}
-                                alt={store.name}
+                                alt={t(`store.items.${store.id}.name`, store.name)}
                                 className="h-full w-full rounded-2xl object-cover"
                                 loading="lazy"
                                 onError={(event) => {
