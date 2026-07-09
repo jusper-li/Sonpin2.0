@@ -270,17 +270,21 @@ export default function Homepage() {
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
 
   useSEO({
-    title: '淞品土雞｜土雞精、商品介紹與品牌故事',
-    description: '淞品土雞提供土雞精、雞肉禮盒、門市資訊與品牌故事，內容與商品可由後台同步更新。',
-    keywords: '淞品土雞,土雞精,商品介紹,品牌故事,門市資訊,媒體報導',
+    title: 'Songpin local chicken｜Brand homepage',
+    description:
+      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
+    keywords: 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports',
     noSuffix: true,
     schema: [organizationSchema(), localBusinessSchema(), websiteSchema()],
   });
 
   useSEO({
-    title: t('homepage.seo.title', '淞品土雞｜品牌首頁'),
-    description: t('homepage.seo.description', '淞品土雞提供土雞禮盒、門市資訊與品牌故事，讓顧客快速找到商品與最新內容。'),
-    keywords: t('homepage.seo.keywords', '淞品土雞,土雞禮盒,商品介紹,品牌故事,門市資訊,媒體報導'),
+    title: t('homepage.seo.title', 'Songpin local chicken｜Brand homepage'),
+    description: t(
+      'homepage.seo.description',
+      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
+    ),
+    keywords: t('homepage.seo.keywords', 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports'),
     noSuffix: true,
   });
 
@@ -413,8 +417,8 @@ export default function Homepage() {
           background_image: block.image,
           image: block.image,
           href: block.href,
-          cta_label: '前往商品',
-          submenu: [{ label: '前往商品', title: '前往商品', href: block.href }],
+          cta_label: 'View products',
+          submenu: [{ label: 'View products', title: 'View products', href: block.href }],
         },
         background_image: block.image,
         description: block.description,
@@ -458,7 +462,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more'),
         );
 
         return {
@@ -624,7 +628,7 @@ export default function Homepage() {
         `}</style>
         <div className="ym-home-loading-panel text-center">
           <div className="ym-loading-ring mx-auto mb-4" />
-          <p className="text-sm">首頁內容載入中...</p>
+          <p className="text-sm">{t('homepage.loading', 'Homepage content loading...')}</p>
         </div>
       </div>
     );
@@ -1010,7 +1014,7 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多');
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more');
           const localizedCtaLabel = ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
@@ -1033,7 +1037,7 @@ export default function Homepage() {
               <Link
                 to={href}
                 className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden"
-                aria-label={`前往 ${localizedTitle}`}
+                aria-label={t('homepage.hero.aria', `Go to ${localizedTitle}`)}
               >
                 {shouldLoadImage ? (
                   <StageImage
@@ -1058,14 +1062,14 @@ export default function Homepage() {
                   </Link>
 
                   <div className="ym-stage-actions mt-4 flex w-full items-center justify-center md:mt-5">
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || '淞品土雞'}</span>
+                    <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || 'Songpin'}</span>
                     <Link
                       to={href}
                       className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[#211d1c] bg-transparent px-5 text-sm font-medium text-[#211d1c] transition-colors duration-300 hover:bg-[#211d1c] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#211d1c]/30"
                     >
                       {localizedCtaLabel}
                     </Link>
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || '淞品品牌'}</span>
+                    <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || 'Brand story'}</span>
                   </div>
                 </div>
               </div>
