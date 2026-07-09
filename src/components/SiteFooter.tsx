@@ -171,7 +171,7 @@ export default function SiteFooter() {
   };
 
   const socialLinks = socialAccounts.length
-    ? socialAccounts.filter((item) => item.is_active && item.url.trim())
+    ? socialAccounts.filter((item) => item.is_active && item.url.trim() && item.platform.trim().toLowerCase() !== 'youtube')
     : ([
         settings.social_links.instagram && {
           platform: 'Instagram',
@@ -180,10 +180,6 @@ export default function SiteFooter() {
         settings.social_links.facebook && {
           platform: 'Facebook',
           url: settings.social_links.facebook,
-        },
-        settings.social_links.youtube && {
-          platform: 'YouTube',
-          url: settings.social_links.youtube,
         },
       ].filter(Boolean) as Array<{ platform: string; url: string }>);
 
