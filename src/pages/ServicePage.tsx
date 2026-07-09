@@ -13,12 +13,12 @@ export default function ServicePage() {
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '文章列表',
-    description: '瀏覽淞品相關文章與服務資訊。',
-    keywords: '文章列表,淞品,服務文章',
+    title: '老饕分享',
+    description: '淞品土雞專賣店老饕分享與門市故事。',
+    keywords: '老饕分享,淞品,服務文章',
     schema: breadcrumbSchema([
       { name: '首頁', url: window.location.origin },
-      { name: '文章列表', url: `${window.location.origin}/service` },
+      { name: '老饕分享', url: `${window.location.origin}/service` },
     ]),
   });
 
@@ -51,11 +51,11 @@ export default function ServicePage() {
                 首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">文章列表</span>
+              <span className="text-stone-700">老饕分享</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Article List</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Service Articles</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              文章列表
+              老饕分享
             </h1>
           </div>
         </section>
@@ -63,7 +63,7 @@ export default function ServicePage() {
         <section className="container mx-auto px-6 py-14">
           {loading ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] px-6 py-12 text-center text-sm text-stone-500">
-              載入文章中…
+              載入中...
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

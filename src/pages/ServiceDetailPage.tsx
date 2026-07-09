@@ -32,8 +32,8 @@ export default function ServiceDetailPage() {
   }, [slug]);
 
   useSEO({
-    title: article?.title || '文章列表',
-    description: article?.excerpt || '瀏覽最新的文章內容與門市資訊。',
+    title: article?.title || '老饕分享',
+    description: article?.excerpt || '淞品土雞專賣店老饕分享與門市資訊。',
   });
 
   if (loading) {
@@ -41,7 +41,7 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">載入文章中…</p>
+          <p className="text-sm text-stone-500">載入中...</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -53,7 +53,7 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">找不到這篇文章。</p>
+          <p className="text-sm text-stone-500">找不到這篇老饕分享。</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -73,7 +73,7 @@ export default function ServiceDetailPage() {
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/service" className="transition-colors hover:text-stone-700">
-                文章列表
+                老饕分享
               </Link>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Article</p>
