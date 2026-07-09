@@ -14,6 +14,10 @@ export default function Cart() {
   const { t } = useLanguage();
   const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
+  const localizedItems = items.map((item) => ({
+    ...item,
+    translatedName: t(`product.${item.slug}.name`, item.name),
+  }));
 
   const cartPromises = [
     { icon: Truck, label: t('cart.promise.shipping.title', '運費自動計算'), text: t('cart.promise.shipping.desc', '依商品分類與數量自動套用運費') },
@@ -81,7 +85,7 @@ export default function Cart() {
         <div className="container mx-auto px-6 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-3">
-              {items.map((item) => (
+              {localizedItems.map((item) => (
                 <div
                   key={item.productId}
                   className="bg-[#fffaf2] p-5 border border-[#eadfd1] hover:border-[#d8bda4] hover:shadow-[0_6px_24px_rgba(120,100,80,0.08)] transition-all duration-300"
@@ -92,13 +96,13 @@ export default function Cart() {
                         {item.image ? (
                           <ProductImage
                             src={item.image}
-                            alt={item.name}
+                            alt={item.translatedName}
                             compactPlaceholder
                             className="w-full h-full object-cover"
                             sizes="96px"
                           />
                         ) : (
-                          <ProductImagePlaceholder name={item.name} compact />
+                          <ProductImagePlaceholder name={item.translatedName} compact />
                         )}
                       </div>
                     </Link>
@@ -108,7 +112,7 @@ export default function Cart() {
                         <div className="flex-1 pr-3">
                           <Link to={`/product/${item.slug}`}>
                             <h3 className="text-sm font-medium text-stone-700 mb-1.5 hover:text-[#8e6448] transition-colors tracking-wide line-clamp-1">
-                              {item.name}
+                              {item.translatedName}
                             </h3>
                           </Link>
                           <div className="flex items-baseline gap-2">
