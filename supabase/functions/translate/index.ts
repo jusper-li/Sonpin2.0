@@ -21,7 +21,8 @@ const pickByLang = (lang: string | null | undefined, zh: string, en: string, ja:
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, apikey, x-client-info, x-supabase-api-key",
+  "Access-Control-Max-Age": "86400",
 };
 
 interface TranslateRequest {
@@ -71,7 +72,7 @@ const translateWithGoogle = async (
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      status: 200,
+      status: 204,
       headers: corsHeaders,
     });
   }

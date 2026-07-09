@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock, ExternalLink, Play } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { getMediaGroup } from '../data/mediaContent';
 import { loadMediaArticle } from '../lib/media';
+import { translateHtmlContentWithT } from '../lib/productPageLiveTranslation';
+import { normalizeLang, pickByLang } from '../lib/language';
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('zh-TW', {
+const formatDate = (value: string, lang: string) =>
+  new Intl.DateTimeFormat(pickByLang(normalizeLang(lang), 'zh-TW', 'en-US', 'ja-JP', 'ko-KR'), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -17,6 +20,7 @@ const formatDate = (value: string) =>
 
 export default function MediaDetailPage() {
   const { groupSlug = '', articleSlug = '' } = useParams();
+  const { currentLanguage, t } = useLanguage();
   const [article, setArticle] = useState<Awaited<ReturnType<typeof loadMediaArticle>>>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,17 +45,23 @@ export default function MediaDetailPage() {
   const group = getMediaGroup(groupSlug);
   const currentPageUrl = `${window.location.origin}/media/${groupSlug}/${articleSlug}`;
   const externalUrl = article?.sourceUrl || '';
+  const translatedTitle = article ? t(`media.article.${article.groupSlug}.${article.articleSlug}.title`, article.title) : t('media.detail.fallbackTitle', '相關報導');
+  const translatedExcerpt = article ? t(`media.article.${article.groupSlug}.${article.articleSlug}.excerpt`, article.excerpt || article.title) : '';
+  const translatedContent = useMemo(() => {
+    if (!article?.htmlContent) return '';
+    return translateHtmlContentWithT(article.htmlContent, t, `media.article.${article.groupSlug}.${article.articleSlug}`);
+  }, [article, t]);
 
   useSEO({
-    title: article?.title || '媒體報導',
-    description: article?.excerpt || '淞品土雞相關媒體報導與影音內容。',
+    title: translatedTitle,
+    description: translatedExcerpt || t('media.detail.description', '淞品土雞相關報導與影音內容。'),
     ogImage: article?.featuredImage,
     ogType: 'article',
     schema: article
       ? breadcrumbSchema([
-          { name: '首頁', url: window.location.origin },
-          { name: '媒體報導', url: `${window.location.origin}/media` },
-          { name: group?.title || '媒體報導', url: `${window.location.origin}/media/${groupSlug}` },
+          { name: t('common.home', '首頁'), url: window.location.origin },
+          { name: t('media.list.title', '相關報導'), url: `${window.location.origin}/media` },
+          { name: group?.title || t('media.detail.groupFallback', '相關報導'), url: `${window.location.origin}/media/${groupSlug}` },
         ])
       : undefined,
   });
@@ -61,12 +71,12 @@ export default function MediaDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">載入中...</p>
+          <p className="text-sm text-stone-500">{t('media.detail.loading', '載入中...')}</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
           >
-            回到媒體列表
+            {t('media.detail.back', '返回列表')}
           </Link>
         </main>
         <DeferredSiteFooter />
@@ -79,12 +89,12 @@ export default function MediaDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
-          <p className="text-sm text-stone-500">找不到文章內容。</p>
+          <p className="text-sm text-stone-500">{t('media.detail.notFound', '找不到這篇報導。')}</p>
           <Link
             to="/media"
             className="mt-6 inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
           >
-            回到媒體列表
+            {t('media.detail.back', '返回列表')}
           </Link>
         </main>
         <DeferredSiteFooter />
@@ -101,7 +111,7 @@ export default function MediaDetailPage() {
         <div className="aspect-video w-full">
           <iframe
             src={article.iframeUrl}
-            title={article.title}
+            title={translatedTitle}
             width="100%"
             height="315"
             frameBorder={0}
@@ -123,25 +133,25 @@ export default function MediaDetailPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/media" className="transition-colors hover:text-stone-700">
-                媒體報導
+                {t('media.list.title', '相關報導')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{group?.title || '媒體報導'}</span>
+              <span className="text-stone-700">{group?.title || t('media.detail.groupFallback', '相關報導')}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
               {group?.label || 'Media'}
             </p>
             <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
-              {article.title}
+              {translatedTitle}
             </h1>
             <div className="mt-7 flex flex-wrap items-center gap-4 text-xs tracking-[0.16em] text-stone-400">
               <span className="inline-flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5" />
-                {formatDate(article.date)}
+                {formatDate(article.date, currentLanguage)}
               </span>
               {externalUrl && externalUrl !== currentPageUrl && (
                 <a
@@ -150,7 +160,7 @@ export default function MediaDetailPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 transition-colors hover:text-[#8e6448]"
                 >
-                  原文連結
+                  {t('media.detail.external', '原始來源')}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
@@ -162,7 +172,7 @@ export default function MediaDetailPage() {
           <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
             {!article.htmlContent && (showVideoFirst ? videoBlock : article.featuredImage) ? (
               <div className="bg-stone-100">
-                <img src={article.featuredImage} alt={article.title} className="h-auto w-full object-cover" loading="eager" decoding="async" />
+                <img src={article.featuredImage} alt={translatedTitle} className="h-auto w-full object-cover" loading="eager" decoding="async" />
               </div>
             ) : null}
 
@@ -170,14 +180,14 @@ export default function MediaDetailPage() {
               {article.kind === 'video' ? (
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#eadfd1] bg-white px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
                   <Play className="h-3.5 w-3.5" />
-                  影音報導
+                  {t('media.detail.videoBadge', '影音報導')}
                 </div>
               ) : null}
 
-              {article.htmlContent ? (
+              {translatedContent ? (
                 <div
                   className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]"
-                  dangerouslySetInnerHTML={{ __html: article.htmlContent }}
+                  dangerouslySetInnerHTML={{ __html: translatedContent }}
                 />
               ) : article.bodyParagraphs.length > 0 ? (
                 <div className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]">
@@ -189,7 +199,7 @@ export default function MediaDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
-                  <p>目前沒有文章內容。</p>
+                  <p>{t('media.detail.empty', '目前沒有內容。')}</p>
                 </div>
               )}
 
@@ -201,7 +211,7 @@ export default function MediaDetailPage() {
                     <img
                       key={image}
                       src={image}
-                      alt={article.title}
+                      alt={translatedTitle}
                       className="w-full rounded-2xl object-cover"
                       loading="lazy"
                       decoding="async"
@@ -216,7 +226,7 @@ export default function MediaDetailPage() {
                   className="inline-flex items-center gap-2 border-b border-stone-300 pb-1 text-xs font-medium tracking-[0.18em] text-stone-700 hover:border-amber-700 hover:text-amber-700"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  回到列表
+                  {t('media.detail.back', '返回列表')}
                 </Link>
               </div>
             </div>

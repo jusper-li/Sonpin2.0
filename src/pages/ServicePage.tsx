@@ -1,24 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { loadServiceArticles, type ServiceArticleRow } from '../lib/serviceArticleStore';
-import { SERVICE_ARTICLE_SLUGS, buildServiceArticleRows } from '../lib/serviceArticleSeed';
+import { buildServiceArticleRows } from '../lib/serviceArticleSeed';
 
 export default function ServicePage() {
+  const { t } = useLanguage();
   const [articles, setArticles] = useState<ServiceArticleRow[]>(() => buildServiceArticleRows());
   const [loading, setLoading] = useState(true);
 
+  const translatedTitle = t('service.list.title', '老饕分享');
+  const translatedDescription = t('service.list.description', '淞品土雞的料理靈感、食用方式與品牌故事。');
+
   useSEO({
-    title: '老饕分享',
-    description: '淞品土雞專賣店老饕分享與門市故事。',
-    keywords: '老饕分享,淞品,服務文章',
+    title: translatedTitle,
+    description: translatedDescription,
+    keywords: t('service.list.keywords', '老饕分享,料理,品牌故事'),
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '老饕分享', url: `${window.location.origin}/service` },
+      { name: t('common.home', '首頁'), url: window.location.origin },
+      { name: translatedTitle, url: `${window.location.origin}/service` },
     ]),
   });
 
@@ -28,7 +33,7 @@ export default function ServicePage() {
     const run = async () => {
       const items = await loadServiceArticles();
       if (!alive) return;
-      setArticles(items.filter((item) => SERVICE_ARTICLE_SLUGS.includes(item.slug)));
+      setArticles(items);
       setLoading(false);
     };
 
@@ -39,6 +44,16 @@ export default function ServicePage() {
     };
   }, []);
 
+  const translatedArticles = useMemo(
+    () =>
+      articles.map((item) => ({
+        ...item,
+        title: t(`service.article.${item.slug}.title`, item.title),
+        excerpt: t(`service.article.${item.slug}.excerpt`, item.excerpt || item.title),
+      })),
+    [articles, t],
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
       <SiteHeader />
@@ -48,14 +63,16 @@ export default function ServicePage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">老饕分享</span>
+              <span className="text-stone-700">{translatedTitle}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Service Articles</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+              {t('service.list.kicker', 'Service Articles')}
+            </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              老饕分享
+              {translatedTitle}
             </h1>
           </div>
         </section>
@@ -63,11 +80,11 @@ export default function ServicePage() {
         <section className="container mx-auto px-6 py-14">
           {loading ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] px-6 py-12 text-center text-sm text-stone-500">
-              載入中...
+              {t('service.list.loading', '載入中...')}
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((item) => (
+              {translatedArticles.map((item) => (
                 <Link
                   key={item.slug}
                   to={`/service/${item.slug}`}
@@ -83,6 +100,7 @@ export default function ServicePage() {
                   </div>
                   <div className="p-4">
                     <p className="text-sm leading-7 text-stone-700 line-clamp-2">{item.title}</p>
+                    {item.excerpt && <p className="mt-2 text-xs leading-6 text-stone-400 line-clamp-2">{item.excerpt}</p>}
                   </div>
                 </Link>
               ))}

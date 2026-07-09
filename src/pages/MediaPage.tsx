@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { loadMediaArticles } from '../lib/media';
@@ -11,15 +12,27 @@ const defaultGroupSlug = '79';
 const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
   '79': new Set(['66', '40']),
 };
-const mediaSectionTitle = '相關報導';
-const mediaSectionDescription = '淞品土雞相關報導與新聞公告';
 
 export default function MediaPage() {
   const { categorySlug } = useParams();
   const { pathname } = useLocation();
+  const { t } = useLanguage();
   const isVideoPage = categorySlug === '78' || pathname.replace(/\/+$/, '') === '/media/78';
   const groupSlug = isVideoPage ? '78' : defaultGroupSlug;
   const [articles, setArticles] = useState<Awaited<ReturnType<typeof loadMediaArticles>>>([]);
+
+  const pageTitle = t('media.list.title', '相關報導');
+  const pageDescription = t('media.list.description', '淞品土雞相關報導與新聞公告');
+
+  useSEO({
+    title: pageTitle,
+    description: pageDescription,
+    keywords: t('media.list.keywords', '相關報導,報章雜誌,影音報導,淞品土雞'),
+    schema: breadcrumbSchema([
+      { name: t('common.home', '首頁'), url: window.location.origin },
+      { name: pageTitle, url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
+    ]),
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -29,10 +42,7 @@ export default function MediaPage() {
       if (cancelled) return;
       const hiddenSlugs = HIDDEN_MEDIA_LIST_ARTICLES[groupSlug] || new Set<string>();
       setArticles(
-        data.filter(
-          (article) =>
-            article.groupSlug === groupSlug && !hiddenSlugs.has(article.articleSlug),
-        ),
+        data.filter((article) => article.groupSlug === groupSlug && !hiddenSlugs.has(article.articleSlug)),
       );
     };
 
@@ -43,17 +53,15 @@ export default function MediaPage() {
     };
   }, [groupSlug]);
 
-  const pageArticles = useMemo(() => articles, [articles]);
-
-  useSEO({
-    title: mediaSectionTitle,
-    description: mediaSectionDescription,
-    keywords: '相關報導,報章雜誌,影音報導,淞品土雞',
-    schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: mediaSectionTitle, url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
-    ]),
-  });
+  const pageArticles = useMemo(
+    () =>
+      articles.map((article) => ({
+        ...article,
+        title: t(`media.article.${article.groupSlug}.${article.articleSlug}.title`, article.title),
+        excerpt: t(`media.article.${article.groupSlug}.${article.articleSlug}.excerpt`, article.excerpt || article.title),
+      })),
+    [articles, t],
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
@@ -64,16 +72,16 @@ export default function MediaPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">{mediaSectionTitle}</span>
+              <span className="text-stone-700">{pageTitle}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
-              {mediaSectionTitle}
+              {pageTitle}
             </p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
-              {mediaSectionTitle}
+              {pageTitle}
             </h1>
           </div>
         </section>
@@ -88,7 +96,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              報章雜誌
+              {t('media.tab.print', '報章雜誌')}
             </Link>
             <Link
               to="/media/78"
@@ -98,7 +106,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              影音報導
+              {t('media.tab.video', '影音報導')}
             </Link>
           </div>
 

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Coffee, Eye, EyeOff, KeyRound, Lock, Mail, User } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -10,6 +11,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const RESEND_STORAGE_PREFIX = 'member-verification-resend:';
 
 export default function MemberAuth() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState<TabType>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -272,12 +274,19 @@ export default function MemberAuth() {
     );
   }
 
-  const tabTitle = tab === 'login' ? '登入' : tab === 'register' ? '加入會員' : tab === 'verify' ? '輸入驗證碼' : '忘記密碼';
+  const tabTitle =
+    tab === 'login'
+      ? t('member.auth.loginTitle', '登入')
+      : tab === 'register'
+        ? t('member.auth.registerTitle', '加入會員')
+        : tab === 'verify'
+          ? t('member.auth.verifyTitle', '輸入驗證碼')
+          : t('member.auth.forgotTitle', '忘記密碼');
   const tabSubtitle =
     tab === 'login'
-      ? '登入後可查看訂單、收藏與個人資料。'
+      ? t('member.auth.loginSubtitle', '登入後可查看訂單、收藏與個人資料。')
       : tab === 'register'
-        ? '註冊後即可快速結帳並管理會員資料。'
+        ? t('member.auth.registerSubtitle', '註冊後即可快速結帳並管理會員資料。')
         : tab === 'verify'
           ? '請輸入寄到信箱的 6 碼驗證碼。'
           : '輸入信箱後，我們會寄送重設密碼連結。';
@@ -629,3 +638,4 @@ export default function MemberAuth() {
     </div>
   );
 }
+

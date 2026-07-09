@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Clock, MapPin, Phone } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema, localBusinessSchema } from '../utils/schemaMarkup';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -37,9 +38,9 @@ const formatOpeningHours = (value: unknown) => {
   if (value && typeof value === 'object') {
     return Object.entries(value as Record<string, unknown>)
       .map(([key, item]) => {
-        if (typeof item === 'string') return `${key}：${item}`;
-        if (Array.isArray(item)) return `${key}：${item.filter((entry) => typeof entry === 'string').join('、')}`;
-        return `${key}：${String(item ?? '')}`;
+        if (typeof item === 'string') return `${key}: ${item}`;
+        if (Array.isArray(item)) return `${key}: ${item.filter((entry) => typeof entry === 'string').join(', ')}`;
+        return `${key}: ${String(item ?? '')}`;
       })
       .join('\n');
   }
@@ -56,15 +57,10 @@ const normalizeStore = (row: StoreRow): StoreView => ({
   email: row.email,
 });
 
-const STORE_ORDER = ['永和', '萬華', '士林', '民生', '新埔', '新店'];
-
 const sortStores = (items: StoreView[]) =>
   [...items].sort((a, b) => {
-    const aIndex = STORE_ORDER.indexOf(a.city);
-    const bIndex = STORE_ORDER.indexOf(b.city);
-    const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-    const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-    if (normalizedA !== normalizedB) return normalizedA - normalizedB;
+    const aCity = a.city.localeCompare(b.city, 'zh-Hant');
+    if (aCity !== 0) return aCity;
     return a.name.localeCompare(b.name, 'zh-Hant');
   });
 
@@ -93,18 +89,19 @@ const StoreImage = ({ src, alt }: { src?: string; alt: string }) => {
 };
 
 export default function StorePage() {
+  const { t } = useLanguage();
   const [stores, setStores] = useState<StoreRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: '門市資訊',
-    description: '淞品土雞門市據點、聯絡方式與營業時間。',
-    keywords: '門市資訊,淞品土雞,門市,營業時間,聯絡方式',
+    title: t('store.seo.title', '門市資訊'),
+    description: t('store.seo.description', '查看淞品土雞各門市據點、電話、地址與營業時間。'),
+    keywords: t('store.seo.keywords', '門市資訊,門市據點,營業時間,電話'),
     schema: [
       localBusinessSchema(),
       breadcrumbSchema([
-        { name: '首頁', url: window.location.origin },
-        { name: '門市資訊', url: `${window.location.origin}/store` },
+        { name: t('common.home', '首頁'), url: window.location.origin },
+        { name: t('store.breadcrumb', '門市資訊'), url: `${window.location.origin}/store` },
       ]),
     ],
   });
@@ -149,18 +146,11 @@ export default function StorePage() {
 
   const normalizedStores = useMemo(() => stores.map(normalizeStore), [stores]);
 
-  const northStores = useMemo<StoreView[]>(
-    () => sortStores(normalizedStores.filter((store) => store.city !== 'factory')),
-    [normalizedStores],
-  );
-
-  const factoryStores = useMemo<StoreView[]>(
-    () => normalizedStores.filter((store) => store.city === 'factory'),
-    [normalizedStores],
-  );
+  const northStores = useMemo<StoreView[]>(() => sortStores(normalizedStores.filter((store) => store.city !== 'factory')), [normalizedStores]);
+  const factoryStores = useMemo<StoreView[]>(() => normalizedStores.filter((store) => store.city === 'factory'), [normalizedStores]);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">載入中...</div>;
+    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('store.loading', '門市資訊載入中...')}</div>;
   }
 
   return (
@@ -172,17 +162,19 @@ export default function StorePage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">門市資訊</span>
+              <span className="text-stone-700">{t('store.breadcrumb', '門市資訊')}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Stores</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+              {t('store.kicker', 'Stores')}
+            </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
-              門市資訊
+              {t('store.title', '門市資訊')}
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-              查看淞品土雞各門市據點、電話、地址與營業時間。
+              {t('store.description', '查看淞品土雞各門市據點、電話、地址與營業時間。')}
             </p>
           </div>
         </section>
@@ -190,14 +182,14 @@ export default function StorePage() {
         <section className="container mx-auto px-6 py-10">
           {normalizedStores.length === 0 ? (
             <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
-              目前沒有可顯示的門市資料。
+              {t('store.empty', '目前沒有門市資料。')}
             </div>
           ) : (
             <>
               {northStores.length > 0 && (
                 <div className="mb-10">
                   <div className="mb-4 inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                    門市
+                    {t('store.section.branches', '門市')}
                   </div>
                   <div className="grid gap-6 lg:grid-cols-2">
                     {northStores.map((store) => (
@@ -205,7 +197,7 @@ export default function StorePage() {
                         <StoreImage src={store.image || store.images?.[0]} alt={store.name} />
                         <div className="p-6">
                           <h2 className="text-xl font-medium text-[#2b221d]">{store.name}</h2>
-                          <p className="mt-2 text-sm text-[#9f8a7b]">{store.city}</p>
+                          <p className="mt-2 text-sm text-[#9f8a7b]">{t(`store.city.${store.city}`, store.city)}</p>
                           <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
@@ -233,7 +225,7 @@ export default function StorePage() {
               {factoryStores.length > 0 && (
                 <div className="space-y-6">
                   <div className="inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
-                    中央工廠
+                    {t('store.section.factory', '工廠')}
                   </div>
                   {factoryStores.map((store) => (
                     <article key={`${store.name}-${store.address}`} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">

@@ -1,18 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
+import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { loadServiceArticle, type ServiceArticleRow } from '../lib/serviceArticleStore';
 import { buildServiceArticleRows } from '../lib/serviceArticleSeed';
+import { translateHtmlContentWithT } from '../lib/productPageLiveTranslation';
 
 export default function ServiceDetailPage() {
   const { slug = '' } = useParams();
+  const { t } = useLanguage();
   const [article, setArticle] = useState<ServiceArticleRow | null>(() => buildServiceArticleRows().find((item) => item.slug === slug) || null);
   const [loading, setLoading] = useState(true);
 
-  const renderedContent = article ? stripServiceMeta(article.content) : '';
+  const translatedTitle = article ? t(`service.article.${article.slug}.title`, article.title) : t('service.detail.fallbackTitle', '老饕分享');
+  const translatedExcerpt = article ? t(`service.article.${article.slug}.excerpt`, article.excerpt || article.title) : '';
+
+  const renderedContent = useMemo(() => {
+    if (!article) return '';
+    return translateHtmlContentWithT(stripServiceMeta(article.content), t, `service.article.${article.slug}`);
+  }, [article, t]);
 
   useEffect(() => {
     let alive = true;
@@ -32,8 +42,15 @@ export default function ServiceDetailPage() {
   }, [slug]);
 
   useSEO({
-    title: article?.title || '老饕分享',
-    description: article?.excerpt || '淞品土雞專賣店老饕分享與門市資訊。',
+    title: translatedTitle,
+    description: translatedExcerpt || t('service.detail.description', '淞品土雞的老饕分享與料理內容。'),
+    schema: article
+      ? breadcrumbSchema([
+          { name: t('common.home', '首頁'), url: window.location.origin },
+          { name: t('service.list.title', '老饕分享'), url: `${window.location.origin}/service` },
+          { name: translatedTitle, url: window.location.href },
+        ])
+      : undefined,
   });
 
   if (loading) {
@@ -41,7 +58,7 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">載入中...</p>
+          <p className="text-sm text-stone-500">{t('service.detail.loading', '載入中...')}</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -53,7 +70,7 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
-          <p className="text-sm text-stone-500">找不到這篇老饕分享。</p>
+          <p className="text-sm text-stone-500">{t('service.detail.notFound', '找不到這篇文章。')}</p>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -69,23 +86,25 @@ export default function ServiceDetailPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
               <Link to="/service" className="transition-colors hover:text-stone-700">
-                老饕分享
+                {t('service.list.title', '老饕分享')}
               </Link>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">Article</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+              {t('service.detail.kicker', 'Article')}
+            </p>
             <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
-              {article.title}
+              {translatedTitle}
             </h1>
           </div>
         </section>
 
         <section className="container mx-auto px-6 py-14">
           <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
-            <img src={article.featured_image || '/sonpin-images/153285217452.jpg'} alt={article.title} className="h-auto w-full object-cover" loading="lazy" />
+            <img src={article.featured_image || '/sonpin-images/153285217452.jpg'} alt={translatedTitle} className="h-auto w-full object-cover" loading="lazy" />
             <div className="p-6 md:p-8">
               <div className="overflow-hidden rounded-2xl bg-stone-50">
                 <div className="prose prose-stone max-w-none p-6" dangerouslySetInnerHTML={{ __html: renderedContent }} />
