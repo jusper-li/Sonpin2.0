@@ -427,6 +427,61 @@ export default function Homepage() {
     return heroSection ? [heroSection, ...chapterSections] : displaySections;
   }, [heroBlocks, heroProducts, sections]);
 
+  const localizedStageSections = useMemo(
+    () =>
+      stageSections.map((section, index) => {
+        const keyPrefix = `homepage.section.${section.section_type}.${section.id || index}`;
+        const sourceSubmenu = section.content?.submenu?.length ? section.content.submenu : section.submenu || [];
+        const localizedSubmenu = sourceSubmenu.map((item, itemIndex) => ({
+          ...item,
+          label: item.label ? t(`${keyPrefix}.submenu.${itemIndex}.label`, item.label) : item.label,
+          title: item.title ? t(`${keyPrefix}.submenu.${itemIndex}.title`, item.title) : item.title,
+        }));
+
+        const translatedLabel = section.label ? t(`${keyPrefix}.label`, section.label) : section.label;
+        const translatedSubtitle = section.subtitle ? t(`${keyPrefix}.subtitle`, section.subtitle) : section.subtitle;
+        const translatedTitle = section.title ? t(`${keyPrefix}.title`, section.title) : section.title;
+        const translatedDescription = section.description
+          ? t(`${keyPrefix}.description`, section.description)
+          : section.description;
+        const translatedContentTitle = section.content?.title
+          ? t(`${keyPrefix}.content.title`, section.content.title)
+          : section.content?.title;
+        const translatedContentLabel = section.content?.label
+          ? t(`${keyPrefix}.content.label`, section.content.label)
+          : section.content?.label;
+        const translatedContentSubtitle = section.content?.subtitle
+          ? t(`${keyPrefix}.content.subtitle`, section.content.subtitle)
+          : section.content?.subtitle;
+        const translatedContentDescription = section.content?.description
+          ? t(`${keyPrefix}.content.description`, section.content.description)
+          : section.content?.description;
+        const translatedCtaLabel = t(
+          `${keyPrefix}.content.cta_label`,
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多'),
+        );
+
+        return {
+          ...section,
+          label: translatedLabel || section.label,
+          subtitle: translatedSubtitle || section.subtitle,
+          title: translatedTitle || section.title,
+          description: translatedDescription || section.description,
+          submenu: localizedSubmenu,
+          content: {
+            ...section.content,
+            label: translatedContentLabel || section.content?.label,
+            subtitle: translatedContentSubtitle || section.content?.subtitle,
+            title: translatedContentTitle || section.content?.title,
+            description: translatedContentDescription || section.content?.description,
+            cta_label: translatedCtaLabel,
+            submenu: localizedSubmenu,
+          },
+        };
+      }),
+    [stageSections, t],
+  );
+
   useEffect(() => {
     setActiveSection(0);
     setVisibleSections(new Set([0]));
@@ -947,7 +1002,7 @@ export default function Homepage() {
       <SiteHeader />
 
       <main className="homepage-main">
-        {stageSections.map((section, index) => {
+        {localizedStageSections.map((section, index) => {
           const visual = getSectionVisual(section, index);
           const palette = getStagePalette(index);
           const title = getSectionTitle(section) || 'Sonpin';
