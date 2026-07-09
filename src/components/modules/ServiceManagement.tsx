@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Edit3, RefreshCw, Save, Search, Sparkles, X } from 'lucide-react';
+import { RefreshCw, Save, Search, Sparkles, X, CreditCard as Edit } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { loadServiceArticles, syncServiceArticlesToDb, type ServiceArticleRow } from '../../lib/serviceArticleStore';
 import { supabase } from '../../lib/supabase';
@@ -64,7 +64,7 @@ export default function ServiceManagement() {
       setRows(items);
     } catch (error) {
       console.error('Failed to load service articles:', error);
-      setNotice('載入老饕分享失敗，請確認 Supabase 連線與 articles 表是否正常。');
+      setNotice('載入老饕分享失敗，請確認 Supabase 連線與 articles 表。');
     } finally {
       setLoading(false);
     }
@@ -152,19 +152,25 @@ export default function ServiceManagement() {
   };
 
   if (loading) {
-    return <div className="p-6 text-slate-500">{t('common.loading', '載入中...')}</div>;
+    return <div className="p-6">{t('common.loading', '載入中...')}</div>;
   }
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">老饕分享</h1>
-          <p className="mt-2 text-slate-600">每一篇分享都直接存放在 `articles` 表中，這裡可以逐篇編輯標題、內容、圖片與發佈狀態。</p>
+          <p className="mt-2 text-slate-600">比照文章管理樣式，逐篇編輯每一則分享內容，並直接寫回 `articles` 表。</p>
         </div>
-        <div className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">
-          <Sparkles className="mr-2 inline h-4 w-4" />
-          Supabase articles
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSync}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
+            {saving ? '同步中...' : '同步預設內容'}
+          </button>
         </div>
       </div>
 
@@ -175,8 +181,8 @@ export default function ServiceManagement() {
 
       {notice && <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{notice}</div>}
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-[260px] flex-1">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={searchTerm}
@@ -185,28 +191,9 @@ export default function ServiceManagement() {
             className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-slate-900 focus:outline-none"
           />
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={load}
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
-            重新整理
-          </button>
-          <button
-            onClick={handleSync}
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
-          >
-            <Save className={`h-4 w-4 ${saving ? 'animate-pulse' : ''}`} />
-            {saving ? '同步中...' : '同步預設內容'}
-          </button>
-        </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
@@ -236,9 +223,9 @@ export default function ServiceManagement() {
                 <td className="px-6 py-4 text-right">
                   <button
                     onClick={() => openForm(row)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   >
-                    <Edit3 className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                     編輯
                   </button>
                 </td>
@@ -254,7 +241,7 @@ export default function ServiceManagement() {
           <h2 className="text-lg font-bold">說明</h2>
         </div>
         <p className="text-sm leading-7 text-slate-600">
-          這個頁面對應前台的「老饕分享」與文章詳情頁。每次儲存都會直接寫回 Supabase 的 <code>articles</code> 表，前台會同步讀取更新後的內容。
+          這個頁面和文章管理共用同一套卡片與表格視覺，編輯後會直接更新 Supabase 的 <code>articles</code> 表，前台 `/service` 與 `/service/:slug` 會立即同步。
         </p>
       </div>
 
@@ -262,16 +249,13 @@ export default function ServiceManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-6">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">編輯老饕分享</h2>
-                <p className="mt-1 text-sm text-slate-500">/{editingArticle.slug}</p>
-              </div>
+              <h2 className="text-2xl font-bold text-slate-900">編輯老饕分享</h2>
               <button onClick={() => setShowForm(false)} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-5 p-6">
+            <div className="space-y-4 p-6">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">文章標題 *</label>
                 <input
@@ -285,7 +269,6 @@ export default function ServiceManagement() {
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">文章代碼</label>
                   <input value={form.slug} disabled className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-500" />
-                  <p className="mt-1 text-xs text-slate-500">此代碼對應前台路由，請先保留原值。</p>
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">發佈狀態</label>
@@ -325,20 +308,14 @@ export default function ServiceManagement() {
                 <p className="mt-2 text-xs text-slate-400">支援 HTML 編輯，內容會直接儲存在 Supabase。</p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">發佈時間</label>
-                  <input
-                    type="datetime-local"
-                    value={form.published_at}
-                    onChange={(event) => setForm({ ...form, published_at: event.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                  />
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-                  <p className="font-medium text-slate-900">同步說明</p>
-                  <p className="mt-1">前台 `/service` 與 `/service/:slug` 都會直接讀取這筆資料，不需要另外維護編碼內容。</p>
-                </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">發佈時間</label>
+                <input
+                  type="datetime-local"
+                  value={form.published_at}
+                  onChange={(event) => setForm({ ...form, published_at: event.target.value })}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
               </div>
             </div>
 
