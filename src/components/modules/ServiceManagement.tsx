@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Save, Search, Sparkles, Trash2, X, CreditCard as Edit } from 'lucide-react';
+import { Plus, RefreshCw, Save, Search, Sparkles, Trash2, X, CreditCard as Edit } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { loadServiceArticles, syncServiceArticlesToDb, type ServiceArticleRow } from '../../lib/serviceArticleStore';
 import { supabase } from '../../lib/supabase';
@@ -84,7 +84,14 @@ export default function ServiceManagement() {
     return rows.filter((row) => `${row.title} ${row.slug} ${row.excerpt}`.toLowerCase().includes(query));
   }, [rows, searchTerm]);
 
-  const openForm = (article: ServiceArticleRow) => {
+  const openForm = (article?: ServiceArticleRow) => {
+    if (!article) {
+      setEditingArticle(null);
+      setForm(emptyForm());
+      setShowForm(true);
+      return;
+    }
+
     setEditingArticle(article);
     setForm({
       title: article.title,
@@ -136,8 +143,6 @@ export default function ServiceManagement() {
   };
 
   const saveArticle = async () => {
-    if (!editingArticle) return;
-
     if (!form.title.trim() || !form.slug.trim()) {
       alert('請先填寫標題與代碼。');
       return;
@@ -156,7 +161,7 @@ export default function ServiceManagement() {
         published_at: form.published_at ? new Date(form.published_at).toISOString() : null,
       };
 
-      const { error } = editingArticle.id
+      const { error } = editingArticle?.id
         ? await supabase.from('articles').update(payload).eq('id', editingArticle.id)
         : await supabase.from('articles').upsert(payload, { onConflict: 'slug' });
 
@@ -185,6 +190,14 @@ export default function ServiceManagement() {
           <p className="mt-2 text-slate-600">比照文章管理功能，逐篇編輯、刪除，並直接寫回 `articles` 表。</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => openForm()}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            新增文章
+          </button>
           <button
             onClick={load}
             disabled={saving}
@@ -284,11 +297,11 @@ export default function ServiceManagement() {
         </p>
       </div>
 
-      {showForm && editingArticle && (
+      {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-6">
-              <h2 className="text-2xl font-bold text-slate-900">編輯老饕分享</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{editingArticle ? '編輯老饕分享' : '新增老饕分享'}</h2>
               <button onClick={() => setShowForm(false)} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>
@@ -307,7 +320,13 @@ export default function ServiceManagement() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">文章代碼</label>
-                  <input value={form.slug} disabled className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-500" />
+                  <input
+                    value={form.slug}
+                    onChange={(event) => setForm({ ...form, slug: event.target.value })}
+                    disabled={Boolean(editingArticle?.slug)}
+                    className={`w-full rounded-lg border border-slate-300 px-3 py-2 ${editingArticle?.slug ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`}
+                  />
+                  <p className="mt-1 text-xs text-slate-500">{editingArticle ? '已建立文章的代碼先保留原值，避免前台路由失效。' : '建立新文章時請填入代碼，會用來對應前台路由。'}</p>
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">發佈狀態</label>
