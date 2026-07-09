@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Save, Search, Sparkles, X, CreditCard as Edit } from 'lucide-react';
+import { RefreshCw, Save, Search, Sparkles, Trash2, X, CreditCard as Edit } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { loadServiceArticles, syncServiceArticlesToDb, type ServiceArticleRow } from '../../lib/serviceArticleStore';
 import { supabase } from '../../lib/supabase';
@@ -113,6 +113,28 @@ export default function ServiceManagement() {
     }
   };
 
+  const deleteArticle = async (article: ServiceArticleRow) => {
+    if (!article.id) {
+      alert('這篇文章尚未有資料庫 ID，無法刪除。');
+      return;
+    }
+
+    if (!confirm(`確定要刪除「${article.title}」嗎？`)) return;
+
+    setSaving(true);
+    setNotice(null);
+    try {
+      const { error } = await supabase.from('articles').delete().eq('id', article.id);
+      if (error) throw error;
+      await load();
+    } catch (error) {
+      console.error('Failed to delete service article:', error);
+      setNotice('刪除失敗，請確認 Supabase 權限與 RLS 設定。');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const saveArticle = async () => {
     if (!editingArticle) return;
 
@@ -160,15 +182,23 @@ export default function ServiceManagement() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">老饕分享</h1>
-          <p className="mt-2 text-slate-600">比照文章管理樣式，逐篇編輯每一則分享內容，並直接寫回 `articles` 表。</p>
+          <p className="mt-2 text-slate-600">比照文章管理功能，逐篇編輯、刪除，並直接寫回 `articles` 表。</p>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleSync}
+            onClick={load}
             disabled={saving}
             className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
+            重新整理
+          </button>
+          <button
+            onClick={handleSync}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-50"
+          >
+            <Save className={`h-4 w-4 ${saving ? 'animate-pulse' : ''}`} />
             {saving ? '同步中...' : '同步預設內容'}
           </button>
         </div>
@@ -221,13 +251,22 @@ export default function ServiceManagement() {
                   <div className="line-clamp-2 max-w-xl">{row.excerpt || '尚未填寫摘要'}</div>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => openForm(row)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <Edit className="h-4 w-4" />
-                    編輯
-                  </button>
+                  <div className="inline-flex items-center gap-2">
+                    <button
+                      onClick={() => openForm(row)}
+                      className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      aria-label="編輯文章"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteArticle(row)}
+                      className="rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      aria-label="刪除文章"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -241,7 +280,7 @@ export default function ServiceManagement() {
           <h2 className="text-lg font-bold">說明</h2>
         </div>
         <p className="text-sm leading-7 text-slate-600">
-          這個頁面和文章管理共用同一套卡片與表格視覺，編輯後會直接更新 Supabase 的 <code>articles</code> 表，前台 `/service` 與 `/service/:slug` 會立即同步。
+          這個頁面和文章管理採同一種資料維護邏輯，內容直接更新 Supabase 的 <code>articles</code> 表，前台 `/service` 與 `/service/:slug` 會立即同步。
         </p>
       </div>
 

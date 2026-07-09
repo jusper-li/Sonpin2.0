@@ -56,12 +56,7 @@ export const loadServiceArticles = async (): Promise<ServiceArticleRow[]> => {
       return fallback;
     }
 
-    const fallbackMap = new Map(fallback.map((row) => [row.slug, row]));
-    rows.forEach((row) => {
-      fallbackMap.set(row.slug, row);
-    });
-
-    return sortRows(Array.from(fallbackMap.values()));
+    return sortRows(rows);
   } catch (error) {
     console.error('Failed to load service articles:', error);
     return fallback;
@@ -79,4 +74,3 @@ export const syncServiceArticlesToDb = async () => {
   if (error) throw error;
   return rows.length;
 };
-
