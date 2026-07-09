@@ -30,29 +30,6 @@ const DEFAULT_LANGUAGES: Language[] = [
 const translations: Record<string, Record<string, string>> = {};
 const translationCache: Record<string, Promise<string>> = {};
 
-const translateViaGoogle = async (sourceText: string, targetLanguage: SupportedLanguage) => {
-  const params = new URLSearchParams({
-    client: 'gtx',
-    sl: 'auto',
-    tl: targetLanguage,
-    dt: 't',
-    q: sourceText,
-    format: 'text',
-  });
-
-  const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params.toString()}`);
-  if (!response.ok) return sourceText;
-
-  const data = (await response.json()) as any;
-
-  const translatedSegments = Array.isArray(data?.[0]) ? data[0] : [];
-  const translatedText = translatedSegments
-    .map((segment) => segment?.[0] || '')
-    .join('')
-    .trim();
-  return translatedText || sourceText;
-};
-
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(normalizeLang('zh-TW'));
   const [languages, setLanguages] = useState<Language[]>(DEFAULT_LANGUAGES);
@@ -130,12 +107,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           translations[targetLanguage] = {};
         }
         let nextTranslation = String(data.translation || sourceText).trim();
-        if (!nextTranslation || nextTranslation === sourceText) {
-          nextTranslation = await translateViaGoogle(sourceText, targetLanguage);
-        }
         translations[targetLanguage][key] = nextTranslation;
         setTranslationRevision((value) => value + 1);
-        return nextTranslation;
+        return nextTranslation || sourceText;
       }
     } catch (error) {
       if (!isSupabaseNetworkError(error)) {
@@ -143,7 +117,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    return translateViaGoogle(sourceText, targetLanguage);
+    return sourceText;
   };
 
   const requestTranslation = (key: string, sourceText: string, targetLanguage: SupportedLanguage) => {

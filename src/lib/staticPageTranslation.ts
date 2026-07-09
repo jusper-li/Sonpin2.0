@@ -32,33 +32,6 @@ const hashText = (txt: string) => {
   return String(hash >>> 0);
 };
 
-const translateViaGoogle = async (
-  sourceText: string,
-  targetLanguage: SupportedLanguage,
-  preserveHtml = false,
-): Promise<string> => {
-  const params = new URLSearchParams({
-    client: 'gtx',
-    sl: 'auto',
-    tl: targetLanguage,
-    dt: 't',
-    q: sourceText,
-    format: preserveHtml ? 'html' : 'text',
-  });
-
-  const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params.toString()}`);
-  if (!response.ok) return sourceText;
-
-  const data = (await response.json()) as any;
-
-  const translatedSegments = Array.isArray(data?.[0]) ? data[0] : [];
-  const translatedText = translatedSegments
-    .map((segment) => segment?.[0] || '')
-    .join('')
-    .trim();
-  return translatedText || sourceText;
-};
-
 const readCache = (): Record<string, TranslatableStaticPage> => {
   try {
     const raw = localStorage.getItem(STATIC_PAGE_TRANSLATION_CACHE_KEY);
@@ -99,16 +72,11 @@ const translateText = async (
     }),
   });
 
-  if (!response.ok) {
-    return translateViaGoogle(sourceText, targetLanguage, preserveHtml);
-  }
+  if (!response.ok) return sourceText;
 
   const data = (await response.json()) as TranslateResponse;
   const remoteTranslation = (data.translation || sourceText).trim();
-  if (!remoteTranslation || remoteTranslation === sourceText) {
-    return translateViaGoogle(sourceText, targetLanguage, preserveHtml);
-  }
-  return remoteTranslation;
+  return remoteTranslation || sourceText;
 };
 
 export const shouldTranslateStaticPage = (lang: string) =>
