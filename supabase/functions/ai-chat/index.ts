@@ -84,30 +84,13 @@ function findKnowledgeMatch(message: string, knowledge: KnowledgeItem[]) {
 }
 
 function fallbackReply(message: string, knowledge: KnowledgeItem[]) {
-  const normalized = message.toLowerCase();
   const matchedAnswer = findKnowledgeMatch(message, knowledge);
 
   if (matchedAnswer) {
-    return `${matchedAnswer}\n\n如果你需要，我也可以幫你整理成更完整的說明。`;
+    return matchedAnswer;
   }
 
-  if (hasAny(normalized, ["運費", "宅配", "shipping", "delivery"])) {
-    return "可以，運費會依商品設定的級距自動計算，也可以疊加不同商品的運費。若你提供商品名稱，我可以幫你說明適用的運費規則。";
-  }
-
-  if (hasAny(normalized, ["禮盒", "gift", "送禮", "伴手禮", "禮品"])) {
-    return "如果是送禮用途，我可以幫你整理適合的禮盒與推薦組合，也可以直接依預算和場合幫你篩選。";
-  }
-
-  if (hasAny(normalized, ["付款", "金流", "payment", "轉帳"])) {
-    return "目前付款方式以銀行轉帳為主。如果你要，我也可以幫你補上結帳流程與轉帳注意事項。";
-  }
-
-  if (hasAny(normalized, ["退貨", "退款", "return", "refund"])) {
-    return "退換貨規則會依商品與狀況判斷，如果你告訴我是哪一筆訂單或哪個商品，我可以先幫你整理處理方向。";
-  }
-
-  return "我是小 M AI 客服，可以協助你查詢商品、運費、付款、門市與退換貨資訊。你也可以直接告訴我商品名稱或頁面內容，我會幫你整理重點。";
+  return "我只能回答本站內容，請詢問商品、門市、服務、FAQ、運費或付款等本站資訊。";
 }
 
 async function readBody(req: Request) {
@@ -187,7 +170,7 @@ Deno.serve(async (req: Request) => {
       {
         role: "system",
         content:
-          "你是淞品土雞的 AI 客服，請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；若資料不足，先承認不確定並提供下一步建議。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
+          "你是淞品土雞的 AI 客服，只能回答本站內容。請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；若問題不屬於本站內容，直接回覆「我只能回答本站內容」。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
           kbContext,
       },
     ];
