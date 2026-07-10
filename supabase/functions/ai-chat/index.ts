@@ -7,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, x-supabase-api-key, content-type, accept",
 };
 
+const AI_MODEL = "gpt-5.4-mini";
+
 type KnowledgeItem = {
   question?: string | null;
   answer?: string | null;
@@ -90,6 +92,24 @@ function fallbackReply(message: string, knowledge: KnowledgeItem[]) {
     return matchedAnswer;
   }
 
+  const normalized = message.toLowerCase();
+
+  if (hasAny(normalized, ["禮盒", "商品", "產品", "product", "main product", "other products", "分類", "主打", "其他"])) {
+    return "是，禮盒屬於本站商品之一。你可以到商品頁查看分類、價格與詳細內容。";
+  }
+
+  if (hasAny(normalized, ["門市", "store", "店面", "地址", "電話", "營業時間"])) {
+    return "可以，本站有門市資訊頁，可以查看各門市地址、電話與營業時間。";
+  }
+
+  if (hasAny(normalized, ["faq", "常見問題", "運費", "付款", "退貨", "退款", "出貨"])) {
+    return "可以，這些都屬於本站資訊範圍，我可以依頁面內容幫你整理。";
+  }
+
+  if (hasAny(normalized, ["關於", "about", "品牌", "生產", "製程", "media", "新聞", "文章"])) {
+    return "可以，本站有關於、製程與媒體文章內容。";
+  }
+
   return "我只能回答本站內容，請詢問商品、門市、服務、FAQ、運費或付款等本站資訊。";
 }
 
@@ -170,7 +190,7 @@ Deno.serve(async (req: Request) => {
       {
         role: "system",
         content:
-          "你是淞品土雞的 AI 客服，只能回答本站內容。請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；若問題不屬於本站內容，直接回覆「我只能回答本站內容」。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
+          "你是淞品土雞的 AI 客服，只能回答本站內容。請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；如果問題屬於本站的商品、門市、FAQ、運費、付款、關於、製程或媒體內容，請直接根據本站資料回答；若問題明顯不屬於本站內容，才回覆「我只能回答本站內容」。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
           kbContext,
       },
     ];
@@ -191,7 +211,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: AI_MODEL,
         messages,
         temperature: 0.6,
         max_tokens: 350,
