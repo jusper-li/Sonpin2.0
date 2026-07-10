@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, x-supabase-api-key, content-type, accept",
 };
 
 type KnowledgeItem = {
@@ -53,17 +53,28 @@ function hasAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word.toLowerCase()));
 }
 
+function normalizeKeywords(keywords: KnowledgeItem["keywords"]) {
+  if (Array.isArray(keywords)) {
+    return keywords;
+  }
+
+  if (typeof keywords === "string") {
+    return keywords
+      .split(/[,，、;\n\r]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function findKnowledgeMatch(message: string, knowledge: KnowledgeItem[]) {
   const normalized = message.toLowerCase();
 
   for (const item of knowledge) {
-    const keywords = Array.isArray(item.keywords)
-      ? item.keywords
-      : typeof item.keywords === "string"
-        ? item.keywords.split(/[,，\s]+/).filter(Boolean)
-        : [];
-
+    const keywords = normalizeKeywords(item.keywords);
     const haystack = [item.question, ...keywords].filter(Boolean).join(" ").toLowerCase();
+
     if (haystack && haystack.split(/\s+/).some((token) => token && normalized.includes(token))) {
       return item.answer?.trim() || null;
     }
@@ -77,26 +88,34 @@ function fallbackReply(message: string, knowledge: KnowledgeItem[]) {
   const matchedAnswer = findKnowledgeMatch(message, knowledge);
 
   if (matchedAnswer) {
-    return `${matchedAnswer}\n\n目前 AI 深度回覆正在維護中，我先用客服知識庫協助您；若需要專人協助，也可以到「聯絡我們」留下需求。`;
+    return `${matchedAnswer}\n\n如果你需要，我也可以幫你整理成更完整的說明。`;
   }
 
-  if (hasAny(normalized, ["配送", "運送", "出貨", "到貨", "shipping", "delivery"])) {
-    return "我們一般會在付款完成後安排出貨，常見配送時間約 1-3 個工作天，實際時間會依物流與訂單內容調整。若是禮盒急件，建議先到「聯絡我們」留下需求，我們會協助確認。";
+  if (hasAny(normalized, ["運費", "宅配", "shipping", "delivery"])) {
+    return "可以，運費會依商品設定的級距自動計算，也可以疊加不同商品的運費。若你提供商品名稱，我可以幫你說明適用的運費規則。";
   }
 
-  if (hasAny(normalized, ["禮盒", "送禮", "gift", "推薦", "父親", "母親", "企業"])) {
-    return "如果是送禮，我會建議先看「禮盒商城」中的冠軍精品咖啡、濾掛禮盒與聯名系列。想要穩重質感可選冠軍精品；想要方便沖煮可選濾掛；企業大量送禮可透過「聯絡我們」洽詢。";
+  if (hasAny(normalized, ["禮盒", "gift", "送禮", "伴手禮", "禮品"])) {
+    return "如果是送禮用途，我可以幫你整理適合的禮盒與推薦組合，也可以直接依預算和場合幫你篩選。";
   }
 
-  if (hasAny(normalized, ["付款", "刷卡", "轉帳", "payment", "發票"])) {
-    return "目前網站結帳流程會依頁面顯示的付款方式完成訂單。若您有轉帳、發票或企業採購需求，請在訂單備註或「聯絡我們」留下資訊，我們會再協助確認。";
+  if (hasAny(normalized, ["付款", "金流", "payment", "轉帳"])) {
+    return "目前付款方式以銀行轉帳為主。如果你要，我也可以幫你補上結帳流程與轉帳注意事項。";
   }
 
-  if (hasAny(normalized, ["退貨", "退款", "換貨", "return", "refund"])) {
-    return "咖啡與食品類商品會依保存狀態與包裝完整性處理退換貨。若商品有破損、錯寄或其他異常，請保留照片並透過「聯絡我們」提供訂單資訊。";
+  if (hasAny(normalized, ["退貨", "退款", "return", "refund"])) {
+    return "退換貨規則會依商品與狀況判斷，如果你告訴我是哪一筆訂單或哪個商品，我可以先幫你整理處理方向。";
   }
 
-  return "您好，我是 Sonpin 的 AI 客服助理。現在深度 AI 回覆正在維護中，我仍可以先協助您查詢送禮、配送、付款與商品推薦。您也可以直接前往「禮盒商城」瀏覽商品，或到「聯絡我們」留下需求。";
+  return "我是小 M AI 客服，可以協助你查詢商品、運費、付款、門市與退換貨資訊。你也可以直接告訴我商品名稱或頁面內容，我會幫你整理重點。";
+}
+
+async function readBody(req: Request) {
+  try {
+    return await req.json();
+  } catch {
+    return null;
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -109,9 +128,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { message, session_id } = await req.json();
+    const payload = await readBody(req);
+    const message = typeof payload?.message === "string" ? payload.message.trim() : "";
+    const sessionId = typeof payload?.session_id === "string" ? payload.session_id.trim() : "";
 
-    if (!message || !session_id) {
+    if (!message || !sessionId) {
       return jsonResponse({ error: "message and session_id are required" }, 400);
     }
 
@@ -125,7 +146,7 @@ Deno.serve(async (req: Request) => {
     if (supabaseUrl && supabaseKey) {
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const [{ data: kbData }, { data: historyData }] = await Promise.all([
+      const [{ data: kbData, error: kbError }, { data: historyData, error: historyError }] = await Promise.all([
         supabase
           .from("knowledge_base")
           .select("question, answer, keywords")
@@ -135,10 +156,18 @@ Deno.serve(async (req: Request) => {
         supabase
           .from("chat_messages")
           .select("sender_type, message")
-          .eq("session_id", session_id)
+          .eq("session_id", sessionId)
           .order("created_at", { ascending: true })
           .limit(12),
       ]);
+
+      if (kbError) {
+        console.error("ai-chat knowledge lookup failed", kbError);
+      }
+
+      if (historyError) {
+        console.error("ai-chat history lookup failed", historyError);
+      }
 
       knowledge = (kbData || []) as KnowledgeItem[];
       history = (historyData || []) as HistoryItem[];
@@ -152,13 +181,13 @@ Deno.serve(async (req: Request) => {
 
     const kbContext = knowledge.length
       ? knowledge.map((item) => `Q: ${item.question || ""}\nA: ${item.answer || ""}`).join("\n\n")
-      : "目前沒有額外知識庫資料。";
+      : "目前沒有可用的知識庫條目。";
 
     const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
       {
         role: "system",
         content:
-          "你是 Sonpin 的 AI 客服助理「小 M」。請使用繁體中文，以溫暖、簡潔、專業的語氣回答。優先協助商品推薦、禮盒選購、配送、付款、退換貨與品牌資訊。回答盡量在 150 字內；若不確定，請引導使用者前往聯絡我們。\n\n客服知識庫：\n" +
+          "你是淞品土雞的 AI 客服，請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；若資料不足，先承認不確定並提供下一步建議。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
           kbContext,
       },
     ];
@@ -188,7 +217,8 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!openaiRes.ok || !openaiRes.body) {
-      console.error("OpenAI chat request failed", openaiRes.status, await openaiRes.text());
+      const errorText = await openaiRes.text().catch(() => "");
+      console.error("OpenAI chat request failed", openaiRes.status, errorText);
       return sseResponse(fallbackReply(message, knowledge), {
         "X-AI-Mode": "fallback-openai-error",
       });
@@ -212,8 +242,8 @@ Deno.serve(async (req: Request) => {
 
               for (const line of lines) {
                 if (!line.startsWith("data: ")) continue;
-                const data = line.slice(6).trim();
 
+                const data = line.slice(6).trim();
                 if (data === "[DONE]") {
                   controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                   continue;
@@ -232,9 +262,7 @@ Deno.serve(async (req: Request) => {
             }
           } catch (error) {
             console.error("AI chat stream failed", error);
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ delta: fallbackReply(message, knowledge) })}\n\n`),
-            );
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: fallbackReply(message, knowledge) })}\n\n`));
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           } finally {
             controller.close();
@@ -253,7 +281,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("AI chat error:", error);
-    return sseResponse("AI 客服暫時忙碌中，請稍後再試，或透過「聯絡我們」留下需求，我們會盡快協助您。", {
+    return sseResponse("目前 AI 客服暫時無法完整回應，請稍後再試，或切換真人客服。", {
       "X-AI-Mode": "fallback-function-error",
     });
   }
