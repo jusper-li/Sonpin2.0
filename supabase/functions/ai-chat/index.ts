@@ -8,6 +8,11 @@ const corsHeaders = {
 };
 
 const AI_MODEL = "gpt-5.4-mini";
+const EMBEDDING_MODEL = "text-embedding-3-small";
+const SITE_MATCH_THRESHOLD = 0.68;
+const SITE_MATCH_COUNT = 6;
+const KNOWLEDGE_CONTEXT_LIMIT = 24;
+const SITE_ORIGIN = "https://sonpin.netlify.app";
 
 type KnowledgeItem = {
   question?: string | null;
@@ -19,6 +24,51 @@ type HistoryItem = {
   sender_type: "user" | "bot" | "admin";
   message: string;
 };
+
+type SemanticMatch = {
+  source_table?: string | null;
+  source_title?: string | null;
+  source_slug?: string | null;
+  content_type?: string | null;
+  content_text?: string | null;
+  metadata?: Record<string, unknown> | null;
+  similarity?: number | null;
+};
+
+function getMatchUrl(match: SemanticMatch) {
+  const metadata = match.metadata || {};
+  const explicitUrl =
+    typeof metadata.source_url === "string"
+      ? metadata.source_url.trim()
+      : typeof metadata.canonical_url === "string"
+        ? metadata.canonical_url.trim()
+        : typeof metadata.url === "string"
+          ? metadata.url.trim()
+          : "";
+
+  if (explicitUrl) return explicitUrl;
+
+  const slug = (match.source_slug || "").trim();
+  const table = (match.source_table || "").trim();
+
+  if (table === "products" && slug) return `${SITE_ORIGIN}/product/${slug}`;
+  if (table === "articles" && slug) return `${SITE_ORIGIN}/service/${slug}`;
+  if (table === "faqs") return `${SITE_ORIGIN}/faq`;
+  if (table === "stores") return `${SITE_ORIGIN}/store`;
+  if (table === "homepage_sections") return SITE_ORIGIN;
+  if (table === "categories" && slug) {
+    if (slug === "main-products") return `${SITE_ORIGIN}/products/6`;
+    if (slug === "other-products") return `${SITE_ORIGIN}/products/7`;
+    return `${SITE_ORIGIN}/products/${slug}`;
+  }
+  if (table === "static_pages" && slug) return `${SITE_ORIGIN}/${slug}`;
+  if (table === "seo_settings") {
+    const pagePath = typeof metadata.page_path === "string" ? metadata.page_path.trim() : "";
+    if (pagePath) return pagePath.startsWith("http") ? pagePath : `${SITE_ORIGIN}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`;
+  }
+
+  return "";
+}
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -51,27 +101,27 @@ function sseResponse(reply: string, headers: Record<string, string> = {}) {
   );
 }
 
+function normalizeText(text: string) {
+  return text.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
 function hasAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word.toLowerCase()));
 }
 
 function normalizeKeywords(keywords: KnowledgeItem["keywords"]) {
-  if (Array.isArray(keywords)) {
-    return keywords;
-  }
-
+  if (Array.isArray(keywords)) return keywords;
   if (typeof keywords === "string") {
     return keywords
-      .split(/[,，、;\n\r]+/)
+      .split(/[,，\n\r|]+/)
       .map((item) => item.trim())
       .filter(Boolean);
   }
-
   return [];
 }
 
 function findKnowledgeMatch(message: string, knowledge: KnowledgeItem[]) {
-  const normalized = message.toLowerCase();
+  const normalized = normalizeText(message);
 
   for (const item of knowledge) {
     const keywords = normalizeKeywords(item.keywords);
@@ -85,32 +135,96 @@ function findKnowledgeMatch(message: string, knowledge: KnowledgeItem[]) {
   return null;
 }
 
+function isSiteTopicQuestion(message: string) {
+  const normalized = normalizeText(message);
+  return hasAny(normalized, [
+    "商品",
+    "產品",
+    "門市",
+    "店面",
+    "faq",
+    "常見問題",
+    "運費",
+    "付款",
+    "結帳",
+    "about",
+    "關於",
+    "製程",
+    "process",
+    "media",
+    "文章",
+    "老饕",
+    "食譜",
+    "shipping",
+    "退貨",
+    "隱私",
+    "會員",
+    "客服",
+    "禮盒",
+    "分類",
+    "商品分類",
+  ]);
+}
+
 function fallbackReply(message: string, knowledge: KnowledgeItem[]) {
   const matchedAnswer = findKnowledgeMatch(message, knowledge);
+  if (matchedAnswer) return matchedAnswer;
 
-  if (matchedAnswer) {
-    return matchedAnswer;
+  if (isSiteTopicQuestion(message)) {
+    return "我目前只能根據本站資料回答。請告訴我你想查的是商品、門市、FAQ、運費、付款、關於、製程、媒體或會員相關內容，我可以直接幫你整理。";
   }
 
-  const normalized = message.toLowerCase();
+  return "我只能回答本站內容，請詢問商品、門市、服務、FAQ、運費、付款、關於、製程或媒體相關問題。";
+}
 
-  if (hasAny(normalized, ["禮盒", "商品", "產品", "product", "main product", "other products", "分類", "主打", "其他"])) {
-    return "是，禮盒屬於本站商品之一。你可以到商品頁查看分類、價格與詳細內容。";
-  }
+function cleanSnippet(text: string, limit = 280) {
+  const cleaned = text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  if (hasAny(normalized, ["門市", "store", "店面", "地址", "電話", "營業時間"])) {
-    return "可以，本站有門市資訊頁，可以查看各門市地址、電話與營業時間。";
-  }
+  if (cleaned.length <= limit) return cleaned;
+  return `${cleaned.slice(0, limit - 1)}…`;
+}
 
-  if (hasAny(normalized, ["faq", "常見問題", "運費", "付款", "退貨", "退款", "出貨"])) {
-    return "可以，這些都屬於本站資訊範圍，我可以依頁面內容幫你整理。";
-  }
+function formatKnowledgeContext(knowledge: KnowledgeItem[]) {
+  if (!knowledge.length) return "（無知識庫資料）";
 
-  if (hasAny(normalized, ["關於", "about", "品牌", "生產", "製程", "media", "新聞", "文章"])) {
-    return "可以，本站有關於、製程與媒體文章內容。";
-  }
+  return knowledge
+    .slice(0, KNOWLEDGE_CONTEXT_LIMIT)
+    .map((item, index) => {
+      const question = cleanSnippet(item.question || "", 180);
+      const answer = cleanSnippet(item.answer || "", 360);
+      return `${index + 1}. Q: ${question}\nA: ${answer}`;
+    })
+    .join("\n\n");
+}
 
-  return "我只能回答本站內容，請詢問商品、門市、服務、FAQ、運費或付款等本站資訊。";
+function formatSemanticContext(matches: SemanticMatch[]) {
+  if (!matches.length) return "（無向量命中）";
+
+  return matches
+    .map((match, index) => {
+      const title = match.source_title || "未命名內容";
+      const table = match.source_table || "content";
+      const type = match.content_type || "page";
+      const slug = match.source_slug ? ` / ${match.source_slug}` : "";
+      const similarity = typeof match.similarity === "number" ? ` ${(match.similarity * 100).toFixed(1)}%` : "";
+      const snippet = cleanSnippet(match.content_text || "", 360);
+      const url = getMatchUrl(match);
+      const linkLine = url ? `\n參考連結：${url}` : "";
+      return `${index + 1}. [${table}:${type}] ${title}${slug}${similarity}\n${snippet}${linkLine}`;
+    })
+    .join("\n\n");
+}
+
+function siteContentLanguageNote() {
+  return [
+    "請用繁體中文回答，並優先依據站內內容作答。",
+    "如果有可對應的站內頁面，請在回答最後加上「參考連結：網址」，讓使用者可以直接點開查看內容。",
+    "回答請以清楚、實用、可直接給顧客看的方式呈現。",
+  ].join(" ");
 }
 
 async function readBody(req: Request) {
@@ -119,6 +233,52 @@ async function readBody(req: Request) {
   } catch {
     return null;
   }
+}
+
+async function getEmbedding(openaiKey: string, text: string) {
+  const response = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${openaiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: EMBEDDING_MODEL,
+      input: text,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`OpenAI embeddings request failed: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const embedding = data?.data?.[0]?.embedding;
+
+  if (!Array.isArray(embedding) || !embedding.length) {
+    throw new Error("OpenAI embeddings response was empty");
+  }
+
+  return embedding as number[];
+}
+
+async function getSemanticMatches(
+  supabase: ReturnType<typeof createClient>,
+  queryEmbedding: number[],
+) {
+  const { data, error } = await supabase.rpc("match_site_content", {
+    query_embedding: queryEmbedding,
+    match_threshold: SITE_MATCH_THRESHOLD,
+    match_count: SITE_MATCH_COUNT,
+  });
+
+  if (error) {
+    console.error("ai-chat semantic lookup failed", error);
+    return [];
+  }
+
+  return (data || []) as SemanticMatch[];
 }
 
 Deno.serve(async (req: Request) => {
@@ -145,6 +305,7 @@ Deno.serve(async (req: Request) => {
 
     let knowledge: KnowledgeItem[] = [];
     let history: HistoryItem[] = [];
+    let semanticMatches: SemanticMatch[] = [];
 
     if (supabaseUrl && supabaseKey) {
       const supabase = createClient(supabaseUrl, supabaseKey);
@@ -155,7 +316,7 @@ Deno.serve(async (req: Request) => {
           .select("question, answer, keywords")
           .eq("is_active", true)
           .order("priority", { ascending: false })
-          .limit(60),
+          .limit(KNOWLEDGE_CONTEXT_LIMIT),
         supabase
           .from("chat_messages")
           .select("sender_type, message")
@@ -164,16 +325,20 @@ Deno.serve(async (req: Request) => {
           .limit(12),
       ]);
 
-      if (kbError) {
-        console.error("ai-chat knowledge lookup failed", kbError);
-      }
-
-      if (historyError) {
-        console.error("ai-chat history lookup failed", historyError);
-      }
+      if (kbError) console.error("ai-chat knowledge lookup failed", kbError);
+      if (historyError) console.error("ai-chat history lookup failed", historyError);
 
       knowledge = (kbData || []) as KnowledgeItem[];
       history = (historyData || []) as HistoryItem[];
+
+      if (openaiKey) {
+        try {
+          const queryEmbedding = await getEmbedding(openaiKey, message);
+          semanticMatches = await getSemanticMatches(supabase, queryEmbedding);
+        } catch (error) {
+          console.error("ai-chat semantic retrieval failed", error);
+        }
+      }
     }
 
     if (!openaiKey) {
@@ -182,16 +347,16 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const kbContext = knowledge.length
-      ? knowledge.map((item) => `Q: ${item.question || ""}\nA: ${item.answer || ""}`).join("\n\n")
-      : "目前沒有可用的知識庫條目。";
+    const semanticContext = formatSemanticContext(semanticMatches);
+    const kbContext = formatKnowledgeContext(knowledge);
 
     const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
       {
         role: "system",
         content:
-          "你是淞品土雞的 AI 客服，只能回答本站內容。請用繁體中文回答，語氣自然、簡潔、清楚。優先根據知識庫內容回答；如果問題屬於本站的商品、門市、FAQ、運費、付款、關於、製程或媒體內容，請直接根據本站資料回答；若問題明顯不屬於本站內容，才回覆「我只能回答本站內容」。回答盡量控制在 150 字以內。以下是知識庫內容：\n\n" +
-          kbContext,
+          `${siteContentLanguageNote()}\n\n` +
+          `【站內內容】\n${semanticContext}\n\n` +
+          `【知識庫】\n${kbContext}`,
       },
     ];
 
@@ -213,8 +378,8 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: AI_MODEL,
         messages,
-        temperature: 0.6,
-        max_tokens: 350,
+        temperature: 0.2,
+        max_completion_tokens: 450,
         stream: true,
       }),
     });
@@ -259,7 +424,7 @@ Deno.serve(async (req: Request) => {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
                   }
                 } catch {
-                  // Ignore partial or non-JSON event chunks from the upstream stream.
+                  // Ignore non-JSON stream fragments.
                 }
               }
             }
@@ -284,7 +449,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("AI chat error:", error);
-    return sseResponse("目前 AI 客服暫時無法完整回應，請稍後再試，或切換真人客服。", {
+    return sseResponse("我目前無法完成回覆，請稍後再試。", {
       "X-AI-Mode": "fallback-function-error",
     });
   }

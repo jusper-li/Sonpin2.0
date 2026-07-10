@@ -13,6 +13,32 @@ interface Message {
   failed?: boolean;
 }
 
+const URL_PATTERN = /(https?:\/\/[^\s<>"')\]]+)/g;
+const URL_TEST_PATTERN = /^https?:\/\//i;
+
+function renderMessageContent(message: string) {
+  const parts = message.split(URL_PATTERN);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+    if (!URL_TEST_PATTERN.test(part)) {
+      return <span key={`${index}-${part}`}>{part}</span>;
+    }
+
+    return (
+      <a
+        key={`${index}-${part}`}
+        href={part}
+        target="_blank"
+        rel="noreferrer"
+        className="break-all text-amber-700 underline underline-offset-2 hover:text-amber-800"
+      >
+        {part}
+      </a>
+    );
+  });
+}
+
 export default function FloatingAIChat() {
   return <FloatingAIChatContent />;
 }
@@ -379,16 +405,19 @@ function FloatingAIChatContent() {
                   <div
                     className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                       msg.sender_type === 'user' ? 'rounded-tr-sm bg-stone-700 text-white' : 'rounded-tl-sm border border-stone-100 bg-white text-stone-800 shadow-sm'
-                    }`}
+                    } whitespace-pre-wrap`}
                   >
-                    {msg.message ||
+                    {msg.message ? (
+                      renderMessageContent(msg.message)
+                    ) : (
                       (msg.streaming && (
                         <span className="flex items-center gap-1 py-0.5">
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-stone-300" style={{ animationDelay: '0ms' }} />
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-stone-300" style={{ animationDelay: '150ms' }} />
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-stone-300" style={{ animationDelay: '300ms' }} />
                         </span>
-                      ))}
+                      ))
+                    )}
                     {msg.streaming && msg.message && <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse align-middle bg-amber-400" />}
                   </div>
                   <div className={`mt-1 px-1 text-[10px] text-stone-400 ${msg.sender_type === 'user' ? 'text-right' : ''}`}>
