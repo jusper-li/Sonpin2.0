@@ -20,6 +20,18 @@ type KnowledgeItem = {
   keywords?: string[] | string | null;
 };
 
+type ProductItem = {
+  name?: string | null;
+  slug?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  price?: number | null;
+  sale_price?: number | null;
+  member_price?: number | null;
+  stock?: number | null;
+  is_featured?: boolean | null;
+};
+
 type HistoryItem = {
   sender_type: "user" | "bot" | "admin";
   message: string;
@@ -135,6 +147,29 @@ function findKnowledgeMatch(message: string, knowledge: KnowledgeItem[]) {
   return null;
 }
 
+function isProductTopicQuestion(message: string) {
+  const normalized = normalizeText(message);
+  return hasAny(normalized, [
+    "商品",
+    "產品",
+    "禮盒",
+    "送禮",
+    "推薦",
+    "哪款",
+    "哪個",
+    "雞湯",
+    "滴雞精",
+    "雞肉",
+    "全雞",
+    "伴手禮",
+    "禮物",
+    "價格",
+    "價錢",
+    "售價",
+    "庫存",
+  ]);
+}
+
 function isSiteTopicQuestion(message: string) {
   const normalized = normalizeText(message);
   return hasAny(normalized, [
@@ -166,15 +201,111 @@ function isSiteTopicQuestion(message: string) {
   ]);
 }
 
-function fallbackReply(message: string, knowledge: KnowledgeItem[]) {
+function fallbackReply(message: string, knowledge: KnowledgeItem[], products: ProductItem[] = []) {
   const matchedAnswer = findKnowledgeMatch(message, knowledge);
   if (matchedAnswer) return matchedAnswer;
 
-  if (isSiteTopicQuestion(message)) {
-    return "我目前只能根據本站資料回答。請告訴我你想查的是商品、門市、FAQ、運費、付款、關於、製程、媒體或會員相關內容，我可以直接幫你整理。";
+  if (isProductTopicQuestion(message)) {
+    if (products.length) {
+      const picks = pickTopProductsForQuery(message, products).slice(0, 3).map((item, index) => {
+        const price =
+          item.sale_price != null
+            ? `特價 NT$${formatPrice(item.sale_price)}`
+            : item.price != null
+              ? `售價 NT$${formatPrice(item.price)}`
+              : "";
+        const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
+        return `${index + 1}. ${item.name || "商品"}${price ? `｜${price}` : ""}${url ? `｜${url}` : ""}`;
+      }).join("\n");
+
+      return `我先幫你整理目前可參考的商品：\n${picks}\n\n如果你要送禮、家用或想找滴雞精／全雞，我也可以再幫你縮小推薦。`;
+    }
+
+    return "我目前可以協助你看商品、送禮推薦、價格與商品頁資訊。請再告訴我你想找的類型，例如雞湯、滴雞精、禮盒或全雞，我可以直接幫你整理。";
   }
 
-  return "我只能回答本站內容，請詢問商品、門市、服務、FAQ、運費、付款、關於、製程或媒體相關問題。";
+  if (isSiteTopicQuestion(message)) {
+    return "我目前可以根據本站資料回答。請告訴我你想查的是商品、門市、FAQ、運費、付款、關於、製程、媒體或會員相關內容，我可以直接幫你整理。";
+  }
+
+  return "我可以回答本站內容，也可以協助你找商品。請直接告訴我你想查的品項、用途或預算。";
+}
+
+function buildProductRecommendationReply(message: string, products: ProductItem[]) {
+  if (!products.length) {
+    return "我目前暫時抓不到商品資料，你可以先告訴我想找雞湯、滴雞精、禮盒或全雞，我再幫你縮小範圍。";
+  }
+
+  const sortedProducts = pickTopProductsForQuery(message, products);
+  const picks = sortedProducts.slice(0, 3).map((item, index) => {
+    const reason = cleanSnippet(item.summary || item.description || "適合參考的商品", 36);
+    const price =
+      item.sale_price != null
+        ? `特價 NT$${formatPrice(item.sale_price)}`
+        : item.price != null
+          ? `售價 NT$${formatPrice(item.price)}`
+          : "價格請洽客服";
+    const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
+    return `${index + 1}. ${item.name || "商品"}｜${reason}｜${price}${url ? `｜${url}` : ""}`;
+  });
+
+  return `我先幫你挑了 3 個可參考的商品：\n${picks.join("\n")}\n\n如果你要，我也可以再依「送禮、家用、預算、雞湯／滴雞精」繼續幫你縮小。`;
+}
+
+function scoreProductForQuery(message: string, item: ProductItem) {
+  const normalized = normalizeText(message);
+  const text = normalizeText([item.name, item.summary, item.description].filter(Boolean).join(" "));
+  let score = 0;
+
+  const scoreByTerms = (terms: string[], points: number) => {
+    if (terms.some((term) => normalized.includes(term) && text.includes(term))) {
+      score += points;
+    }
+  };
+
+  scoreByTerms(["滴雞精", "雞精"], 8);
+  scoreByTerms(["禮盒", "送禮", "伴手禮", "禮物"], 6);
+  scoreByTerms(["全雞", "雞肉", "煙燻", "鹽水"], 5);
+  scoreByTerms(["雞湯"], 4);
+  scoreByTerms(["價格", "價錢", "售價", "預算"], 2);
+  scoreByTerms(["庫存"], 1);
+
+  if (normalized.includes("人氣") && (item.is_featured || text.includes("熱銷") || text.includes("熱門"))) {
+    score += 4;
+  }
+
+  if (normalized.includes("送禮") && (text.includes("禮盒") || text.includes("送禮") || text.includes("節慶"))) {
+    score += 4;
+  }
+
+  if (normalized.includes("家用") && (text.includes("全雞") || text.includes("日常") || text.includes("家庭"))) {
+    score += 3;
+  }
+
+  if (normalized.includes("長輩") && (text.includes("滴雞精") || text.includes("禮盒") || text.includes("滋補"))) {
+    score += 4;
+  }
+
+  if (normalized.includes("企業") && text.includes("禮盒")) {
+    score += 4;
+  }
+
+  if (normalized.includes("現場") && (text.includes("鹽水") || text.includes("煙燻"))) {
+    score += 2;
+  }
+
+  if (normalized.includes("推薦") || normalized.includes("好")) {
+    score += item.is_featured ? 2 : 0;
+  }
+
+  return score;
+}
+
+function pickTopProductsForQuery(message: string, products: ProductItem[]) {
+  return [...products]
+    .map((item) => ({ item, score: scoreProductForQuery(message, item) }))
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.item);
 }
 
 function cleanSnippet(text: string, limit = 280) {
@@ -186,6 +317,42 @@ function cleanSnippet(text: string, limit = 280) {
 
   if (cleaned.length <= limit) return cleaned;
   return `${cleaned.slice(0, limit - 1)}…`;
+}
+
+function formatPrice(value?: number | null) {
+  if (typeof value !== "number" || Number.isNaN(value)) return "";
+  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(value);
+}
+
+function formatProductContext(products: ProductItem[]) {
+  if (!products.length) return "（無商品資料）";
+
+  return products
+    .slice(0, 10)
+    .map((item, index) => {
+      const title = cleanSnippet(item.name || "", 80);
+      const summary = cleanSnippet(item.summary || item.description || "", 160);
+      const price =
+        item.sale_price != null
+          ? `特價 NT$${formatPrice(item.sale_price)}`
+          : item.price != null
+            ? `售價 NT$${formatPrice(item.price)}`
+            : "";
+      const memberPrice = item.member_price != null ? `會員價 NT$${formatPrice(item.member_price)}` : "";
+      const stock = item.stock != null ? `庫存 ${item.stock}` : "";
+      const slug = item.slug ? `/${item.slug}` : "";
+      const url = slug ? `${SITE_ORIGIN}/product${slug}` : "";
+
+      return [
+        `${index + 1}. ${title}${item.slug ? ` (${item.slug})` : ""}`,
+        summary,
+        [price, memberPrice, stock].filter(Boolean).join("｜"),
+        url ? `商品頁：${url}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
 }
 
 function formatKnowledgeContext(knowledge: KnowledgeItem[]) {
@@ -304,19 +471,31 @@ Deno.serve(async (req: Request) => {
     const openaiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
 
     let knowledge: KnowledgeItem[] = [];
+    let products: ProductItem[] = [];
     let history: HistoryItem[] = [];
     let semanticMatches: SemanticMatch[] = [];
 
     if (supabaseUrl && supabaseKey) {
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const [{ data: kbData, error: kbError }, { data: historyData, error: historyError }] = await Promise.all([
+      const [
+        { data: kbData, error: kbError },
+        { data: productData, error: productError },
+        { data: historyData, error: historyError },
+      ] = await Promise.all([
         supabase
           .from("knowledge_base")
           .select("question, answer, keywords")
           .eq("is_active", true)
           .order("priority", { ascending: false })
           .limit(KNOWLEDGE_CONTEXT_LIMIT),
+        supabase
+          .from("products")
+          .select("name, slug, summary, description, price, sale_price, member_price, stock, is_featured")
+          .eq("is_active", true)
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(12),
         supabase
           .from("chat_messages")
           .select("sender_type, message")
@@ -326,9 +505,11 @@ Deno.serve(async (req: Request) => {
       ]);
 
       if (kbError) console.error("ai-chat knowledge lookup failed", kbError);
+      if (productError) console.error("ai-chat product lookup failed", productError);
       if (historyError) console.error("ai-chat history lookup failed", historyError);
 
       knowledge = (kbData || []) as KnowledgeItem[];
+      products = (productData || []) as ProductItem[];
       history = (historyData || []) as HistoryItem[];
 
       if (openaiKey) {
@@ -341,14 +522,24 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    if (isProductTopicQuestion(message) && products.length) {
+      return sseResponse(buildProductRecommendationReply(message, products), {
+        "X-AI-Mode": "product-fast-path",
+      });
+    }
+
     if (!openaiKey) {
-      return sseResponse(fallbackReply(message, knowledge), {
+      return sseResponse(fallbackReply(message, knowledge, products), {
         "X-AI-Mode": "fallback-missing-openai-key",
       });
     }
 
     const semanticContext = formatSemanticContext(semanticMatches);
     const kbContext = formatKnowledgeContext(knowledge);
+    const productContext = formatProductContext(products);
+    const productGuidance = isProductTopicQuestion(message)
+      ? "使用者正在詢問商品相關問題，請優先依商品清單回答。務必直接推薦 1-3 個合適商品，格式可用：商品名稱、簡短推薦原因、價格、商品頁連結；只有在資訊真的不足時才追問 1 個重點。"
+      : "若後續對話轉到商品相關問題，請優先依商品清單回答。務必直接推薦 1-3 個合適商品，格式可用：商品名稱、簡短推薦原因、價格、商品頁連結；只有在資訊真的不足時才追問 1 個重點。";
 
     const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
       {
@@ -356,7 +547,9 @@ Deno.serve(async (req: Request) => {
         content:
           `${siteContentLanguageNote()}\n\n` +
           `【站內內容】\n${semanticContext}\n\n` +
-          `【知識庫】\n${kbContext}`,
+          `【知識庫】\n${kbContext}\n\n` +
+          `【商品清單】\n${productContext}\n\n` +
+          `${productGuidance}`,
       },
     ];
 
@@ -387,7 +580,7 @@ Deno.serve(async (req: Request) => {
     if (!openaiRes.ok || !openaiRes.body) {
       const errorText = await openaiRes.text().catch(() => "");
       console.error("OpenAI chat request failed", openaiRes.status, errorText);
-      return sseResponse(fallbackReply(message, knowledge), {
+      return sseResponse(fallbackReply(message, knowledge, products), {
         "X-AI-Mode": "fallback-openai-error",
       });
     }
@@ -430,7 +623,7 @@ Deno.serve(async (req: Request) => {
             }
           } catch (error) {
             console.error("AI chat stream failed", error);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: fallbackReply(message, knowledge) })}\n\n`));
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: fallbackReply(message, knowledge, products) })}\n\n`));
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           } finally {
             controller.close();

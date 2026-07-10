@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
+import { pickByLang } from '../lib/language';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
@@ -241,7 +242,7 @@ const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual =
 };
 
 export default function Homepage() {
-  const { t } = useLanguage();
+  const { currentLanguage, t } = useLanguage();
   const [activeSection, setActiveSection] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set([0]));
   const [sections, setSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
@@ -408,21 +409,21 @@ export default function Homepage() {
         title: block.title,
         number: String(index + 1).padStart(2, '0'),
         section_type: 'hero_product',
-        content: {
-          label: block.subtitle,
-          subtitle: block.subtitle,
-          title: block.title,
-          number: String(index + 1).padStart(2, '0'),
-          description: block.description,
+          content: {
+            label: block.subtitle,
+            subtitle: block.subtitle,
+            title: block.title,
+            number: String(index + 1).padStart(2, '0'),
+            description: block.description,
+            background_image: block.image,
+            image: block.image,
+            href: block.href,
+            cta_label: '前往商品',
+            submenu: [{ label: '前往商品', title: '前往商品', href: block.href }],
+          },
           background_image: block.image,
-          image: block.image,
-          href: block.href,
-          cta_label: 'View products',
-          submenu: [{ label: 'View products', title: 'View products', href: block.href }],
-        },
-        background_image: block.image,
-        description: block.description,
-      }));
+          description: block.description,
+        }));
     }
 
     const displaySections = sections.length > 0 ? sections : DEFAULT_HOMEPAGE_SECTIONS;
@@ -462,7 +463,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : 'Learn more'),
         );
 
         return {
@@ -1014,8 +1015,14 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more');
-          const localizedCtaLabel = ctaLabel;
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : 'Learn more');
+          const localizedCtaLabel = pickByLang(
+            currentLanguage,
+            ctaLabel,
+            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
+            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
+            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
+          );
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
           const sectionStyle = {
