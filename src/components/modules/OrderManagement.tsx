@@ -290,7 +290,7 @@ export default function OrderManagement() {
     setCustomerEmailEdit(order.customer_email || member.email || getAddressField(order.shipping_address, ['email']));
     setCustomerPhoneEdit(order.customer_phone || member.phone || getAddressField(order.shipping_address, ['phone', 'recipient_phone']));
     setCustomerAccountEdit(order.customer_account || '');
-    setShippingMethodEdit(order.shipping_method || '');
+    setShippingMethodEdit(order.shipping_method || getAddressField(order.shipping_address, ['shipping_method', 'method']) || '');
     setRecipientNameEdit(order.recipient_name || getAddressField(order.shipping_address, ['name', 'recipient_name']));
     setRecipientPhoneEdit(order.recipient_phone || getAddressField(order.shipping_address, ['phone', 'recipient_phone']));
     setTrackingNumberEdit(order.tracking_number || '');
@@ -457,7 +457,9 @@ export default function OrderManagement() {
                   return (
                     <tr key={order.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
-                      <td className="px-4 py-3 text-sm">{order.customer_name || member.name}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {order.customer_name || getAddressField(order.shipping_address, ['name', 'recipient_name']) || member.name}
+                      </td>
                       <td className="px-4 py-3 text-sm">{statusLabel(order.status)}</td>
                       <td className="px-4 py-3 text-sm">{paymentStatusLabel(order.payment_status)}</td>
                       <td className="px-4 py-3 text-sm font-semibold">{formatCurrency(order.total)}</td>
