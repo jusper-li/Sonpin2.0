@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Eye, FileText, Globe, Plus, Save, Search, ToggleLeft, ToggleRight, Trash2, X, CreditCard as Edit } from 'lucide-react';
+import { BarChart3, Eye, FileText, Globe, Mail, Plus, Save, Search, ToggleLeft, ToggleRight, Trash2, X, CreditCard as Edit } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { DEFAULT_FOOTER_SETTINGS } from '../../data/homepageContent';
 import ImageUpload from '../ImageUpload';
 
 interface SEOSetting {
@@ -30,6 +31,7 @@ interface GoogleAnalyticsSetting {
 }
 
 const GOOGLE_ANALYTICS_SETTING_KEY = 'google_analytics';
+const FOOTER_SETTING_KEY = 'footer';
 
 const DEFAULT_GOOGLE_ANALYTICS: GoogleAnalyticsSetting = {
   enabled: true,
@@ -43,8 +45,10 @@ export default function SEOManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [seoSettings, setSeoSettings] = useState<SEOSetting[]>([]);
   const [googleAnalytics, setGoogleAnalytics] = useState<GoogleAnalyticsSetting>(DEFAULT_GOOGLE_ANALYTICS);
+  const [footerContactEmail, setFooterContactEmail] = useState(DEFAULT_FOOTER_SETTINGS.contact_email);
   const [loading, setLoading] = useState(true);
   const [savingAnalytics, setSavingAnalytics] = useState(false);
+  const [savingFooterEmail, setSavingFooterEmail] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingSeo, setEditingSeo] = useState<SEOSetting | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -65,12 +69,17 @@ export default function SEOManagement() {
 
   const loadSeoSettings = async () => {
     try {
-      const [seoResponse, analyticsResponse] = await Promise.all([
+      const [seoResponse, analyticsResponse, footerResponse] = await Promise.all([
         supabase.from('seo_settings').select('*').order('page_path'),
         supabase
           .from('site_settings')
           .select('id,setting_key,setting_value')
           .eq('setting_key', GOOGLE_ANALYTICS_SETTING_KEY)
+          .maybeSingle(),
+        supabase
+          .from('site_settings')
+          .select('id,setting_key,setting_value')
+          .eq('setting_key', FOOTER_SETTING_KEY)
           .maybeSingle(),
       ]);
 
@@ -90,6 +99,12 @@ export default function SEOManagement() {
         stream_url: String(analyticsValue.stream_url || DEFAULT_GOOGLE_ANALYTICS.stream_url).trim(),
         stream_id: String(analyticsValue.stream_id || DEFAULT_GOOGLE_ANALYTICS.stream_id).trim(),
       });
+
+      const footerRow = footerResponse.data as SiteSettingRow | null;
+      const footerValue = (footerRow?.setting_value || {}) as Partial<typeof DEFAULT_FOOTER_SETTINGS>;
+      setFooterContactEmail(
+        String(footerValue.contact_email || DEFAULT_FOOTER_SETTINGS.contact_email).trim() || DEFAULT_FOOTER_SETTINGS.contact_email
+      );
     } catch (error) {
       console.error('Failed to load SEO settings:', error);
       alert('載入 SEO 資料失敗。');
@@ -181,6 +196,57 @@ export default function SEOManagement() {
       alert(`儲存 GA4 設定失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
     } finally {
       setSavingAnalytics(false);
+    }
+  };
+
+  const saveFooterContactEmail = async () => {
+    const nextEmail = footerContactEmail.trim();
+    if (!nextEmail) {
+      alert('請輸入要接收訂單通知的信箱');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+      alert('請輸入有效的 Email');
+      return;
+    }
+
+    setSavingFooterEmail(true);
+    try {
+      const { data: existingRow, error: existingError } = await supabase
+        .from('site_settings')
+        .select('id,setting_value')
+        .eq('setting_key', FOOTER_SETTING_KEY)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      const existingValue = (existingRow?.setting_value || {}) as Partial<typeof DEFAULT_FOOTER_SETTINGS>;
+      const payload = {
+        ...DEFAULT_FOOTER_SETTINGS,
+        ...existingValue,
+        contact_email: nextEmail,
+      };
+
+      if (existingRow?.id) {
+        const { error } = await supabase.from('site_settings').update({ setting_value: payload }).eq('id', existingRow.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('site_settings').insert([
+          {
+            setting_key: FOOTER_SETTING_KEY,
+            setting_value: payload,
+          },
+        ]);
+        if (error) throw error;
+      }
+
+      alert('通知信箱已更新');
+    } catch (error) {
+      console.error('Failed to save footer contact email:', error);
+      alert(`儲存信箱失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    } finally {
+      setSavingFooterEmail(false);
     }
   };
 
@@ -384,6 +450,40 @@ export default function SEOManagement() {
             <Save className="h-4 w-4" />
             {savingAnalytics ? '儲存中...' : '儲存 GA4 設定'}
           </button>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <Mail className="h-5 w-5 text-slate-700" />
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">通知信箱</h2>
+            <p className="text-sm text-slate-600">這個信箱會收到訂單通知，也會作為前台頁尾的聯絡信箱。</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="mb-1 text-sm font-medium text-slate-900">頁尾聯絡信箱 / 訂單通知信箱</div>
+            <input
+              type="email"
+              value={footerContactEmail}
+              onChange={(e) => setFooterContactEmail(e.target.value)}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              placeholder="service@sonpin.tw"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={saveFooterContactEmail}
+              disabled={savingFooterEmail}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Save className="h-4 w-4" />
+              {savingFooterEmail ? '儲存中...' : '儲存信箱'}
+            </button>
+          </div>
         </div>
       </div>
 
