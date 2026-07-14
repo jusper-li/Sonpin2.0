@@ -271,21 +271,21 @@ export default function Homepage() {
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
 
   useSEO({
-    title: 'Songpin local chicken｜Brand homepage',
+    title: '淞品土雞專賣店｜首頁',
     description:
-      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
-    keywords: 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports',
+      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
+    keywords: '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導',
     noSuffix: true,
     schema: [organizationSchema(), localBusinessSchema(), websiteSchema()],
   });
 
   useSEO({
-    title: t('homepage.seo.title', 'Songpin local chicken｜Brand homepage'),
+    title: t('homepage.seo.title', '淞品土雞專賣店｜首頁'),
     description: t(
       'homepage.seo.description',
-      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
+      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
     ),
-    keywords: t('homepage.seo.keywords', 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports'),
+    keywords: t('homepage.seo.keywords', '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導'),
     noSuffix: true,
   });
 
