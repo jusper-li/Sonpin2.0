@@ -192,7 +192,8 @@ async function getAdminEmail() {
 async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
   if (!resendApiKey) {
-    throw new HttpError(503, "missing_resend_api_key", "Missing RESEND_API_KEY in Edge Function Secrets.");
+    console.warn("send-email: skipped mail send because RESEND_API_KEY is not configured");
+    return;
   }
 
   const payload: Record<string, unknown> = {
@@ -217,7 +218,7 @@ async function sendEmail(params: { to: string; subject: string; html: string; re
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Resend request failed (${res.status}): ${text.slice(0, 500)}`);
+    console.warn(`send-email: Resend request failed (${res.status}): ${text.slice(0, 500)}`);
   }
 }
 
@@ -397,4 +398,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
