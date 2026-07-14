@@ -307,7 +307,7 @@ export default function SiteHeader() {
       <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500 ${isSolidHeader ? 'bg-[#fbf6ee]/96 shadow-[0_1px_30px_rgba(61,43,31,0.08)] border-b border-[#eadfd1]/90' : 'bg-transparent'}`}>
         <nav className="container mx-auto px-5 py-2 md:py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="group relative block flex-shrink-0" aria-label="? Sonpin 擐?">
+            <Link to="/" className="group relative block flex-shrink-0" aria-label="??? Sonpin ???????">
               {settings.logo_image ? (
                 <img
                   src={settings.logo_image}
