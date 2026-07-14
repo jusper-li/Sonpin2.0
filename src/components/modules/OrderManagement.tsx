@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Loader2, Plus, RefreshCw, Save, Search, Star, X } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Save, Search, Star, X } from 'lucide-react';
 import { isMissingSupabaseTableError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -101,6 +101,25 @@ const formatCurrency = (value: number) =>
 
 const formatDateTime = (value?: string | null) => (value ? new Date(value).toLocaleString('zh-TW', { hour12: false }) : '-');
 
+const formatOrderDateTime = (value?: string | null) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  const dateText = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+  const timeText = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .format(date)
+    .replace(' ', '');
+  return `${dateText} ${timeText}`;
+};
+
 const getAddressField = (address: Record<string, unknown> | null | undefined, keys: string[]) => {
   if (!address) return '';
   for (const key of keys) {
@@ -196,6 +215,15 @@ export default function OrderManagement() {
 
   const statusLabel = (status: string) => orderStatusOptions.find((item) => item.value === status)?.label ?? status;
   const paymentStatusLabel = (status: string) => paymentStatusOptions.find((item) => item.value === status)?.label ?? status;
+  const shippingStatusLabel = (status: string) => shippingStatusOptions.find((item) => item.value === status)?.label ?? status;
+
+  const statusTone = (status: string) => {
+    if (['completed', 'paid', 'delivered'].includes(status)) return 'border-emerald-200 bg-emerald-100 text-emerald-700';
+    if (['processing', 'pending', 'ready_to_ship', 'preparing', 'packing', 'shipping', 'unpaid'].includes(status))
+      return 'border-amber-200 bg-amber-100 text-amber-700';
+    if (['failed', 'cancelled'].includes(status)) return 'border-rose-200 bg-rose-100 text-rose-700';
+    return 'border-slate-200 bg-slate-100 text-slate-700';
+  };
 
   useEffect(() => {
     void loadData();
@@ -394,6 +422,8 @@ export default function OrderManagement() {
     }
   };
 
+  const orderDiscount = viewingOrder ? Math.max(0, viewingOrder.subtotal + viewingOrder.tax + viewingOrder.shipping - viewingOrder.total) : 0;
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -439,40 +469,62 @@ export default function OrderManagement() {
           <div className="p-6 text-rose-600">{error}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+            <table className="min-w-full text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3">{t('order_management.column_order_number', '訂單號碼')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_date', '訂單日期')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_status', '訂單狀態')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_payment', '付款狀態')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_shipping', '送貨狀態')}</th>
                   <th className="px-4 py-3">{t('order_management.column_customer', '訂購人')}</th>
-                  <th className="px-4 py-3">{t('order_management.column_status', '狀態')}</th>
-                  <th className="px-4 py-3">{t('order_management.column_payment', '付款')}</th>
-                  <th className="px-4 py-3">{t('order_management.column_amount', '金額')}</th>
-                  <th className="px-4 py-3">{t('order_management.column_date', '日期')}</th>
-                  <th className="px-4 py-3 text-right">{t('order_management.column_actions', '操作')}</th>
+                  <th className="px-4 py-3 text-right">{t('order_management.column_amount', '合計')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredOrders.map((order) => {
                   const member = getMember(order.member_id);
+                  const customerName = order.customer_name || getAddressField(order.shipping_address, ['name', 'recipient_name']) || member.name;
+                  const customerEmail = order.customer_email || member.email || getAddressField(order.shipping_address, ['email']);
+                  const shippingValue = order.delivery_status || order.shipping_status || '';
+
                   return (
-                    <tr key={order.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {order.customer_name || getAddressField(order.shipping_address, ['name', 'recipient_name']) || member.name}
-                      </td>
-                      <td className="px-4 py-3 text-sm">{statusLabel(order.status)}</td>
-                      <td className="px-4 py-3 text-sm">{paymentStatusLabel(order.payment_status)}</td>
-                      <td className="px-4 py-3 text-sm font-semibold">{formatCurrency(order.total)}</td>
-                      <td className="px-4 py-3 text-sm">{formatDateTime(order.created_at)}</td>
-                      <td className="px-4 py-3 text-right">
+                    <tr key={order.id} className="cursor-pointer hover:bg-slate-50" onClick={() => void openDetail(order)}>
+                      <td className="px-4 py-3 font-mono text-sm text-sky-700">
                         <button
-                          onClick={() => void openDetail(order)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100"
+                          type="button"
+                          className="text-left hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void openDetail(order);
+                          }}
                         >
-                          <Eye className="h-4 w-4" />
-                          {t('order_management.view', '查看')}
+                          {order.order_number}
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{formatOrderDateTime(order.created_at)}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex rounded border px-3 py-1 text-xs font-medium ${statusTone(order.status)}`}>
+                          {statusLabel(order.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex rounded border px-3 py-1 text-xs font-medium ${statusTone(order.payment_status)}`}>
+                          {paymentStatusLabel(order.payment_status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex rounded border px-3 py-1 text-xs font-medium ${statusTone(shippingValue)}`}>
+                          {shippingStatusLabel(shippingValue) || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-slate-800">{customerName || '-'}</div>
+                          {customerEmail && <div className="truncate text-xs text-slate-500">{customerEmail}</div>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-slate-800">{formatCurrency(order.total)}</td>
                     </tr>
                   );
                 })}
@@ -499,17 +551,13 @@ export default function OrderManagement() {
               <section className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-2">
                 <h3 className="md:col-span-2 text-lg font-semibold">{t('order_management.order_info', '訂單資料')}</h3>
                 <Field label={t('order_management.order_number', '訂單號碼')} value={viewingOrder.order_number} />
-                <Field label={t('order_management.order_date', '訂單日期')} value={formatDateTime(viewingOrder.created_at)} />
+                <Field label={t('order_management.order_date', '訂單日期')} value={formatOrderDateTime(viewingOrder.created_at)} />
                 <Field label={t('order_management.order_status', '訂單狀態')} value={statusLabel(statusEdit)} />
-                <Field label={t('order_management.completed_at', '完成時間')} value={formatDateTime(viewingOrder.completed_at)} />
+                <Field label={t('order_management.completed_at', '完成時間')} value={formatOrderDateTime(viewingOrder.completed_at)} />
                 <Field label={t('order_management.channel', '訂單成立於')} value={viewingOrder.channel || t('order_management.frontend_store', '前台購物網站')} />
                 <Field label={t('order_management.source', '訂單來源')} value={viewingOrder.source || t('order_management.frontend_store', '前台購物網站')} />
-                <Input label={t('order_management.company_name', '公司名稱')} value={companyNameEdit} onChange={setCompanyNameEdit} />
-                <Input label={t('order_management.company_tax_id', '統一編號')} value={companyTaxIdEdit} onChange={setCompanyTaxIdEdit} />
-                <Input label={t('order_management.customer_name', '訂購人')} value={customerNameEdit} onChange={setCustomerNameEdit} />
-                <Input label={t('order_management.customer_email', '訂單 Email')} value={customerEmailEdit} onChange={setCustomerEmailEdit} />
-                <Input label={t('order_management.customer_phone', '電話號碼')} value={customerPhoneEdit} onChange={setCustomerPhoneEdit} />
-                <Input label={t('order_management.customer_account', '訂購帳號')} value={customerAccountEdit} onChange={setCustomerAccountEdit} />
+                <Field label={t('order_management.company_name', '公司名稱')} value={companyNameEdit || '-'} />
+                <Field label={t('order_management.company_tax_id', '統一編號')} value={companyTaxIdEdit || '-'} />
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-xs text-slate-500">{t('order_management.order_notes', '訂單備註')}</label>
                   <textarea
@@ -527,6 +575,14 @@ export default function OrderManagement() {
                   />
                   {t('order_management.subscribe_notifications', '訂閱訂單通知')}
                 </label>
+              </section>
+
+              <section className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-2">
+                <h3 className="md:col-span-2 text-lg font-semibold">{t('order_management.customer_info', '訂購人資訊')}</h3>
+                <Input label={t('order_management.customer_name', '訂購人')} value={customerNameEdit} onChange={setCustomerNameEdit} />
+                <Input label={t('order_management.customer_email', '訂單 Email')} value={customerEmailEdit} onChange={setCustomerEmailEdit} />
+                <Input label={t('order_management.customer_phone', '電話號碼')} value={customerPhoneEdit} onChange={setCustomerPhoneEdit} />
+                <Input label={t('order_management.customer_account', '訂購帳號')} value={customerAccountEdit} onChange={setCustomerAccountEdit} />
               </section>
 
               <section className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-2">
@@ -562,6 +618,7 @@ export default function OrderManagement() {
                 {payments[0] ? (
                   <>
                     <Field label={t('order_management.payment_method', '付款方法')} value={payments[0].method || '-'} />
+                    <Field label={t('order_management.payment_instructions', '付款指示')} value={payments[0].gateway_name || payments[0].method || '-'} />
                     <Field label={t('order_management.paid_amount', '收取金額')} value={formatCurrency(payments[0].amount)} />
                     <Field label={t('order_management.transaction_id', '交易序號')} value={payments[0].transaction_id || '-'} />
                     <Field label={t('order_management.paid_at', '交易時間')} value={formatDateTime(payments[0].paid_at || payments[0].created_at)} />
@@ -620,17 +677,22 @@ export default function OrderManagement() {
                 <h3 className="mb-3 text-lg font-semibold">{t('order_management.items_title', '商品詳情')}</h3>
                 <div className="space-y-3">
                   {orderItems.map((item) => (
-                    <div key={item.id} className="rounded-lg bg-slate-50 p-3">
-                      <p className="font-medium">{item.product_name}</p>
-                      <p className="text-sm text-slate-600">
-                        {item.quantity} x {formatCurrency(item.price)} = {formatCurrency(item.total)}
-                      </p>
+                    <div key={item.id} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <div className="flex h-12 w-12 flex-none items-center justify-center rounded-md bg-white text-xs text-slate-400">
+                        商品
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-slate-800">{item.product_name}</p>
+                        <p className="text-sm text-slate-600">
+                          {item.quantity} x {formatCurrency(item.price)} = {formatCurrency(item.total)}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 grid gap-2 text-sm md:grid-cols-2">
                   <Field label={t('order_management.subtotal', '商品小計')} value={formatCurrency(viewingOrder.subtotal)} />
-                  <Field label={t('order_management.tax', '稅額')} value={formatCurrency(viewingOrder.tax)} />
+                  <Field label={t('order_management.discount', '折扣')} value={orderDiscount > 0 ? `-${formatCurrency(orderDiscount)}` : '-'} />
                   <Field label={t('order_management.shipping_fee', '運費')} value={formatCurrency(viewingOrder.shipping)} />
                   <Field label={t('order_management.total', '訂單合計')} value={formatCurrency(viewingOrder.total)} />
                 </div>
