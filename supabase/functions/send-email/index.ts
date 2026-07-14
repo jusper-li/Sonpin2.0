@@ -388,7 +388,16 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ success: true });
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse({ error: error.code, message: error.message }, error.status);
+      console.warn(`send-email skipped (${error.code}): ${error.message}`);
+      return jsonResponse(
+        {
+          success: true,
+          skipped: true,
+          error: error.code,
+          message: error.message,
+        },
+        200,
+      );
     }
 
     console.error("send-email failed", error instanceof Error ? error.message : String(error));
