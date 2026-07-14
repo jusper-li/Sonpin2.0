@@ -463,7 +463,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : 'Learn more'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多'),
         );
 
         return {
@@ -1015,13 +1015,14 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : 'Learn more');
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多');
           const localizedCtaLabel = pickByLang(
             currentLanguage,
             ctaLabel,
+            section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多',
             section.section_type === 'hero_product' ? 'View products' : 'Learn more',
-            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
-            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
+            section.section_type === 'hero_product' ? '商品を見る' : '詳しく見る',
+            section.section_type === 'hero_product' ? '상품 보기' : '자세히 보기',
           );
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
