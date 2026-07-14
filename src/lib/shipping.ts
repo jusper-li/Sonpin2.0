@@ -56,6 +56,19 @@ const pickTierForQuantity = (quantity: number, categories: ShippingCategoryRow[]
 
   if (exactMatch) return exactMatch;
 
+  const nextMatch = candidates
+    .filter((row) => quantity < Number(row.quantity || 0))
+    .sort((a, b) => {
+      const quantityA = Number(a.quantity || 0);
+      const quantityB = Number(b.quantity || 0);
+      if (quantityA !== quantityB) return quantityA - quantityB;
+      const endA = a.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(a.quantity_to || 0);
+      const endB = b.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(b.quantity_to || 0);
+      return endA - endB;
+    })[0];
+
+  if (nextMatch) return nextMatch;
+
   const floorMatch = [...candidates]
     .reverse()
     .find((row) => quantity >= Number(row.quantity || 0));
