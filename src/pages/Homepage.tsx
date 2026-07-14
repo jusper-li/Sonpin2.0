@@ -463,7 +463,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多'),
         );
 
         return {
@@ -1015,7 +1015,7 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '前往商品' : '了解更多');
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多');
           const localizedCtaLabel = pickByLang(
             currentLanguage,
             ctaLabel,
