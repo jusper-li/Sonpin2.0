@@ -12,6 +12,7 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const SITE_MATCH_THRESHOLD = 0.68;
 const SITE_MATCH_COUNT = 6;
 const KNOWLEDGE_CONTEXT_LIMIT = 24;
+const PRODUCT_CONTEXT_LIMIT = 10;
 const SITE_ORIGIN = "https://sonpin.netlify.app";
 
 type KnowledgeItem = {
@@ -30,6 +31,8 @@ type ProductItem = {
   member_price?: number | null;
   stock?: number | null;
   is_featured?: boolean | null;
+  is_hidden?: boolean | null;
+  is_active?: boolean | null;
 };
 
 type HistoryItem = {
@@ -201,55 +204,20 @@ function isSiteTopicQuestion(message: string) {
   ]);
 }
 
-function fallbackReply(message: string, knowledge: KnowledgeItem[], products: ProductItem[] = []) {
-  const matchedAnswer = findKnowledgeMatch(message, knowledge);
-  if (matchedAnswer) return matchedAnswer;
-
-  if (isProductTopicQuestion(message)) {
-    if (products.length) {
-      const picks = pickTopProductsForQuery(message, products).slice(0, 3).map((item, index) => {
-        const price =
-          item.sale_price != null
-            ? `特價 NT$${formatPrice(item.sale_price)}`
-            : item.price != null
-              ? `售價 NT$${formatPrice(item.price)}`
-              : "";
-        const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
-        return `${index + 1}. ${item.name || "商品"}${price ? `｜${price}` : ""}${url ? `｜${url}` : ""}`;
-      }).join("\n");
-
-      return `我先幫你整理目前可參考的商品：\n${picks}\n\n如果你要送禮、家用或想找滴雞精／全雞，我也可以再幫你縮小推薦。`;
-    }
-
-    return "我目前可以協助你看商品、送禮推薦、價格與商品頁資訊。請再告訴我你想找的類型，例如雞湯、滴雞精、禮盒或全雞，我可以直接幫你整理。";
-  }
-
-  if (isSiteTopicQuestion(message)) {
-    return "我目前可以根據本站資料回答。請告訴我你想查的是商品、門市、FAQ、運費、付款、關於、製程、媒體或會員相關內容，我可以直接幫你整理。";
-  }
-
-  return "我可以回答本站內容，也可以協助你找商品。請直接告訴我你想查的品項、用途或預算。";
+function formatPrice(value?: number | null) {
+  if (typeof value !== "number" || Number.isNaN(value)) return "";
+  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(value);
 }
 
-function buildProductRecommendationReply(message: string, products: ProductItem[]) {
-  if (!products.length) {
-    return "我目前暫時抓不到商品資料，你可以先告訴我想找雞湯、滴雞精、禮盒或全雞，我再幫你縮小範圍。";
-  }
+function cleanSnippet(text: string, limit = 280) {
+  const cleaned = text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  const sortedProducts = pickTopProductsForQuery(message, products);
-  const picks = sortedProducts.slice(0, 3).map((item, index) => {
-    const reason = cleanSnippet(item.summary || item.description || "適合參考的商品", 36);
-    const price =
-      item.sale_price != null
-        ? `特價 NT$${formatPrice(item.sale_price)}`
-        : item.price != null
-          ? `售價 NT$${formatPrice(item.price)}`
-          : "價格請洽客服";
-    const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
-    return `${index + 1}. ${item.name || "商品"}｜${reason}｜${price}${url ? `｜${url}` : ""}`;
-  });
-
-  return `我先幫你挑了 3 個可參考的商品：\n${picks.join("\n")}\n\n如果你要，我也可以再依「送禮、家用、預算、雞湯／滴雞精」繼續幫你縮小。`;
+  if (cleaned.length <= limit) return cleaned;
+  return `${cleaned.slice(0, limit - 1)}…`;
 }
 
 function scoreProductForQuery(message: string, item: ProductItem) {
@@ -308,33 +276,71 @@ function pickTopProductsForQuery(message: string, products: ProductItem[]) {
     .map((entry) => entry.item);
 }
 
-function cleanSnippet(text: string, limit = 280) {
-  const cleaned = text
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+function buildProductRecommendationReply(message: string, products: ProductItem[]) {
+  if (!products.length) {
+    return "我目前暫時抓不到商品資料，你可以先告訴我想找雞湯、滴雞精、禮盒或全雞，我再幫你縮小範圍。";
+  }
 
-  if (cleaned.length <= limit) return cleaned;
-  return `${cleaned.slice(0, limit - 1)}…`;
+  const sortedProducts = pickTopProductsForQuery(message, products);
+  const picks = sortedProducts.slice(0, 3).map((item, index) => {
+    const reason = cleanSnippet(item.summary || item.description || "適合參考的商品", 36);
+    const price =
+      item.sale_price != null
+        ? `售價 NT$${formatPrice(item.sale_price)}`
+        : item.price != null
+          ? `售價 NT$${formatPrice(item.price)}`
+          : "價格請洽客服";
+    const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
+    return `${index + 1}. ${item.name || "商品"}｜${reason}｜${price}${url ? `｜${url}` : ""}`;
+  });
+
+  return `我先幫你挑了 3 個可參考的商品：\n${picks.join("\n")}\n\n如果你要，我也可以再依「送禮、家用、預算、雞湯／滴雞精」繼續幫你縮小。`;
 }
 
-function formatPrice(value?: number | null) {
-  if (typeof value !== "number" || Number.isNaN(value)) return "";
-  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(value);
+function fallbackReply(message: string, knowledge: KnowledgeItem[], products: ProductItem[] = []) {
+  const matchedAnswer = findKnowledgeMatch(message, knowledge);
+  if (matchedAnswer) return matchedAnswer;
+
+  if (isProductTopicQuestion(message)) {
+    if (products.length) {
+      const picks = pickTopProductsForQuery(message, products)
+        .slice(0, 3)
+        .map((item, index) => {
+          const price =
+            item.sale_price != null
+              ? `特價 NT$${formatPrice(item.sale_price)}`
+              : item.price != null
+                ? `售價 NT$${formatPrice(item.price)}`
+                : "";
+          const url = item.slug ? `${SITE_ORIGIN}/product/${item.slug}` : "";
+          return `${index + 1}. ${item.name || "商品"}${price ? `｜${price}` : ""}${url ? `｜${url}` : ""}`;
+        })
+        .join("\n");
+
+      return `我先幫你整理目前可參考的商品：\n${picks}\n\n如果你要送禮、家用或想找滴雞精／全雞，我也可以再幫你縮小推薦。`;
+    }
+
+    return "我目前可以協助你看商品、送禮推薦、價格與商品頁資訊。請再告訴我你想找的類型，例如雞湯、滴雞精、禮盒或全雞，我可以直接幫你整理。";
+  }
+
+  if (isSiteTopicQuestion(message)) {
+    return "我目前可以根據本站資料回答。請告訴我你想查的是商品、門市、FAQ、運費、付款、關於、製程、媒體或會員相關內容，我可以直接幫你整理。";
+  }
+
+  return "我可以回答本站內容，也可以協助你找商品。請直接告訴我你想查的品項、用途或預算。";
 }
 
 function formatProductContext(products: ProductItem[]) {
   if (!products.length) return "（無商品資料）";
 
   return products
-    .slice(0, 10)
+    .slice(0, PRODUCT_CONTEXT_LIMIT)
     .map((item, index) => {
       const title = cleanSnippet(item.name || "", 80);
       const summary = cleanSnippet(item.summary || item.description || "", 160);
       const price =
         item.sale_price != null
-          ? `特價 NT$${formatPrice(item.sale_price)}`
+          ? `售價 NT$${formatPrice(item.sale_price)}`
           : item.price != null
             ? `售價 NT$${formatPrice(item.price)}`
             : "";
@@ -491,11 +497,12 @@ Deno.serve(async (req: Request) => {
           .limit(KNOWLEDGE_CONTEXT_LIMIT),
         supabase
           .from("products")
-          .select("name, slug, summary, description, price, sale_price, member_price, stock, is_featured")
+          .select("name, slug, summary, description, price, sale_price, member_price, stock, is_featured, is_hidden, is_active")
           .eq("is_active", true)
+          .eq("is_hidden", false)
           .order("is_featured", { ascending: false })
           .order("created_at", { ascending: false })
-          .limit(12),
+          .limit(40),
         supabase
           .from("chat_messages")
           .select("sender_type, message")
