@@ -66,6 +66,10 @@ export default function Checkout() {
       const orderId = crypto.randomUUID();
       const shippingAmount = Number(shippingTotal || 0);
       const finalTotal = total + shippingAmount;
+      const shippingMethodSummary =
+        shippingBreakdown.length > 0
+          ? shippingBreakdown.map((item) => `${item.categoryName}${item.quantityLabel ? ` ${item.quantityLabel}` : ''}`).join('、')
+          : '銀行轉帳';
 
       const insertMinimal = async (table: string, payload: unknown) => {
         const response = await fetch(`${supabaseBaseUrl}/rest/v1/${table}`, {
@@ -96,6 +100,7 @@ export default function Checkout() {
         shipping: shippingAmount,
         total: finalTotal,
         payment_status: 'pending',
+        shipping_method: shippingMethodSummary,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
