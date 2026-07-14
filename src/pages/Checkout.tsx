@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
-import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
+import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { useShippingQuote } from '../hooks/useShippingQuote';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
@@ -67,7 +67,25 @@ export default function Checkout() {
       const shippingAmount = Number(shippingTotal || 0);
       const finalTotal = total + shippingAmount;
 
-      const { error: orderError } = await supabase.from('orders').insert({
+      const insertMinimal = async (table: string, payload: unknown) => {
+        const response = await fetch(`${supabaseBaseUrl}/rest/v1/${table}`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            authorization: `Bearer ${supabaseAnonKey}`,
+            'content-type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const details = await response.text();
+          throw new Error(`Failed to insert ${table}: ${details || response.statusText}`);
+        }
+      };
+
+      await insertMinimal('orders', {
         id: orderId,
         order_number: orderNumber,
         status: 'pending',
@@ -87,8 +105,6 @@ export default function Checkout() {
         notes: formData.notes,
       });
 
-      if (orderError) throw orderError;
-
       const orderItems = items.map((item) => ({
         order_id: orderId,
         product_id: item.productId,
@@ -98,10 +114,9 @@ export default function Checkout() {
         total: (item.salePrice || item.price) * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
+      await insertMinimal('order_items', orderItems);
 
-      const { error: paymentError } = await supabase.from('payments').insert({
+      await insertMinimal('payments', {
         order_id: orderId,
         amount: finalTotal,
         method: 'bank_transfer',
@@ -111,8 +126,6 @@ export default function Checkout() {
           customer_email: formData.email,
         },
       });
-
-      if (paymentError) throw paymentError;
 
       fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
         method: 'POST',

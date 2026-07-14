@@ -1,5 +1,5 @@
 [build]
-  command = "rm -rf dist node_modules/.vite && npm run build"
+  command = "npm run build"
   publish = "dist"
 
 [[headers]]
