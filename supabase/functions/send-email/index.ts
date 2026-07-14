@@ -162,6 +162,11 @@ function parseWelcomeEmail(data: Record<string, unknown>): WelcomeEmail {
 }
 
 async function getAdminEmail() {
+  const explicitAdminEmail = Deno.env.get("ADMIN_EMAIL")?.trim();
+  if (isEmail(explicitAdminEmail)) {
+    return explicitAdminEmail;
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
 
@@ -357,7 +362,7 @@ Deno.serve(async (req: Request) => {
       }
       case "order_confirmation": {
         const order = parseOrderEmail(data);
-        await Promise.all([
+        await Promise.allSettled([
           sendEmail({
             to: order.customerEmail,
             subject: `Sonpin 訂單確認 ${order.orderNumber}`,
