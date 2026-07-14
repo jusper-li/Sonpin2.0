@@ -268,7 +268,7 @@ export default function ShippingManagement() {
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {t('common.refresh', '??渡?')}
+            {t('common.refresh', '重新整理')}
           </button>
           <button
             type="button"
