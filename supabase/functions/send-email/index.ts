@@ -1,16 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "onboarding@resend.dev";
 const FROM_NAME = Deno.env.get("RESEND_FROM_NAME")?.trim() || "Sonpin";
 const FALLBACK_ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL")?.trim() || FROM_EMAIL;
-
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type ContactEmail = {
@@ -54,12 +48,11 @@ class HttpError extends Error {
   }
 }
 
-function jsonResponse(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -68,10 +61,6 @@ function escapeHtml(value: unknown) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function escapeMultiline(value: unknown) {
-  return escapeHtml(value).replace(/\r?\n/g, "<br>");
 }
 
 function asRecord(value: unknown, label: string) {
@@ -83,9 +72,7 @@ function asRecord(value: unknown, label: string) {
 
 function requiredString(value: unknown, label: string) {
   const result = typeof value === "string" ? value.trim() : "";
-  if (!result) {
-    throw new HttpError(400, "invalid_payload", `${label} is required`);
-  }
+  if (!result) throw new HttpError(400, "invalid_payload", `${label} is required`);
   return result;
 }
 
@@ -95,17 +82,13 @@ function optionalString(value: unknown) {
 
 function requiredEmail(value: unknown, label: string) {
   const result = requiredString(value, label).toLowerCase();
-  if (!emailPattern.test(result)) {
-    throw new HttpError(400, "invalid_payload", `${label} must be a valid email`);
-  }
+  if (!emailPattern.test(result)) throw new HttpError(400, "invalid_payload", `${label} must be a valid email`);
   return result;
 }
 
 function requiredNumber(value: unknown, label: string) {
   const result = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(result)) {
-    throw new HttpError(400, "invalid_payload", `${label} must be a number`);
-  }
+  if (!Number.isFinite(result)) throw new HttpError(400, "invalid_payload", `${label} must be a number`);
   return result;
 }
 
@@ -119,11 +102,10 @@ function formatMoney(value: number) {
 
 function paymentMethodLabel(method: string) {
   const labels: Record<string, string> = {
-    credit_card: "信用卡付款",
-    bank_transfer: "銀行轉帳 / 匯款",
+    credit_card: "信用卡",
+    bank_transfer: "銀行轉帳",
     cash_on_delivery: "貨到付款",
   };
-
   return labels[method] || method;
 }
 
@@ -183,9 +165,7 @@ async function getAdminEmail() {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    return FALLBACK_ADMIN_EMAIL;
-  }
+  if (!supabaseUrl || !serviceRoleKey) return FALLBACK_ADMIN_EMAIL;
 
   try {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -204,27 +184,15 @@ async function getAdminEmail() {
     const contactEmail = optionalString(settingValue?.contact_email);
     return isEmail(contactEmail) ? contactEmail : FALLBACK_ADMIN_EMAIL;
   } catch (error) {
-    console.warn(
-      "send-email: skipped admin email lookup",
-      error instanceof Error ? error.message : String(error),
-    );
+    console.warn("send-email: skipped admin email lookup", error instanceof Error ? error.message : String(error));
     return FALLBACK_ADMIN_EMAIL;
   }
 }
 
-async function sendEmail(params: {
-  to: string;
-  subject: string;
-  html: string;
-  replyTo?: string;
-}) {
+async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
   if (!resendApiKey) {
-    throw new HttpError(
-      503,
-      "missing_resend_api_key",
-      "請先在 Supabase Edge Function Secrets 中設定 RESEND_API_KEY。",
-    );
+    throw new HttpError(503, "missing_resend_api_key", "Missing RESEND_API_KEY in Edge Function Secrets.");
   }
 
   const payload: Record<string, unknown> = {
@@ -251,143 +219,69 @@ async function sendEmail(params: {
     const text = await res.text();
     throw new Error(`Resend request failed (${res.status}): ${text.slice(0, 500)}`);
   }
-
-  return res.json();
 }
-
-const baseStyle = `
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: #f5f4f0;
-  margin: 0;
-  padding: 0;
-`;
-
-const cardStyle = `
-  max-width: 600px;
-  margin: 40px auto;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
-`;
-
-const headerStyle = `
-  background: #1c1917;
-  padding: 36px 40px;
-  text-align: center;
-`;
-
-const bodyStyle = `
-  padding: 40px;
-`;
-
-const footerStyle = `
-  background: #f5f4f0;
-  padding: 24px 40px;
-  text-align: center;
-  border-top: 1px solid #e7e5e4;
-`;
 
 function wrapEmail(content: string) {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="${baseStyle}">
-  <div style="${cardStyle}">
-    <div style="${headerStyle}">
-      <p style="color:#d6a96a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin:0 0 8px 0;">Sonpin</p>
-      <p style="color:#ffffff;font-size:22px;font-weight:300;letter-spacing:0.15em;margin:0;">淞品土雞</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  </head>
+  <body style="font-family: Arial, Helvetica, sans-serif; background:#f5f4f0; margin:0; padding:0;">
+    <div style="max-width:600px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.07);">
+      <div style="background:#1c1917;padding:28px 40px;text-align:center;">
+        <div style="color:#d6a96a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin:0 0 8px 0;">Sonpin</div>
+        <div style="color:#fff;font-size:22px;font-weight:300;letter-spacing:0.15em;margin:0;">客服通知</div>
+      </div>
+      <div style="padding:40px;">${content}</div>
     </div>
-    <div style="${bodyStyle}">
-      ${content}
-    </div>
-    <div style="${footerStyle}">
-      <p style="color:#a8a29e;font-size:12px;margin:0 0 4px 0;">© Sonpin</p>
-      <p style="color:#c4b5a0;font-size:11px;margin:0;">淞品土雞官方通知信件，請勿直接回覆此信件地址。</p>
-    </div>
-  </div>
-</body>
+  </body>
 </html>`;
 }
 
 function generateContactAutoReply(data: ContactEmail) {
   return wrapEmail(`
     <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">您好，${escapeHtml(data.name)}</h2>
-    <p style="color:#d6a96a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 24px 0;">Sonpin 聯絡確認</p>
-    <p style="color:#57534e;font-size:15px;line-height:1.8;margin:0 0 16px 0;">
-      我們已收到您主旨為 <strong>${escapeHtml(data.subject)}</strong> 的來信。
-    </p>
-    <p style="color:#57534e;font-size:15px;line-height:1.8;margin:0 0 24px 0;">
-      Sonpin 團隊會盡快回覆您，若有急件也歡迎直接來電門市，由專人協助處理。
-    </p>
-    <div style="background:#faf9f7;border-left:3px solid #d6a96a;padding:16px 20px;border-radius:0 8px 8px 0;margin:24px 0;">
-      <p style="color:#a8a29e;font-size:12px;margin:0 0 4px 0;">服務時間</p>
-      <p style="color:#1c1917;font-size:14px;margin:0;">週一至週日 09:00 - 18:00</p>
-    </div>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">我們已收到您關於 <strong>${escapeHtml(data.subject)}</strong> 的訊息。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;">我們會盡快回覆您，謝謝您的聯繫。</p>
   `);
 }
 
 function generateContactAdminNotify(data: ContactEmail) {
-  const phoneRow = data.phone
-    ? `<tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">電話</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.phone)}</td></tr>`
-    : "";
-
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 4px 0;">收到新的聯絡表單</h2>
-    <p style="color:#a8a29e;font-size:12px;margin:0 0 28px 0;">Sonpin 官方網站詢問</p>
-    <table style="width:100%;border-collapse:collapse;">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;width:80px;">姓名</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.name)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">Email</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;"><a href="mailto:${escapeHtml(data.email)}" style="color:#d6a96a;">${escapeHtml(data.email)}</a></td></tr>
-      ${phoneRow}
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">主旨</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.subject)}</td></tr>
-    </table>
-    <div style="background:#faf9f7;border-radius:8px;padding:20px;margin-top:20px;">
-      <p style="color:#a8a29e;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px 0;">訊息內容</p>
-      <p style="color:#1c1917;font-size:14px;line-height:1.8;margin:0;">${escapeMultiline(data.message)}</p>
+    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 16px 0;">新的聯絡表單</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>姓名：</strong>${escapeHtml(data.name)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>電話：</strong>${escapeHtml(data.phone || "-")}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>主旨：</strong>${escapeHtml(data.subject)}</p>
+    <div style="background:#faf9f7;border-radius:8px;padding:16px 20px;">
+      <p style="margin:0;white-space:pre-wrap;color:#1c1917;line-height:1.8;">${escapeHtml(data.message)}</p>
     </div>
   `);
 }
 
 function generateOrderConfirmation(data: OrderEmail) {
   const itemRows = data.items
-    .map((item) => `
-    <tr>
-      <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(item.product_name)}</td>
-      <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#78716c;font-size:14px;text-align:center;">x${item.quantity}</td>
-      <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(item.total)}</td>
-    </tr>
-  `)
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(item.product_name)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#78716c;font-size:14px;text-align:center;">x${item.quantity}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(item.total)}</td>
+        </tr>`,
+    )
     .join("");
 
-  const bankTransferNotice =
-    data.paymentMethod === "bank_transfer"
-      ? `
-        <div style="background:#faf9f7;border-radius:10px;padding:18px 20px;margin:0 0 24px 0;border:1px solid #e7e5e4;">
-          <p style="margin:0 0 8px 0;color:#1c1917;font-size:14px;font-weight:600;">匯款提醒</p>
-          <p style="margin:0;color:#57534e;font-size:14px;line-height:1.8;">
-            請依照結帳頁面顯示的匯款資訊完成付款。確認入帳後，我們會盡快更新訂單付款狀態並安排出貨。
-          </p>
-        </div>
-      `
-      : "";
-
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">訂單已收到</h2>
-    <p style="color:#a8a29e;font-size:13px;margin:0 0 28px 0;">${escapeHtml(data.customerName)}，感謝您選購 Sonpin。</p>
-    <div style="background:#faf9f7;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:inline-block;width:100%;box-sizing:border-box;">
-      <p style="color:#a8a29e;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 4px 0;">訂單編號</p>
-      <p style="color:#d6a96a;font-size:18px;font-weight:500;letter-spacing:0.1em;margin:0;">${escapeHtml(data.orderNumber)}</p>
-    </div>
-    ${bankTransferNotice}
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">訂單確認</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(data.customerName)}，感謝您訂購 Sonpin。</p>
+    <p style="color:#d6a96a;font-size:18px;font-weight:600;margin:0 0 24px 0;">${escapeHtml(data.orderNumber)}</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
       <tr>
-        <th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:0.1em;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">品項</th>
-        <th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:0.1em;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th>
-        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:0.1em;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">金額</th>
+        <th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th>
+        <th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th>
+        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">金額</th>
       </tr>
       ${itemRows}
       <tr>
@@ -395,15 +289,8 @@ function generateOrderConfirmation(data: OrderEmail) {
         <td style="padding:16px 0 0 0;color:#d6a96a;font-size:18px;font-weight:600;text-align:right;">${formatMoney(data.total)}</td>
       </tr>
     </table>
-    <table style="width:100%;border-collapse:collapse;margin-top:24px;">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;width:80px;">收件資訊</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.address)}</td></tr>
-      <tr><td style="padding:10px 0;color:#a8a29e;font-size:12px;">付款方式</td>
-          <td style="padding:10px 0;color:#1c1917;font-size:14px;">${escapeHtml(paymentMethodLabel(data.paymentMethod))}</td></tr>
-    </table>
-    <p style="color:#a8a29e;font-size:13px;line-height:1.8;margin:28px 0 0 0;padding-top:20px;border-top:1px solid #f0ede8;">
-      若有任何訂單或付款疑問，歡迎直接回覆此信件，我們會由專人協助您。
-    </p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>配送地址：</strong>${escapeHtml(data.address)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;"><strong>付款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
   `);
 }
 
@@ -413,23 +300,15 @@ function generateOrderAdminNotify(data: OrderEmail) {
     .join("<br>");
 
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 4px 0;">新訂單通知</h2>
-    <p style="color:#a8a29e;font-size:12px;margin:0 0 28px 0;">訂單編號：<strong style="color:#d6a96a;">${escapeHtml(data.orderNumber)}</strong></p>
-    <table style="width:100%;border-collapse:collapse;">
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;width:80px;">姓名</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.customerName)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">Email</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;"><a href="mailto:${escapeHtml(data.customerEmail)}" style="color:#d6a96a;">${escapeHtml(data.customerEmail)}</a></td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">收件資訊</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(data.address)}</td></tr>
-      <tr><td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#a8a29e;font-size:12px;">付款方式</td>
-          <td style="padding:10px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(paymentMethodLabel(data.paymentMethod))}</td></tr>
-      <tr><td style="padding:10px 0;color:#a8a29e;font-size:12px;">訂單總計</td>
-          <td style="padding:10px 0;color:#d6a96a;font-size:16px;font-weight:600;">${formatMoney(data.total)}</td></tr>
-    </table>
-    <div style="background:#faf9f7;border-radius:8px;padding:16px 20px;margin-top:20px;">
-      <p style="color:#a8a29e;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px 0;">訂購品項</p>
-      <p style="color:#1c1917;font-size:14px;line-height:2;margin:0;">${itemList}</p>
+    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 4px 0;">新的訂單通知</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>訂單號：</strong>${escapeHtml(data.orderNumber)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>姓名：</strong>${escapeHtml(data.customerName)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.customerEmail)}">${escapeHtml(data.customerEmail)}</a></p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>地址：</strong>${escapeHtml(data.address)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>付款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
+    <div style="background:#faf9f7;border-radius:8px;padding:16px 20px;">
+      <p style="margin:0 0 8px 0;color:#a8a29e;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">訂單明細</p>
+      <p style="color:#1c1917;font-size:14px;line-height:1.9;margin:0;">${itemList}</p>
     </div>
   `);
 }
@@ -437,31 +316,14 @@ function generateOrderAdminNotify(data: OrderEmail) {
 function generateWelcomeEmail(data: WelcomeEmail) {
   return wrapEmail(`
     <h2 style="color:#1c1917;font-size:24px;font-weight:300;margin:0 0 4px 0;">歡迎加入 Sonpin</h2>
-    <p style="color:#d6a96a;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">會員通知</p>
-    <p style="color:#57534e;font-size:15px;line-height:1.8;margin:0 0 16px 0;">
-      您好 <strong>${escapeHtml(data.displayName)}</strong>，感謝您加入 Sonpin 會員。
-    </p>
-    <p style="color:#57534e;font-size:15px;line-height:1.8;margin:0 0 24px 0;">
-      您現在可以登入會員中心查詢訂單、保存收件資料，並接收最新商品與門市資訊。
-    </p>
-    <div style="background:#faf9f7;border-radius:10px;padding:24px;margin:24px 0;">
-      <p style="color:#1c1917;font-size:13px;font-weight:500;margin:0 0 12px 0;">會員功能</p>
-      <ul style="color:#57534e;font-size:14px;line-height:2;margin:0;padding-left:20px;">
-        <li>查詢訂單與付款狀態</li>
-        <li>保存常用收件資訊</li>
-        <li>接收最新商品與活動通知</li>
-        <li>取得門市與客服更新訊息</li>
-      </ul>
-    </div>
-    <p style="color:#a8a29e;font-size:13px;margin:24px 0 0 0;">
-      您的登入 Email：<span style="color:#1c1917;">${escapeHtml(data.email)}</span>
-    </p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">親愛的 <strong>${escapeHtml(data.displayName)}</strong>，感謝您加入我們。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;">您現在可以瀏覽商品、查詢訂單並接收最新消息。</p>
   `);
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
@@ -480,13 +342,13 @@ Deno.serve(async (req: Request) => {
         await Promise.all([
           sendEmail({
             to: adminEmail,
-            subject: `【Sonpin】新聯絡訊息：${contact.subject}`,
+            subject: `Sonpin 聯絡表單：${contact.subject}`,
             html: generateContactAdminNotify(contact),
             replyTo: contact.email,
           }),
           sendEmail({
             to: contact.email,
-            subject: `【Sonpin】已收到您的訊息`,
+            subject: "Sonpin 聯絡表單已收到",
             html: generateContactAutoReply(contact),
           }),
         ]);
@@ -497,12 +359,12 @@ Deno.serve(async (req: Request) => {
         await Promise.all([
           sendEmail({
             to: order.customerEmail,
-            subject: `【Sonpin】訂單 ${order.orderNumber} 確認通知`,
+            subject: `Sonpin 訂單確認 ${order.orderNumber}`,
             html: generateOrderConfirmation(order),
           }),
           sendEmail({
             to: adminEmail,
-            subject: `【Sonpin】新訂單 ${order.orderNumber}`,
+            subject: `Sonpin 新訂單 ${order.orderNumber}`,
             html: generateOrderAdminNotify(order),
             replyTo: order.customerEmail,
           }),
@@ -513,7 +375,7 @@ Deno.serve(async (req: Request) => {
         const welcome = parseWelcomeEmail(data);
         await sendEmail({
           to: welcome.email,
-          subject: "【Sonpin】歡迎加入會員",
+          subject: "Sonpin 歡迎加入",
           html: generateWelcomeEmail(welcome),
         });
         break;
@@ -530,8 +392,9 @@ Deno.serve(async (req: Request) => {
 
     console.error("send-email failed", error instanceof Error ? error.message : String(error));
     return jsonResponse(
-      { error: "email_send_failed", message: "寄信失敗，請稍後再試或確認 Resend 設定。" },
+      { error: "email_send_failed", message: "Email send failed. Please check Resend configuration." },
       500,
     );
   }
 });
+
