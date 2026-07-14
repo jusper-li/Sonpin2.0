@@ -107,11 +107,15 @@ export default function Checkout() {
         shipping_line1: formData.address,
         shipping_address: {
           name: formData.name,
+          recipient_name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          recipient_phone: formData.phone,
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
+          postal_code: formData.postalCode,
+          country: '台灣',
         },
         notes: formData.notes,
       });
