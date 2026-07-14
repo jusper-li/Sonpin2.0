@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Plus, RefreshCw, Save, Search, Star, X } from 'lucide-react';
 import { isMissingSupabaseTableError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ProductImage from '../ProductImage';
 
 interface Order {
   id: string;
@@ -57,10 +58,18 @@ interface PaymentRecord {
 interface OrderItem {
   id: string;
   order_id: string;
+  product_id: string | null;
   product_name: string;
   quantity: number;
   price: number;
   total: number;
+  product?: ProductImageSource | ProductImageSource[] | null;
+}
+
+interface ProductImageSource {
+  id?: string;
+  images?: unknown;
+  og_image?: string | null;
 }
 
 interface Member {
@@ -127,6 +136,18 @@ const getAddressField = (address: Record<string, unknown> | null | undefined, ke
     if (typeof value === 'string' && value.trim()) return value.trim();
   }
   return '';
+};
+
+const normalizeImageList = (images: unknown) => {
+  if (Array.isArray(images)) return images.filter((image): image is string => typeof image === 'string' && image.trim().length > 0);
+  if (typeof images === 'string' && images.trim()) return [images.trim()];
+  return [];
+};
+
+const getOrderItemImage = (item: OrderItem) => {
+  const product = Array.isArray(item.product) ? item.product[0] : item.product;
+  const images = normalizeImageList(product?.images);
+  return images[0] || product?.og_image || null;
 };
 
 const emptyTimelineResult = Promise.resolve({ data: [], error: null } as const);
@@ -253,7 +274,7 @@ export default function OrderManagement() {
 
   const loadOrderDetailData = async (orderId: string, withTimeline = supportsOrderTimeline) => {
     const [itemsRes, payRes, msgRes, eventRes] = await Promise.all([
-      supabase.from('order_items').select('*').eq('order_id', orderId),
+      supabase.from('order_items').select('*, product:products(id, images, og_image)').eq('order_id', orderId),
       supabase.from('payments').select('*').eq('order_id', orderId).order('created_at', { ascending: false }),
       withTimeline
         ? supabase.from('order_messages').select('*').eq('order_id', orderId).order('created_at', { ascending: false })
@@ -676,10 +697,19 @@ export default function OrderManagement() {
               <section className="rounded-xl border border-slate-200 p-4">
                 <h3 className="mb-3 text-lg font-semibold">{t('order_management.items_title', '商品詳情')}</h3>
                 <div className="space-y-3">
-                  {orderItems.map((item) => (
+                  {orderItems.map((item) => {
+                    const productImage = getOrderItemImage(item);
+
+                    return (
                     <div key={item.id} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                      <div className="flex h-12 w-12 flex-none items-center justify-center rounded-md bg-white text-xs text-slate-400">
-                        商品
+                      <div className="relative h-14 w-14 flex-none overflow-hidden rounded-md border border-slate-200 bg-white">
+                        <ProductImage
+                          src={productImage}
+                          alt={item.product_name}
+                          compactPlaceholder
+                          className="absolute inset-0 h-full w-full object-cover"
+                          sizes="56px"
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-slate-800">{item.product_name}</p>
@@ -688,7 +718,8 @@ export default function OrderManagement() {
                         </p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="mt-4 grid gap-2 text-sm md:grid-cols-2">
                   <Field label={t('order_management.subtotal', '商品小計')} value={formatCurrency(viewingOrder.subtotal)} />
