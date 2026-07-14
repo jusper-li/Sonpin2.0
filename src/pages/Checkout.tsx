@@ -18,7 +18,6 @@ export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -68,7 +67,7 @@ export default function Checkout() {
       const finalTotal = total + shippingAmount;
       const shippingMethodSummary =
         shippingBreakdown.length > 0
-          ? shippingBreakdown.map((item) => `${item.categoryName}${item.quantityLabel ? ` ${item.quantityLabel}` : ''}`).join('、')
+          ? shippingBreakdown.map((item) => item.categoryName + (item.quantityLabel ? ' ' + item.quantityLabel : '')).join('、')
           : '銀行轉帳';
 
       const insertMinimal = async (table: string, payload: unknown) => {
@@ -170,7 +169,7 @@ export default function Checkout() {
       }).catch(() => {});
 
       clearCart();
-      setOrderSuccess({ orderNumber });
+      navigate('/checkout/result?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNumber), { replace: true });
     } catch (error) {
       console.error('Checkout failed:', error);
       alert('結帳失敗，請稍後再試。');
@@ -182,42 +181,6 @@ export default function Checkout() {
   const inputCls =
     'w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm tracking-wide text-stone-800 placeholder-stone-300 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100';
   const labelCls = 'mb-2 block text-xs tracking-[0.15em] text-stone-500 uppercase';
-
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
-        <SiteHeader />
-        <main className="flex flex-1 items-center justify-center bg-stone-50 px-6 py-20">
-          <div className="w-full max-w-md text-center">
-            <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-green-100 bg-green-50">
-              <div className="h-10 w-10 rounded-full border-4 border-green-600/80" />
-            </div>
-            <p className="mb-3 text-xs tracking-[0.3em] text-amber-700 uppercase">訂單已成立</p>
-            <h1 className="mb-3 text-3xl font-light text-stone-800">感謝您的訂購</h1>
-            <p className="mb-2 font-light text-stone-500">我們已收到您的訂單，稍後會寄出確認信。</p>
-            <p className="mb-8 text-sm font-light text-stone-400">
-              訂單編號：<span className="font-medium text-stone-700">{orderSuccess.orderNumber}</span>
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <button
-                onClick={() => navigate('/products')}
-                className="rounded-xl bg-stone-800 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-700"
-              >
-                繼續購物
-              </button>
-              <button
-                onClick={() => navigate('/')}
-                className="rounded-xl border border-stone-200 bg-white px-6 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50"
-              >
-                回首頁
-              </button>
-            </div>
-          </div>
-        </main>
-        <DeferredSiteFooter />
-      </div>
-    );
-  }
 
   const finalShippingTotal = Number(shippingTotal || 0);
   const finalOrderTotal = total + finalShippingTotal;

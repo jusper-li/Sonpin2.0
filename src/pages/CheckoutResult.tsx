@@ -12,6 +12,7 @@ export default function CheckoutResult() {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order_id') || '';
+  const orderNumberParam = searchParams.get('order_number') || '';
   const [status, setStatus] = useState<PaymentState>('pending');
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -19,7 +20,7 @@ export default function CheckoutResult() {
   const stateConfig: Record<PaymentState, { title: string; description: string; tone: string }> = useMemo(
     () => ({
       paid: {
-        title: t('checkout.result.paid.title', '付款成功'),
+        title: t('checkout.result.paid.title', '完成訂單'),
         description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排出貨。'),
         tone: 'text-emerald-700',
       },
@@ -29,8 +30,8 @@ export default function CheckoutResult() {
         tone: 'text-rose-700',
       },
       pending: {
-        title: t('checkout.result.pending.title', '付款處理中'),
-        description: t('checkout.result.pending.description', '系統正在同步付款結果，請稍候自動更新。'),
+        title: t('checkout.result.pending.title', '完成訂單'),
+        description: t('checkout.result.pending.description', '您的訂單已成立，我們正在同步付款與出貨資訊。'),
         tone: 'text-amber-700',
       },
       unknown: {
@@ -67,7 +68,7 @@ export default function CheckoutResult() {
         return;
       }
 
-      setOrderNumber(data.order_number || '');
+      setOrderNumber(data.order_number || orderNumberParam || '');
       const paymentStatus = (data.payment_status || '').toLowerCase();
       if (paymentStatus === 'paid') {
         setStatus('paid');
@@ -88,7 +89,7 @@ export default function CheckoutResult() {
       mounted = false;
       if (timer) window.clearInterval(timer);
     };
-  }, [orderId]);
+  }, [orderId, orderNumberParam]);
 
   const icon = useMemo(() => {
     if (loading || status === 'pending') return <Clock3 className="h-10 w-10 text-amber-600" />;
