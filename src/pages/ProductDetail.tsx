@@ -284,8 +284,18 @@ function ProductInfoSections({
   productPage: ExtractedProductPageDocument;
   serviceSections: ProductDetailServiceSection[];
 }) {
-  const { t } = useLanguage();
+  const { t, currentLanguage, translationRevision } = useLanguage();
   const shippingGroups = serviceSections.length > 0 ? serviceSections : DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS;
+  const translatedShippingGroups = useMemo(
+    () =>
+      shippingGroups.map((section, sectionIndex) => ({
+        title: t(`product.detail.service.${product.slug}.section.${sectionIndex}.title`, section.title),
+        items: section.items.map((item, itemIndex) =>
+          t(`product.detail.service.${product.slug}.section.${sectionIndex}.item.${itemIndex}`, item),
+        ),
+      })),
+    [currentLanguage, product.slug, shippingGroups, t, translationRevision],
+  );
 
   return (
     <div className="space-y-8 border-t border-[var(--sonpin-primary-border)] pt-8">
@@ -360,7 +370,7 @@ function ProductInfoSections({
           </h2>
         </div>
         <div className="space-y-5 rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-5 text-sm">
-          {shippingGroups.map(({ title, items }) => (
+          {translatedShippingGroups.map(({ title, items }) => (
             <div key={title}>
               <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-[0.15em] text-stone-700">{title}</h3>
               <ul className="space-y-1.5">
