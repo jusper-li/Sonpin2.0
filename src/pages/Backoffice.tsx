@@ -20,6 +20,7 @@ const PaymentManagement = lazy(() => import('../components/modules/PaymentManage
 const SocialManagement = lazy(() => import('../components/modules/SocialManagement'));
 const LanguageManagement = lazy(() => import('../components/modules/LanguageManagement'));
 const SEOManagement = lazy(() => import('../components/modules/SEOManagement'));
+const NotificationManagement = lazy(() => import('../components/modules/NotificationManagement'));
 const AIChat = lazy(() => import('../components/modules/AIChat'));
 const AIAnalytics = lazy(() => import('../components/modules/AIAnalytics'));
 const PermissionManagement = lazy(() => import('../components/modules/PermissionManagement'));
@@ -111,6 +112,8 @@ function AdminPanel() {
         return <LanguageManagement />;
       case 'seo':
         return <SEOManagement />;
+      case 'notifications':
+        return <NotificationManagement />;
       case 'ai-chat':
         return <AIChat />;
       case 'knowledge-base':

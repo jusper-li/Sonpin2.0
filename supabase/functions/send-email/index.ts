@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+﻿import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -61,6 +61,22 @@ type RemittanceNotificationEmail = {
   orderNumber: string;
   remittanceAmount: number;
   remitterAccountLast5: string;
+};
+
+type NotificationMailSettings = {
+  admin_email: string;
+  contact_enabled: boolean;
+  order_enabled: boolean;
+  remittance_enabled: boolean;
+  customer_copy_enabled: boolean;
+};
+
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
+  admin_email: FALLBACK_ADMIN_EMAIL,
+  contact_enabled: true,
+  order_enabled: true,
+  remittance_enabled: true,
+  customer_copy_enabled: true,
 };
 
 class HttpError extends Error {
@@ -213,37 +229,79 @@ function parseRemittanceNotificationEmail(data: Record<string, unknown>): Remitt
   };
 }
 
-async function getAdminEmail() {
+function parseNotificationSettings(value: unknown): NotificationMailSettings {
+  const settings = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  return {
+    admin_email: optionalString(settings.admin_email) || FALLBACK_ADMIN_EMAIL,
+    contact_enabled: settings.contact_enabled === undefined ? true : Boolean(settings.contact_enabled),
+    order_enabled: settings.order_enabled === undefined ? true : Boolean(settings.order_enabled),
+    remittance_enabled: settings.remittance_enabled === undefined ? true : Boolean(settings.remittance_enabled),
+    customer_copy_enabled: settings.customer_copy_enabled === undefined ? true : Boolean(settings.customer_copy_enabled),
+  };
+}
+
+async function getNotificationSettings() {
   const explicitAdminEmail = Deno.env.get("ADMIN_EMAIL")?.trim();
-  if (isEmail(explicitAdminEmail)) {
-    return explicitAdminEmail;
-  }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
 
-  if (!supabaseUrl || !serviceRoleKey) return FALLBACK_ADMIN_EMAIL;
+  if (!supabaseUrl || !serviceRoleKey) {
+    return {
+      ...DEFAULT_NOTIFICATION_SETTINGS,
+      admin_email: isEmail(explicitAdminEmail) ? explicitAdminEmail : FALLBACK_ADMIN_EMAIL,
+    };
+  }
 
   try {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("setting_value")
-      .eq("setting_key", "footer")
-      .maybeSingle();
+    const [{ data: notificationData, error: notificationError }, { data: footerData, error: footerError }] = await Promise.all([
+      supabase
+        .from("site_settings")
+        .select("setting_value")
+        .eq("setting_key", "notification_mail")
+        .maybeSingle(),
+      supabase
+        .from("site_settings")
+        .select("setting_value")
+        .eq("setting_key", "footer")
+        .maybeSingle(),
+    ]);
 
-    if (error) {
-      console.warn("send-email: skipped footer settings lookup", error.message);
-      return FALLBACK_ADMIN_EMAIL;
+    if (notificationError) {
+      console.warn("send-email: skipped notification settings lookup", notificationError.message);
+    }
+    if (footerError) {
+      console.warn("send-email: skipped footer settings lookup", footerError.message);
     }
 
-    const settingValue = data?.setting_value as { contact_email?: unknown } | null | undefined;
-    const contactEmail = optionalString(settingValue?.contact_email);
-    return isEmail(contactEmail) ? contactEmail : FALLBACK_ADMIN_EMAIL;
+    const notificationSettings = parseNotificationSettings(notificationData?.setting_value);
+    const footerValue = footerData?.setting_value as { contact_email?: unknown } | null | undefined;
+    const footerContactEmail = optionalString(footerValue?.contact_email);
+
+    return {
+      ...DEFAULT_NOTIFICATION_SETTINGS,
+      ...notificationSettings,
+      admin_email: isEmail(notificationSettings.admin_email)
+        ? notificationSettings.admin_email
+        : isEmail(footerContactEmail)
+          ? footerContactEmail
+          : isEmail(explicitAdminEmail)
+            ? explicitAdminEmail
+          : FALLBACK_ADMIN_EMAIL,
+    };
   } catch (error) {
     console.warn("send-email: skipped admin email lookup", error instanceof Error ? error.message : String(error));
-    return FALLBACK_ADMIN_EMAIL;
+    return {
+      ...DEFAULT_NOTIFICATION_SETTINGS,
+      admin_email: isEmail(explicitAdminEmail) ? explicitAdminEmail : FALLBACK_ADMIN_EMAIL,
+    };
   }
+}
+
+async function getAdminEmail() {
+  const settings = await getNotificationSettings();
+  return settings.admin_email;
 }
 
 async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
@@ -520,18 +578,21 @@ Deno.serve(async (req: Request) => {
     const body = await readJson(req);
     const type = requiredString(body.type, "type");
     const data = asRecord(body.data, "data");
-    const adminEmail = await getAdminEmail();
+    const notificationSettings = await getNotificationSettings();
+    const adminEmail = notificationSettings.admin_email;
 
     switch (type) {
       case "contact": {
         const contact = parseContactEmail(data);
         await Promise.all([
-          sendEmail({
-            to: adminEmail,
-            subject: `Sonpin 聯絡表單：${contact.subject}`,
-            html: generateContactAdminNotify(contact),
-            replyTo: contact.email,
-          }),
+          notificationSettings.contact_enabled
+            ? sendEmail({
+                to: adminEmail,
+                subject: `Sonpin 聯絡表單：${contact.subject}`,
+                html: generateContactAdminNotify(contact),
+                replyTo: contact.email,
+              })
+            : Promise.resolve(),
           sendEmail({
             to: contact.email,
             subject: "Sonpin 聯絡表單已收到",
@@ -548,12 +609,14 @@ Deno.serve(async (req: Request) => {
             subject: `Sonpin 訂單已送出 ${order.orderNumber}`,
             html: generateOrderConfirmation(order),
           }),
-          sendEmail({
-            to: adminEmail,
-            subject: `Sonpin 新訂單通知 ${order.orderNumber}`,
-            html: generateOrderAdminNotify(order),
-            replyTo: order.customerEmail,
-          }),
+          notificationSettings.order_enabled
+            ? sendEmail({
+                to: adminEmail,
+                subject: `Sonpin 新訂單通知 ${order.orderNumber}`,
+                html: generateOrderAdminNotify(order),
+                replyTo: order.customerEmail,
+              })
+            : Promise.resolve(),
         ]);
         break;
       }
@@ -597,16 +660,18 @@ Deno.serve(async (req: Request) => {
             actor_name: order.customer_name || "",
             actor_type: "customer",
           }),
-          sendEmail({
-            to: adminEmail,
-            subject: "Sonpin ???? " + remittance.orderNumber,
-            html: generateRemittanceNotificationAdminEmail(remittance, order),
-            replyTo: order.customer_email || undefined,
-          }),
-          order.customer_email
+          notificationSettings.remittance_enabled
+            ? sendEmail({
+                to: adminEmail,
+                subject: `Sonpin 匯款通知 ${remittance.orderNumber}`,
+                html: generateRemittanceNotificationAdminEmail(remittance, order),
+                replyTo: order.customer_email || undefined,
+              })
+            : Promise.resolve(),
+          notificationSettings.customer_copy_enabled && order.customer_email
             ? sendEmail({
                 to: order.customer_email,
-                subject: "Sonpin ????????? " + remittance.orderNumber,
+                subject: `Sonpin 匯款通知已收到 ${remittance.orderNumber}`,
                 html: generateRemittanceNotificationCustomerEmail(remittance),
               })
             : Promise.resolve(),
