@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, Mail, Phone, ReceiptText, Search, ChevronRight } from 'lucide-react';
-import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
+import { isSupabaseContentEnabled, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
@@ -296,15 +296,56 @@ export default function ContactPage() {
   const intro = sections.find((section) => section.type === 'intro');
   const infoSections = sections.filter((section) => section.type === 'section');
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.subject || !form.message) {
       setError(t.validation);
       return;
     }
-    setSubmitted(true);
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+
+    try {
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+      };
+
+      const inquiryInsert = supabase.from('contact_inquiries').insert([
+        {
+          ...payload,
+          status: 'pending',
+        },
+      ]);
+
+      const emailSend = fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          authorization: `Bearer ${supabaseAnonKey}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'contact',
+          data: payload,
+        }),
+      });
+
+      const [inquiryResult, emailResponse] = await Promise.all([inquiryInsert, emailSend]);
+      if (inquiryResult.error) throw inquiryResult.error;
+
+      const emailPayload = await emailResponse.json().catch(() => null);
+      if (!emailResponse.ok || emailPayload?.error) {
+        throw new Error(emailPayload?.message || emailPayload?.error || '信件寄送失敗');
+      }
+
+      setSubmitted(true);
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : '送出失敗，請稍後再試');
+    }
   };
 
   if (loading) {

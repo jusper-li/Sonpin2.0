@@ -30,6 +30,7 @@ const StaticPageManagement = lazy(() => import('../components/modules/StaticPage
 const VersionLogManagement = lazy(() => import('../components/modules/VersionLogManagement'));
 const ProductDetailServiceManagement = lazy(() => import('../components/modules/ProductDetailServiceManagement'));
 const ThemeManagement = lazy(() => import('../components/modules/ThemeManagement'));
+const ContactCenterManagement = lazy(() => import('../components/modules/ContactCenterManagement'));
 
 function ModuleLoading() {
   return (
@@ -128,6 +129,8 @@ function AdminPanel() {
         return <StaticPageManagement />;
       case 'product-detail-service':
         return <ProductDetailServiceManagement />;
+      case 'contact-center':
+        return <ContactCenterManagement />;
       case 'theme':
         return <ThemeManagement />;
       case 'version-logs':
