@@ -233,6 +233,12 @@ export default function CheckoutResult() {
               {"\u8a02\u55ae\u67e5\u8a62"}
             </Link>
             <Link
+              to="/remittance-notice"
+              className="rounded-xl border border-[var(--sonpin-primary-border)] px-6 py-3 text-sm font-medium text-[var(--sonpin-primary)] transition hover:bg-[var(--sonpin-background)]"
+            >
+              匯款通知
+            </Link>
+            <Link
               to="/cart"
               className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
             >

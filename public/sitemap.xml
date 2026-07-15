@@ -91,6 +91,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sonpin.tw/remittance-notice</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sonpin.tw/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

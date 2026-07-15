@@ -57,6 +57,12 @@ type WelcomeEmail = {
   displayName: string;
 };
 
+type RemittanceNotificationEmail = {
+  orderNumber: string;
+  remittanceAmount: number;
+  remitterAccountLast5: string;
+};
+
 class HttpError extends Error {
   status: number;
   code: string;
@@ -196,6 +202,14 @@ function parseWelcomeEmail(data: Record<string, unknown>): WelcomeEmail {
   return {
     email: requiredEmail(data.email, "data.email"),
     displayName: requiredString(data.displayName, "data.displayName"),
+  };
+}
+
+function parseRemittanceNotificationEmail(data: Record<string, unknown>): RemittanceNotificationEmail {
+  return {
+    orderNumber: requiredString(data.orderNumber, "data.orderNumber"),
+    remittanceAmount: requiredNumber(data.remittanceAmount, "data.remittanceAmount"),
+    remitterAccountLast5: requiredString(data.remitterAccountLast5, "data.remitterAccountLast5").slice(-5),
   };
 }
 
@@ -456,6 +470,43 @@ function generateWelcomeEmail(data: WelcomeEmail) {
   `);
 }
 
+
+type OrderLookup = {
+  id: string;
+  order_number: string;
+  total: number | null;
+  customer_name: string | null;
+  customer_email: string | null;
+};
+
+function generateRemittanceNotificationAdminEmail(data: RemittanceNotificationEmail, order: OrderLookup) {
+  return wrapEmail(`
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">????</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">????????????????????????</p>
+    <div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${escapeHtml(data.orderNumber)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${formatMoney(data.remittanceAmount)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>????? 5 ??</strong>${escapeHtml(data.remitterAccountLast5)}</p>
+      <p style="margin:0;color:#57534e;line-height:1.8;"><strong>?????</strong>${formatMoney(Number(order.total || 0))}</p>
+    </div>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>????</strong>${escapeHtml(order.customer_name || '?')}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;"><strong>Email?</strong><a href="mailto:${escapeHtml(order.customer_email || '')}">${escapeHtml(order.customer_email || '?')}</a></p>
+  `);
+}
+
+function generateRemittanceNotificationCustomerEmail(data: RemittanceNotificationEmail) {
+  return wrapEmail(`
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">???????????</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">?????????????????????????</p>
+    <div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${escapeHtml(data.orderNumber)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${formatMoney(data.remittanceAmount)}</p>
+      <p style="margin:0;color:#57534e;line-height:1.8;"><strong>????? 5 ??</strong>${escapeHtml(data.remitterAccountLast5)}</p>
+    </div>
+    <p style="color:#57534e;line-height:1.8;margin:0;">?????????????????????</p>
+  `);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { status: 200, headers: corsHeaders });
@@ -510,9 +561,56 @@ Deno.serve(async (req: Request) => {
         const welcome = parseWelcomeEmail(data);
         await sendEmail({
           to: welcome.email,
-          subject: "Sonpin 歡迎加入",
+          subject: "Sonpin ??????",
           html: generateWelcomeEmail(welcome),
         });
+        break;
+      }
+      case "remittance_notification": {
+        const remittance = parseRemittanceNotificationEmail(data);
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+
+        if (!supabaseUrl || !serviceRoleKey) {
+          throw new HttpError(503, "supabase_not_configured", "Supabase service credentials are not configured");
+        }
+
+        const supabase = createClient(supabaseUrl, serviceRoleKey);
+        const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .select("id, order_number, total, customer_name, customer_email")
+          .eq("order_number", remittance.orderNumber)
+          .maybeSingle();
+
+        if (orderError || !orderData) {
+          throw new HttpError(404, "order_not_found", "?????????????????");
+        }
+
+        const order = orderData as OrderLookup;
+        const eventDescription = "remittance notification: amount " + formatMoney(remittance.remittanceAmount) + ", last5 " + remittance.remitterAccountLast5;
+
+        await Promise.allSettled([
+          supabase.from("order_events").insert({
+            order_id: orderData.id,
+            event_type: "remittance_notification",
+            description: eventDescription,
+            actor_name: order.customer_name || "",
+            actor_type: "customer",
+          }),
+          sendEmail({
+            to: adminEmail,
+            subject: "Sonpin ???? " + remittance.orderNumber,
+            html: generateRemittanceNotificationAdminEmail(remittance, order),
+            replyTo: order.customer_email || undefined,
+          }),
+          order.customer_email
+            ? sendEmail({
+                to: order.customer_email,
+                subject: "Sonpin ????????? " + remittance.orderNumber,
+                html: generateRemittanceNotificationCustomerEmail(remittance),
+              })
+            : Promise.resolve(),
+        ]);
         break;
       }
       default:
