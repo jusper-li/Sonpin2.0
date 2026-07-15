@@ -29,6 +29,13 @@ import { extractProductPageDocument, type ExtractedProductPageDocument } from '.
 import { normalizeLang } from '../lib/language';
 import { shouldTranslateProductPage, translateHtmlContentWithT, translateProductPageDocumentWithT } from '../lib/productPageLiveTranslation';
 import { loadCatalogProducts } from '../lib/supabaseCatalog';
+import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
+import {
+  DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS,
+  normalizeProductDetailServiceSettings,
+  PRODUCT_DETAIL_SERVICE_SETTING_KEY,
+  type ProductDetailServiceSection,
+} from '../data/productDetailServiceInfo';
 const ProductPageCardRenderer = lazy(() => import('../components/product-page/ProductPageCardRenderer'));
 
 interface Product {
@@ -271,50 +278,21 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 function ProductInfoSections({
   product,
   productPage,
+  serviceSections,
 }: {
   product: Product;
   productPage: ExtractedProductPageDocument;
+  serviceSections: ProductDetailServiceSection[];
 }) {
   const { t } = useLanguage();
-  const shippingGroups = [
-    {
-      title: t('product.detail.shipping.payment', '付款方式'),
-      items: [
-        t('product.detail.shipping.paymentItem1', '信用卡線上刷卡、Apple Pay'),
-        t('product.detail.shipping.paymentItem2', 'ATM 轉帳，請提供帳號後五碼方便對帳'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.delivery', '運送方式'),
-      items: [
-        t('product.detail.shipping.deliveryItem1', '7-11 取件：每件 NT$65'),
-        t('product.detail.shipping.deliveryItem2', '常溫宅配：黑貓宅急便或中華郵政，每件 NT$100'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.arrival', '出貨與到貨'),
-      items: [
-        t('product.detail.shipping.arrivalItem1', '收到訂單後約 1-2 個工作天出貨'),
-        t('product.detail.shipping.arrivalItem2', '7-11 取貨約 3-4 個工作天送達'),
-        t('product.detail.shipping.arrivalItem3', '宅配到府約 1-3 個工作天送達'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.return', '退換貨提醒'),
-      items: [
-        t('product.detail.shipping.returnItem1', '商品到貨後享有 7 天猶豫期，猶豫期並非試用期'),
-        t('product.detail.shipping.returnItem2', '食品基於衛生安全，已拆封商品恕無法辦理換貨'),
-        t('product.detail.shipping.returnItem3', '商品瑕疵請於 7 天內聯繫我們協助處理'),
-      ],
-    },
-  ];
+  const shippingGroups = serviceSections.length > 0 ? serviceSections : DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS;
 
   return (
     <div className="space-y-8 border-t border-[#eadfd1] pt-8">
       <section className="scroll-mt-28">
         <div className="mb-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.storyTag', '商品故事')}
+            {t('product.detail.storyTag', '故事')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.story', '商品故事')}
@@ -331,7 +309,7 @@ function ProductInfoSections({
             ) : product.description ? (
               <p className="whitespace-pre-line text-sm leading-8 text-stone-600">{product.description}</p>
             ) : (
-              <p className="text-sm italic text-stone-400">{t('product.detail.storyEmpty', '尚未提供商品故事內容。')}</p>
+              <p className="text-sm italic text-stone-400">{t('product.detail.storyEmpty', '尚未設定商品故事')}</p>
             )}
           </div>
         )}
@@ -340,10 +318,10 @@ function ProductInfoSections({
       <section className="scroll-mt-28">
         <div className="mb-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.specTag', '規格資訊')}
+            {t('product.detail.specTag', '規格')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
-            {t('product.detail.spec', '規格資訊')}
+            {t('product.detail.spec', '商品規格')}
           </h2>
         </div>
         {product.specifications && product.specifications.length > 0 ? (
@@ -368,7 +346,7 @@ function ProductInfoSections({
             ))}
           </div>
         ) : (
-          <p className="text-sm italic text-stone-400">{t('product.detail.specEmpty', '暫無規格資訊')}</p>
+          <p className="text-sm italic text-stone-400">{t('product.detail.specEmpty', '尚未設定商品規格')}</p>
         )}
       </section>
 
@@ -400,7 +378,6 @@ function ProductInfoSections({
     </div>
   );
 }
-
 export default function ProductDetail() {
   const { t, currentLanguage, translationRevision } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
@@ -414,6 +391,7 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [serviceSections, setServiceSections] = useState(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
   const productSectionRef = useRef<HTMLElement>(null);
   const extractedProductPage = useMemo(
     () => (product ? extractProductPageDocument(product.content) : { document: null, fallbackHtml: '' }),
@@ -500,6 +478,40 @@ export default function ProductDetail() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadServiceSections = async () => {
+      if (!isSupabaseContentEnabled) {
+        setServiceSections(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', PRODUCT_DETAIL_SERVICE_SETTING_KEY)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (cancelled) return;
+
+        setServiceSections(normalizeProductDetailServiceSettings(data?.setting_value).sections);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Failed to load product detail service settings:', error);
+        setServiceSections(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
+      }
+    };
+
+    void loadServiceSections();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const loadProduct = async () => {
@@ -914,7 +926,9 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-10 lg:mt-14">
-            <Suspense fallback={null}><ProductInfoSections product={product} productPage={activeProductPage} /></Suspense>
+            <Suspense fallback={null}>
+              <ProductInfoSections product={product} productPage={activeProductPage} serviceSections={serviceSections} />
+            </Suspense>
           </div>
         </section>
 

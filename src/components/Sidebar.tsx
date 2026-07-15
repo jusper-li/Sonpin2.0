@@ -76,6 +76,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
       title: t('admin.sidebar.group.content', '內容管理'),
       items: [
         { id: 'homepage', label: t('admin.sidebar.homepage', '首頁管理'), icon: Home },
+        { id: 'product-detail-service', label: '商品頁配送與服務', icon: Truck },
         { id: 'service', label: t('admin.sidebar.service', '老饕分享'), icon: Share2 },
         { id: 'articles', label: t('admin.sidebar.articles', '文章管理'), icon: FileText },
         { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 管理'), icon: HelpCircle },
