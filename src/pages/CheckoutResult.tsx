@@ -224,13 +224,19 @@ export default function CheckoutResult() {
               to="/shop"
               className="rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
             >
-              繼續購物
+              ??????
+            </Link>
+            <Link
+              to="/order-query"
+              className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
+            >
+              {"\u8a02\u55ae\u67e5\u8a62"}
             </Link>
             <Link
               to="/cart"
               className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
             >
-              回到購物車
+              ????????
             </Link>
           </div>
         </div>

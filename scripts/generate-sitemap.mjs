@@ -34,6 +34,7 @@ const staticUrls = [
   { loc: '/returns', changefreq: 'monthly', priority: '0.6' },
   { loc: '/privacy', changefreq: 'monthly', priority: '0.5' },
   { loc: '/terms', changefreq: 'monthly', priority: '0.5' },
+  { loc: '/order-query', changefreq: 'weekly', priority: '0.7' },
   { loc: '/blog', changefreq: 'weekly', priority: '0.7' },
 ];
 

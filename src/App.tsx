@@ -20,6 +20,7 @@ const ProcessPage = lazy(() => import('./pages/ProcessPage'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const CheckoutResult = lazy(() => import('./pages/CheckoutResult'));
+const OrderInquiry = lazy(() => import('./pages/OrderInquiry'));
 const MemberAuth = lazy(() => import('./pages/MemberAuth'));
 const MemberProfile = lazy(() => import('./pages/MemberProfile'));
 const StaticPage = lazy(() => import('./pages/StaticPage'));
@@ -86,6 +87,7 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/checkout/result" element={<CheckoutResult />} />
+                <Route path="/order-query" element={<OrderInquiry />} />
                 <Route path="/member" element={<MemberAuth />} />
                 <Route path="/member/auth" element={<MemberAuth />} />
                 <Route path="/member/reset" element={<MemberAuth />} />
