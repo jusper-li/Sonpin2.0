@@ -146,7 +146,7 @@ export default function StaticPage() {
 
         {!loading && notFound && (
           <div className="container mx-auto px-6 py-40 text-center">
-            <h1 className="mb-4 text-3xl font-light text-[#2b221d]">
+            <h1 className="mb-4 text-3xl font-light text-[var(--sonpin-ink)]">
               {t('static.not_found.title', '找不到頁面')}
             </h1>
             <p className="mb-8 text-[var(--sonpin-primary-muted)]">
@@ -164,7 +164,7 @@ export default function StaticPage() {
 
         {!loading && page && (
           <>
-            <section className="bg-gradient-to-br from-[#2b221d] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] py-20 text-[var(--sonpin-surface)]">
+            <section className="bg-gradient-to-br from-[var(--sonpin-ink)] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] py-20 text-[var(--sonpin-surface)]">
               <div className="container mx-auto px-6">
                 {translating && (
                   <div className="mb-4 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-surface)]">
@@ -196,7 +196,7 @@ export default function StaticPage() {
                 <div key={index} className={`mb-12 ${section.type === 'intro' ? 'border-b border-[var(--sonpin-primary-border)] pb-12' : ''}`}>
                   {section.type === 'intro' ? (
                     <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] p-8">
-                      <h2 className="mb-4 text-2xl font-light text-[#2b221d]">{localizeStaticText(section.title, currentLanguage)}</h2>
+                      <h2 className="mb-4 text-2xl font-light text-[var(--sonpin-ink)]">{localizeStaticText(section.title, currentLanguage)}</h2>
                       <p className="whitespace-pre-line text-lg font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
                         {localizeStaticText(section.content, currentLanguage)}
                       </p>
@@ -205,7 +205,7 @@ export default function StaticPage() {
                     <div>
                       <div className="mb-4 flex items-start gap-4">
                         <div className="mt-1 h-6 w-1 flex-shrink-0 rounded-full bg-[var(--sonpin-primary-warm)]" />
-                        <h2 className="text-xl font-medium text-[#2b221d]">{localizeStaticText(section.title, currentLanguage)}</h2>
+                        <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{localizeStaticText(section.title, currentLanguage)}</h2>
                       </div>
                       <div className="ml-5 whitespace-pre-line font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
                         {formatContent(section.content)}

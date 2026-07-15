@@ -293,12 +293,12 @@ export default function MemberAuth() {
 
   return (
     <div className="flex min-h-screen bg-[var(--sonpin-background)]">
-      <div className="relative hidden overflow-hidden bg-[#c7a08d] lg:flex lg:w-1/2">
+      <div className="relative hidden overflow-hidden bg-[var(--sonpin-primary-warm)] lg:flex lg:w-1/2">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-30"
           style={{ backgroundImage: 'url(https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=1200)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2b221d]/70 via-[var(--sonpin-primary-soft)]/50 to-[var(--sonpin-primary-border)]/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--sonpin-ink)]/70 via-[var(--sonpin-primary-soft)]/50 to-[var(--sonpin-primary-border)]/30" />
         <div className="relative z-10 flex w-full flex-col justify-between p-12">
           <Link to="/" className="inline-block">
             <img src="/LOGO-1.png" alt="Sonpin" className="h-20 opacity-95 drop-shadow-[0_2px_6px_rgba(43,34,29,0.22)]" />
@@ -429,7 +429,7 @@ export default function MemberAuth() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2b221d] py-3 text-sm font-medium text-[var(--sonpin-surface)] transition-all hover:bg-[var(--sonpin-primary-soft)] active:bg-[var(--sonpin-primary-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--sonpin-ink)] py-3 text-sm font-medium text-[var(--sonpin-surface)] transition-all hover:bg-[var(--sonpin-primary-soft)] active:bg-[var(--sonpin-primary-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : '登入'}
                 </button>

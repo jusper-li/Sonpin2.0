@@ -95,13 +95,13 @@ export default function StoryPage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="relative h-[55vh] min-h-[420px] bg-[#c7a08d] overflow-hidden">
+        <section className="relative h-[55vh] min-h-[420px] bg-[var(--sonpin-primary-warm)] overflow-hidden">
           <img
             src="https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1600"
             alt={t('story.hero.alt', '品牌故事')}
             className="absolute inset-0 w-full h-full object-cover opacity-35"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2b221d]/50 via-transparent to-[var(--sonpin-primary)]/40" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--sonpin-ink)]/50 via-transparent to-[var(--sonpin-primary)]/40" />
           <div className="relative h-full flex flex-col justify-end pb-16 px-6 container mx-auto">
             <div className="flex items-center gap-2 text-xs text-[var(--sonpin-primary-border)] tracking-[0.1em] mb-4">
               <Link to="/" className="hover:text-[var(--sonpin-surface)] transition-colors">
@@ -156,7 +156,7 @@ export default function StoryPage() {
                     <div className="inline-block text-xs tracking-[0.3em] uppercase text-[var(--sonpin-primary)] font-medium mb-3 bg-[var(--sonpin-background)] px-3 py-1 rounded-full">
                       {t('story.chapter', `第 ${index + 1} 章`)}
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-light text-[#2b221d] mb-5 leading-snug">
+                    <h2 className="text-2xl md:text-3xl font-light text-[var(--sonpin-ink)] mb-5 leading-snug">
                       {section.title}
                     </h2>
                     <p className="text-[var(--sonpin-primary-soft)] font-light leading-relaxed whitespace-pre-line">
@@ -200,7 +200,7 @@ export default function StoryPage() {
 
         <section className="py-20 bg-[var(--sonpin-background)]">
           <div className="container mx-auto px-6 text-center max-w-2xl">
-            <h2 className="text-3xl font-light text-[#2b221d] mb-6">
+            <h2 className="text-3xl font-light text-[var(--sonpin-ink)] mb-6">
               {t('story.cta.title', '一起了解淞品土雞')}
             </h2>
             <p className="text-[var(--sonpin-primary-muted)] font-light mb-10 leading-relaxed">
@@ -209,7 +209,7 @@ export default function StoryPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/shop"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#2b221d] text-[var(--sonpin-surface)] rounded-full hover:bg-[var(--sonpin-primary)] transition-colors text-sm font-medium"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] rounded-full hover:bg-[var(--sonpin-primary)] transition-colors text-sm font-medium"
               >
                 {t('story.cta.shop', '前往購物')}
                 <ChevronRight size={16} />

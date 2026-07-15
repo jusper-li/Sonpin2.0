@@ -140,8 +140,8 @@ export default function MemberProfile() {
           </div>
 
           <div className="mb-5 overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_18px_50px_rgba(61,43,31,0.08)]">
-            <div className="flex items-center gap-5 bg-[linear-gradient(135deg,#c7a08d_0%,var(--sonpin-primary)_100%)] px-6 py-8">
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#2b221d] shadow-lg">
+            <div className="flex items-center gap-5 bg-[linear-gradient(135deg,var(--sonpin-primary-warm)_0%,var(--sonpin-primary)_100%)] px-6 py-8">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[var(--sonpin-ink)] shadow-lg">
                 <span className="text-2xl font-semibold text-[var(--sonpin-surface)]">{initials}</span>
               </div>
               <div className="min-w-0 flex-1">

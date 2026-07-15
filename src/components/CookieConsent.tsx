@@ -89,7 +89,7 @@ export default function CookieConsent() {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-[#2b221d]">{t('cookie.title', 'Cookie 與隱私偏好')}</p>
+                <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('cookie.title', 'Cookie 與隱私偏好')}</p>
                 <p className="mt-1 text-sm leading-6 text-[var(--sonpin-primary-soft)]">
                   {t(
                     'cookie.description',
@@ -101,7 +101,7 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={close}
-                className="rounded-full p-1 text-[var(--sonpin-primary-muted)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[#2b221d]"
+                className="rounded-full p-1 text-[var(--sonpin-primary-muted)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[var(--sonpin-ink)]"
                 aria-label={t('cookie.close', '關閉')}
               >
                 <X className="h-4 w-4" />
@@ -130,7 +130,7 @@ export default function CookieConsent() {
                   className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-[#2b221d]">
+                  <span className="block text-sm font-medium text-[var(--sonpin-ink)]">
                     {t('cookie.necessary.title', '必要 Cookie')}
                   </span>
                   <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
@@ -147,7 +147,7 @@ export default function CookieConsent() {
                   className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-[#2b221d]">
+                  <span className="block text-sm font-medium text-[var(--sonpin-ink)]">
                     {t('cookie.analytics.title', '分析 Cookie')}
                   </span>
                   <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
@@ -164,7 +164,7 @@ export default function CookieConsent() {
                   className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-[#2b221d]">
+                  <span className="block text-sm font-medium text-[var(--sonpin-ink)]">
                     {t('cookie.marketing.title', '行銷 Cookie')}
                   </span>
                   <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
@@ -185,7 +185,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={acceptNecessaryOnly}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary-soft)] transition-colors hover:border-[var(--sonpin-primary-warm)] hover:text-[#2b221d]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary-soft)] transition-colors hover:border-[var(--sonpin-primary-warm)] hover:text-[var(--sonpin-ink)]"
             >
               <Check className="h-4 w-4" />
               {t('cookie.necessary_only', '只接受必要')}
@@ -201,7 +201,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={acceptAll}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-4 py-2 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sonpin-ink)] px-4 py-2 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary)]"
             >
               <ShieldCheck className="h-4 w-4" />
               {t('cookie.accept_all', '全部接受')}

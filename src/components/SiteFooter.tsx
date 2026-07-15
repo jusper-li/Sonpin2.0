@@ -210,7 +210,7 @@ export default function SiteFooter() {
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
+                    className="w-9 h-9 flex items-center justify-center border border-[var(--sonpin-primary-border)] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
                     aria-label={item.platform}
                   >
                     <Icon size={16} />
@@ -220,7 +220,7 @@ export default function SiteFooter() {
               {settings.contact_email && (
                 <a
                   href={`mailto:${settings.contact_email}`}
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
+                  className="w-9 h-9 flex items-center justify-center border border-[var(--sonpin-primary-border)] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
                   aria-label="Email"
                 >
                   <Mail size={16} />

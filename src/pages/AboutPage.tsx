@@ -156,7 +156,7 @@ export default function AboutPage() {
             {rest.map((section, index) => (
               <div key={section.title} className={`flex flex-col gap-8 md:flex-row ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
                 <div className="md:w-1/3">
-                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[#2b221d] px-4 py-3 text-[var(--sonpin-surface)]">
+                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[var(--sonpin-ink)] px-4 py-3 text-[var(--sonpin-surface)]">
                     <h2 className="text-lg font-medium tracking-[0.05em] md:text-xl">{section.title}</h2>
                   </div>
                 </div>

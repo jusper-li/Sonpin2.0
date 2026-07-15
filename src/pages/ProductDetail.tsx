@@ -197,7 +197,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
               className={`aspect-square overflow-hidden rounded-xl border-2 bg-[var(--sonpin-background)] transition-all ${
                 selected === index
                   ? 'border-[var(--sonpin-primary-warm)] shadow-md scale-[1.03]'
-                  : 'border-[var(--sonpin-primary-border)] opacity-70 hover:border-[#c7a08d] hover:opacity-100'
+                  : 'border-[var(--sonpin-primary-border)] opacity-70 hover:border-[var(--sonpin-primary-warm)] hover:opacity-100'
               }`}
             >
               <ProductImage
@@ -266,7 +266,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
               1
             );
           }}
-          className="mt-3 w-full rounded-xl border border-[var(--sonpin-primary-border)] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[var(--sonpin-surface)]"
+          className="mt-3 w-full rounded-xl border border-[var(--sonpin-primary-border)] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[var(--sonpin-ink)] hover:bg-[var(--sonpin-ink)] hover:text-[var(--sonpin-surface)]"
         >
           {t('product.detail.related.add', '加入購物車')}
         </button>

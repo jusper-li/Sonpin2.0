@@ -31,7 +31,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-8 shadow-[0_24px_60px_rgba(61,43,31,0.12)]">
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#2b221d] shadow-lg">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--sonpin-ink)] shadow-lg">
               <ShieldCheck className="h-8 w-8 text-[var(--sonpin-surface)]" />
             </div>
             <h1 className="text-3xl font-bold text-stone-800">{t('admin.login.title', '後台管理登入')}</h1>
@@ -94,7 +94,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-lg bg-[#2b221d] py-3 font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)] disabled:cursor-not-allowed disabled:bg-[var(--sonpin-primary-border)]"
+              className="w-full rounded-lg bg-[var(--sonpin-ink)] py-3 font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)] disabled:cursor-not-allowed disabled:bg-[var(--sonpin-primary-border)]"
             >
               {isSubmitting ? t('admin.login.sending', '登入中...') : t('admin.login.sendCode', '登入後台')}
             </button>

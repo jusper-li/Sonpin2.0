@@ -43,7 +43,7 @@ export default function Cart() {
             </p>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#2b221d] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] transition-all duration-300 text-xs tracking-[0.2em] uppercase font-medium"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[var(--sonpin-ink)] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] transition-all duration-300 text-xs tracking-[0.2em] uppercase font-medium"
             >
               {t('cart.go_shop', '前往購物')}
             </Link>
@@ -234,7 +234,7 @@ export default function Cart() {
 
                 <Link
                   to="/checkout"
-                  className="w-full block py-3.5 bg-[#2b221d] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
+                  className="w-full block py-3.5 bg-[var(--sonpin-ink)] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
                 >
                   前往結帳
                 </Link>

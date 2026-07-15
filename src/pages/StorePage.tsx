@@ -205,7 +205,7 @@ export default function StorePage() {
                       <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
                         <StoreImage src={store.images[0]} alt={t(`store.items.${store.id}.name`, store.name)} />
                         <div className="p-6">
-                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{t(`store.items.${store.id}.name`, store.name)}</h2>
                           <p className="mt-2 text-sm text-[var(--sonpin-primary-muted)]">
                             {store.city === 'factory' ? t('store.section.factory', '工廠') : t(`store.city.${store.city}`, store.city)}
                           </p>
@@ -242,7 +242,7 @@ export default function StorePage() {
                     <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
                       <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
                         <div>
-                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{t(`store.items.${store.id}.name`, store.name)}</h2>
                           <div className="mt-5 space-y-3 text-sm text-[var(--sonpin-primary-soft)]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />

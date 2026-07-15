@@ -6,12 +6,12 @@
   :root {
     --sonpin-primary: #351e0d;
     --sonpin-primary-strong: #211208;
-    --sonpin-primary-soft: var(--sonpin-primary-soft);
-    --sonpin-primary-muted: var(--sonpin-primary-muted);
-    --sonpin-primary-warm: var(--sonpin-primary);
-    --sonpin-primary-border: var(--sonpin-primary-border);
-    --sonpin-surface: var(--sonpin-surface);
-    --sonpin-background: var(--sonpin-background);
+    --sonpin-primary-soft: #6d4f3d;
+    --sonpin-primary-muted: #9f8a7b;
+    --sonpin-primary-warm: #8e6448;
+    --sonpin-primary-border: #d8c8b6;
+    --sonpin-surface: #fffaf2;
+    --sonpin-background: #fbf6ee;
     --sonpin-ink: #2b221d;
   }
 
@@ -23,8 +23,8 @@
   body {
     @apply overflow-x-hidden text-stone-700;
     background:
-      radial-gradient(circle at top left, rgba(53, 30, 13, 0.12), transparent 32%),
-      radial-gradient(circle at top right, rgba(141, 108, 86, 0.08), transparent 28%),
+      radial-gradient(circle at top left, color-mix(in srgb, var(--sonpin-primary) 12%, transparent), transparent 32%),
+      radial-gradient(circle at top right, color-mix(in srgb, var(--sonpin-primary-warm) 8%, transparent), transparent 28%),
       linear-gradient(180deg, var(--sonpin-background) 0%, var(--sonpin-background) 100%);
     overscroll-behavior-y: none;
     font-feature-settings: 'kern' 1, 'liga' 1;
@@ -55,7 +55,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(53, 30, 13, 0.24);
+    background: color-mix(in srgb, var(--sonpin-primary) 24%, transparent);
     border-radius: 2px;
   }
 
@@ -64,8 +64,8 @@
   }
 
   ::selection {
-    background: rgba(53, 30, 13, 0.18);
-    color: #2b221d;
+    background: color-mix(in srgb, var(--sonpin-primary) 18%, transparent);
+    color: var(--sonpin-ink);
   }
 
   input::placeholder,
@@ -117,11 +117,13 @@
   }
 
   .gold-divider {
-    @apply w-12 h-px bg-[rgba(53,30,13,0.7)];
+    @apply w-12 h-px;
+    background: color-mix(in srgb, var(--sonpin-primary) 70%, transparent);
   }
 
   .card-luxury {
-    @apply bg-[var(--sonpin-surface)] border border-[var(--sonpin-primary-border)] transition-all duration-500 hover:border-[var(--sonpin-primary-border)] hover:shadow-[0_20px_60px_-10px_rgba(53,30,13,0.08)] hover:-translate-y-1;
+    @apply bg-[var(--sonpin-surface)] border border-[var(--sonpin-primary-border)] transition-all duration-500 hover:border-[var(--sonpin-primary-border)] hover:-translate-y-1;
+    box-shadow: 0 20px 60px -10px color-mix(in srgb, var(--sonpin-primary) 8%, transparent);
   }
 
   .ym-product-content {
@@ -231,7 +233,7 @@
 
 @layer utilities {
   .text-amber-300 { color: var(--sonpin-primary-border) !important; }
-  .text-amber-400 { color: #b18a73 !important; }
+  .text-amber-400 { color: var(--sonpin-primary-muted) !important; }
   .text-amber-500 { color: var(--sonpin-primary) !important; }
   .text-amber-600 { color: var(--sonpin-primary) !important; }
   .text-amber-700 { color: var(--sonpin-primary) !important; }

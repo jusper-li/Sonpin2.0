@@ -131,7 +131,7 @@ export default function ProcessPage() {
 
             <div className="space-y-4">
               {PROCESS_VIDEOS.map((src) => (
-                <div key={src} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[#2b221d] shadow-sm">
+                <div key={src} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-ink)] shadow-sm">
                   <div className="aspect-video w-full">
                     <iframe
                       className="h-full w-full"

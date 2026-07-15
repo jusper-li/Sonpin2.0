@@ -157,7 +157,7 @@ export default function ContactPage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="bg-gradient-to-br from-[#2b221d] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] pt-32 pb-20 text-[var(--sonpin-surface)]">
+        <section className="bg-gradient-to-br from-[var(--sonpin-ink)] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] pt-32 pb-20 text-[var(--sonpin-surface)]">
           <div className="container mx-auto px-6">
             <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
               <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
@@ -189,7 +189,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">Email</p>
-                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[#2b221d] transition-colors hover:text-[var(--sonpin-primary)]">
+                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_email || 'service@sonpin.tw'}
                   </a>
                 </div>
@@ -201,7 +201,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">客服電話</p>
-                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[var(--sonpin-primary)]">
+                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_phone || '02-2338-0018'}
                   </a>
                 </div>
@@ -213,7 +213,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">服務時間</p>
-                  <p className="font-light text-[#2b221d]">週一至週日 上午 09:00 - 17:00</p>
+                  <p className="font-light text-[var(--sonpin-ink)]">週一至週日 上午 09:00 - 17:00</p>
                   <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">實際營業時間請以門市公告為準</p>
                 </div>
               </div>
@@ -236,7 +236,7 @@ export default function ContactPage() {
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--sonpin-background)]">
                     <CheckCircle className="h-10 w-10 text-[var(--sonpin-primary)]" />
                   </div>
-                  <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
+                  <h2 className="mb-3 text-2xl font-light text-[var(--sonpin-ink)]">已送出訊息</h2>
                   <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-muted)]">
                     我們已收到您的訊息，若有需要會儘快透過 Email 與您聯繫。
                   </p>
@@ -266,7 +266,7 @@ export default function ContactPage() {
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder="請輸入姓名"
-                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
@@ -278,7 +278,7 @@ export default function ContactPage() {
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@email.com"
-                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                   </div>
@@ -291,7 +291,7 @@ export default function ContactPage() {
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="02-1234-5678"
-                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
@@ -303,7 +303,7 @@ export default function ContactPage() {
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
                         placeholder="請填寫主旨"
-                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                   </div>
@@ -317,13 +317,13 @@ export default function ContactPage() {
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       placeholder="請描述您的需求或問題"
-                      className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
+                      className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sonpin-ink)] px-8 py-4 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
                   >
                     送出訊息
                   </button>

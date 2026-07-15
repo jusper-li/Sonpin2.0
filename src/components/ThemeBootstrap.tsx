@@ -20,21 +20,18 @@ export default function ThemeBootstrap() {
 
   useEffect(() => {
     const cached = window.localStorage.getItem(THEME_COLOR_CACHE_KEY);
-    if (cached) {
-      try {
-        const parsed = normalizeThemeSettings(JSON.parse(cached));
-        setSettings(parsed);
-        applyThemePalette(resolveThemePalette(parsed, location.pathname));
-      } catch {
-        window.localStorage.removeItem(THEME_COLOR_CACHE_KEY);
-        setSettings(DEFAULT_THEME_SETTINGS);
-        applyThemePalette(resolveThemePalette(DEFAULT_THEME_SETTINGS, location.pathname));
-      }
-    } else {
+    if (!cached) {
       setSettings(DEFAULT_THEME_SETTINGS);
-      applyThemePalette(resolveThemePalette(DEFAULT_THEME_SETTINGS, location.pathname));
+      return;
     }
-  }, [location.pathname]);
+
+    try {
+      setSettings(normalizeThemeSettings(JSON.parse(cached)));
+    } catch {
+      window.localStorage.removeItem(THEME_COLOR_CACHE_KEY);
+      setSettings(DEFAULT_THEME_SETTINGS);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseContentEnabled) return;
@@ -69,7 +66,7 @@ export default function ThemeBootstrap() {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     applyThemePalette(resolveThemePalette(settings, location.pathname));

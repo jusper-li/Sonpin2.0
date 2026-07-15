@@ -155,7 +155,7 @@ export default function CulturePage() {
         {intro && (
           <section className="border-b border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]">
             <div className="container mx-auto max-w-4xl px-6 py-16">
-              <h2 className="mb-4 text-center text-2xl font-light text-[#2b221d] md:text-3xl">{intro.title}</h2>
+              <h2 className="mb-4 text-center text-2xl font-light text-[var(--sonpin-ink)] md:text-3xl">{intro.title}</h2>
               <p className="whitespace-pre-line text-base leading-8 text-[var(--sonpin-primary-soft)] md:text-lg">{intro.content}</p>
             </div>
           </section>
@@ -166,7 +166,7 @@ export default function CulturePage() {
             {rest.map((section) => (
               <div key={section.title} className="flex flex-col gap-8 md:flex-row">
                 <div className="md:w-1/3">
-                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[#2b221d] px-4 py-3 text-[var(--sonpin-surface)]">
+                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[var(--sonpin-ink)] px-4 py-3 text-[var(--sonpin-surface)]">
                     <h2 className="text-lg font-medium tracking-[0.05em] md:text-xl">{section.title}</h2>
                   </div>
                 </div>

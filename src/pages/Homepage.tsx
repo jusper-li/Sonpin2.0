@@ -58,38 +58,38 @@ interface ProductStagePalette {
 const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
   {
     background: 'var(--sonpin-background)',
-    panel: '#fff0a6',
-    accent: '#fff5cc',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 12%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 6%, var(--sonpin-surface))',
     stripe: 'var(--sonpin-primary)',
-    ink: '#2b221d',
+    ink: 'var(--sonpin-ink)',
   },
   {
     background: 'var(--sonpin-background)',
-    panel: '#ffe16a',
-    accent: '#fff1a8',
-    stripe: '#ffd400',
-    ink: '#2b221d',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 16%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary-warm)',
+    ink: 'var(--sonpin-ink)',
   },
   {
     background: 'var(--sonpin-surface)',
     panel: 'var(--sonpin-primary-warm)',
-    accent: '#fff4c4',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
     stripe: 'var(--sonpin-primary)',
-    ink: '#2b221d',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#f7f0e7',
-    panel: '#ffd84d',
-    accent: '#fff0aa',
-    stripe: '#f3ca12',
-    ink: '#2b221d',
+    background: 'color-mix(in srgb, var(--sonpin-background) 90%, var(--sonpin-surface))',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 20%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 10%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary)',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#f5eadf',
-    panel: '#ffe66d',
-    accent: '#fff6cf',
+    background: 'color-mix(in srgb, var(--sonpin-background) 84%, var(--sonpin-surface))',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 18%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
     stripe: 'var(--sonpin-primary)',
-    ink: '#2b221d',
+    ink: 'var(--sonpin-ink)',
   },
 ];
 
@@ -102,17 +102,17 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   shop: {
     media: '/product-images/champion-coffee-chocolate-huo-gang-gift-box-1.jpg',
     objectPosition: 'center center',
-    accent: '#ffd84d',
+    accent: 'var(--sonpin-primary-warm)',
   },
   story: {
     media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
     objectPosition: 'center center',
-    accent: '#fff0aa',
+    accent: 'var(--sonpin-primary-border)',
   },
   contact: {
     media: '/product-images/huo-gang-coffee-letter-gift-2.jpg',
     objectPosition: 'center center',
-    accent: '#fff4c4',
+    accent: 'var(--sonpin-primary-muted)',
   },
   default: {
     media: '/product-images/the-one-and-only-15-drip-canvas-set-1.jpg',
@@ -564,18 +564,18 @@ export default function Homepage() {
 
   if (loading) {
     return (
-      <div className="ym-home-loading relative flex h-screen items-center justify-center overflow-hidden text-[#2f261b]">
+      <div className="ym-home-loading relative flex h-screen items-center justify-center overflow-hidden text-[var(--sonpin-ink)]">
         <style>{`
           .ym-home-loading {
             background:
-              linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(245, 232, 205, 0.82) 22%, rgba(214, 180, 116, 0.74) 48%, rgba(252, 239, 213, 0.9) 73%, rgba(188, 147, 72, 0.68) 100%),
-              linear-gradient(180deg, #f7efe2 0%, #e4c98e 58%, #b9893f 100%);
+              linear-gradient(135deg, color-mix(in srgb, var(--sonpin-surface) 72%, transparent) 0%, color-mix(in srgb, var(--sonpin-primary-border) 78%, transparent) 22%, color-mix(in srgb, var(--sonpin-primary) 60%, transparent) 48%, color-mix(in srgb, var(--sonpin-surface) 90%, transparent) 73%, color-mix(in srgb, var(--sonpin-primary-warm) 68%, transparent) 100%),
+              linear-gradient(180deg, color-mix(in srgb, var(--sonpin-background) 92%, white) 0%, color-mix(in srgb, var(--sonpin-primary-border) 64%, var(--sonpin-background)) 58%, color-mix(in srgb, var(--sonpin-primary-warm) 72%, var(--sonpin-primary)) 100%);
           }
           .ym-home-loading::before {
             content: '';
             position: absolute;
             inset: -42%;
-            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.58) 49%, transparent 63%);
+            background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--sonpin-surface) 58%, transparent) 49%, transparent 63%);
             opacity: 0.45;
             transform: translateX(-16%) rotate(8deg);
             animation: ymLoadingSheen 4.6s ease-in-out infinite;
@@ -585,8 +585,8 @@ export default function Homepage() {
             position: absolute;
             inset: 0;
             background:
-              repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 8px),
-              linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(108, 78, 32, 0.12));
+              repeating-linear-gradient(90deg, color-mix(in srgb, var(--sonpin-surface) 7%, transparent) 0 1px, transparent 1px 8px),
+              linear-gradient(180deg, color-mix(in srgb, var(--sonpin-surface) 34%, transparent), color-mix(in srgb, var(--sonpin-primary) 12%, transparent));
             mix-blend-mode: soft-light;
             pointer-events: none;
           }
@@ -595,7 +595,7 @@ export default function Homepage() {
             z-index: 1;
           }
           .ym-home-loading p {
-            color: rgba(59, 45, 28, 0.86);
+            color: color-mix(in srgb, var(--sonpin-ink) 86%, transparent);
             font-size: 13px;
             font-weight: 500;
             letter-spacing: 0.18em;
@@ -604,12 +604,12 @@ export default function Homepage() {
             width: 34px;
             height: 34px;
             border-radius: 9999px;
-            border: 1px solid rgba(81, 61, 32, 0.16);
-            border-top-color: rgba(78, 53, 20, 0.8);
-            border-right-color: rgba(255, 255, 255, 0.76);
+            border: 1px solid color-mix(in srgb, var(--sonpin-primary) 16%, transparent);
+            border-top-color: color-mix(in srgb, var(--sonpin-primary) 80%, transparent);
+            border-right-color: color-mix(in srgb, var(--sonpin-surface) 76%, transparent);
             box-shadow:
-              0 0 0 1px rgba(255, 255, 255, 0.22) inset,
-              0 12px 34px rgba(112, 78, 30, 0.18);
+              0 0 0 1px color-mix(in srgb, var(--sonpin-surface) 22%, transparent) inset,
+              0 12px 34px color-mix(in srgb, var(--sonpin-primary) 18%, transparent);
             animation: ymLoadingSpin 1.05s linear infinite;
           }
           @keyframes ymLoadingSpin {
@@ -636,7 +636,7 @@ export default function Homepage() {
   }
 
   return (
-    <div className="ym-homepage overflow-x-hidden bg-[#fffdf4] text-[#2b221d]">
+    <div className="ym-homepage overflow-x-hidden bg-[var(--sonpin-surface)] text-[var(--sonpin-ink)]">
       <style>{`
         .ym-homepage header {
           background: transparent !important;
@@ -650,7 +650,7 @@ export default function Homepage() {
         }
         .ym-homepage header nav a,
         .ym-homepage header nav button {
-          color: #ffffff !important;
+          color: var(--sonpin-surface) !important;
           filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
         }
         .homepage-main {
@@ -899,12 +899,12 @@ export default function Homepage() {
           .ym-homepage header nav > div > div:last-child > a:first-child {
             display: none !important;
           }
-          .ym-homepage header nav > div > div:last-child > a,
-          .ym-homepage header nav > div > div:last-child > button {
-            pointer-events: auto;
-            color: #ffffff !important;
-            filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
-          }
+        .ym-homepage header nav > div > div:last-child > a,
+        .ym-homepage header nav > div > div:last-child > button {
+          pointer-events: auto;
+          color: var(--sonpin-surface) !important;
+          filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
+        }
         .ym-homepage header nav > div > div:last-child > div {
           pointer-events: auto;
         }
@@ -913,12 +913,12 @@ export default function Homepage() {
         }
         .ym-homepage header nav .ym-language-menu,
         .ym-homepage header nav .ym-language-menu button {
-          color: #2b221d !important;
+          color: var(--sonpin-ink) !important;
           filter: none !important;
           text-shadow: none !important;
         }
         .ym-homepage header nav .ym-language-menu button:hover {
-          color: #2b221d !important;
+          color: var(--sonpin-ink) !important;
         }
         .ym-homepage header nav > div > div:last-child > button:last-child {
           position: fixed;
@@ -1061,7 +1061,7 @@ export default function Homepage() {
                 <div className={`ym-stage-copy ym-reveal is-visible mx-auto flex max-w-4xl flex-col items-center ${isVisible ? 'is-active-copy' : ''}`}>
                   <Link to={href} className="ym-stage-title-link group block max-w-[22rem] sm:max-w-2xl md:max-w-4xl">
                     <h1
-                      className={`ym-stage-title font-serif text-xl font-semibold leading-relaxed text-[#211d1c] transition-transform duration-300 group-hover:-translate-y-0.5 sm:text-2xl md:text-4xl ${
+                      className={`ym-stage-title font-serif text-xl font-semibold leading-relaxed text-[var(--sonpin-ink)] transition-transform duration-300 group-hover:-translate-y-0.5 sm:text-2xl md:text-4xl ${
                         index === 0 ? '' : 'md:text-3xl'
                       }`}
                     >
@@ -1073,7 +1073,7 @@ export default function Homepage() {
                     <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || 'Songpin'}</span>
                     <Link
                       to={href}
-                      className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[#211d1c] bg-transparent px-5 text-sm font-medium text-[#211d1c] transition-colors duration-300 hover:bg-[#211d1c] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#211d1c]/30"
+                      className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[var(--sonpin-ink)] bg-transparent px-5 text-sm font-medium text-[var(--sonpin-ink)] transition-colors duration-300 hover:bg-[var(--sonpin-ink)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-ink)]/30"
                     >
                       {localizedCtaLabel}
                     </Link>

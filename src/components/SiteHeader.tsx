@@ -316,7 +316,7 @@ export default function SiteHeader() {
                 />
               ) : (
                 <span className="flex flex-col">
-                  <span className={`text-xl md:text-3xl font-semibold tracking-wider transition-all duration-300 ${isSolidHeader ? 'text-[#2b221d] group-hover:text-[var(--sonpin-primary)]' : 'text-white group-hover:text-white/90'}`}>
+                  <span className={`text-xl md:text-3xl font-semibold tracking-wider transition-all duration-300 ${isSolidHeader ? 'text-[var(--sonpin-ink)] group-hover:text-[var(--sonpin-primary)]' : 'text-white group-hover:text-white/90'}`}>
                     {settings.logo_text.split(' ')[0] || '淞品'}
                   </span>
                   <span className={`text-[9px] md:text-xs tracking-[0.3em] uppercase transition-colors duration-300 ${isSolidHeader ? 'text-[var(--sonpin-primary)] group-hover:text-[var(--sonpin-primary)]' : 'text-white/70 group-hover:text-white/60'}`}>
@@ -332,7 +332,7 @@ export default function SiteHeader() {
                 <button
                   key={index}
                   onClick={() => handleNavigation(item.href)}
-                  className={`relative text-xs font-medium tracking-[0.12em] uppercase transition-all duration-300 group py-2 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[#2b221d]' : 'text-white/80 hover:text-white'}`}
+                  className={`relative text-xs font-medium tracking-[0.12em] uppercase transition-all duration-300 group py-2 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/80 hover:text-white'}`}
                 >
                   <span className="relative z-10">{item.label}</span>
                   <span className={`absolute -bottom-0.5 left-0 w-0 h-px transition-all duration-400 group-hover:w-full ${isSolidHeader ? 'bg-[var(--sonpin-primary)]' : 'bg-[var(--sonpin-surface)]/60'}`}></span>
@@ -341,11 +341,11 @@ export default function SiteHeader() {
 
               <Link
                 to={user ? '/member/profile' : '/member'}
-                className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[#a38b00] hover:text-[#2b221d]' : 'text-white/70 hover:text-white'}`}
+                className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 title={user ? '會員中心' : '登入 / 加入會員'}
               >
                 {memberInitial ? (
-                  <span className="w-5 h-5 flex items-center justify-center bg-[#2b221d] text-[var(--sonpin-surface)] text-xs font-medium">
+                  <span className="w-5 h-5 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
                     {memberInitial}
                   </span>
                 ) : (
@@ -356,11 +356,11 @@ export default function SiteHeader() {
               {settings.show_cart && (
                 <Link
                   to="/cart"
-                className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[#a38b00] hover:text-[#2b221d]' : 'text-white/70 hover:text-white'}`}
+                className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 >
                   <ShoppingCart className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-[#2b221d] text-[var(--sonpin-surface)] text-[10px] w-4 h-4 flex items-center justify-center font-medium shadow-sm">
+                    <span className="absolute -top-0.5 -right-0.5 bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-[10px] w-4 h-4 flex items-center justify-center font-medium shadow-sm">
                       {itemCount}
                     </span>
                   )}
@@ -371,7 +371,7 @@ export default function SiteHeader() {
                 <div className="relative">
                   <button
                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                    className={`flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium tracking-[0.1em] uppercase transition-all duration-300 group ${isSolidHeader ? 'text-[#a38b00] hover:text-[#2b221d]' : 'mix-blend-difference border border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium tracking-[0.1em] uppercase transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'mix-blend-difference border border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
                   >
                     <Globe className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" />
                     <span>{normalizedLanguage === 'zh-TW' ? 'ZH' : normalizedLanguage.toUpperCase()}</span>
@@ -386,8 +386,8 @@ export default function SiteHeader() {
                           className={`block w-full text-left px-4 py-3 text-xs tracking-[0.1em] uppercase transition-all duration-200 ${
                             isSolidHeader
                             ? normalizeLang(lang.code) === normalizedLanguage
-                                ? 'bg-[var(--sonpin-surface)] text-[#2b221d] font-medium'
-                                : 'text-[#a38b00] hover:bg-[var(--sonpin-surface)] hover:text-[#2b221d]'
+                                ? 'bg-[var(--sonpin-surface)] text-[var(--sonpin-ink)] font-medium'
+                                : 'text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-surface)] hover:text-[var(--sonpin-ink)]'
                               : normalizeLang(lang.code) === normalizedLanguage
                                 ? 'bg-gradient-to-r from-[var(--sonpin-primary)]/30 to-[var(--sonpin-surface)]/20 text-white font-medium'
                                 : 'text-white/70 hover:bg-[var(--sonpin-surface)]/10 hover:text-white'
@@ -405,11 +405,11 @@ export default function SiteHeader() {
             <div className="md:hidden flex items-center gap-1">
               <Link
                 to={user ? '/member/profile' : '/member'}
-                className={`relative p-2 transition-all duration-200 ${isSolidHeader ? 'text-[#a38b00] hover:text-[#2b221d]' : 'text-white/70 hover:text-white'}`}
+                className={`relative p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 aria-label={user ? t('header.member_center', '會員中心') : t('header.login_join', '登入 / 加入會員')}
               >
                 {memberInitial ? (
-                  <span className="w-6 h-6 flex items-center justify-center bg-[#2b221d] text-[var(--sonpin-surface)] text-xs font-medium">
+                  <span className="w-6 h-6 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
                     {memberInitial}
                   </span>
                 ) : (
@@ -420,12 +420,12 @@ export default function SiteHeader() {
               {settings.show_cart && (
                 <Link
                   to="/cart"
-                  className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 ${isSolidHeader ? 'border-transparent text-[#a38b00] hover:text-[#2b221d] hover:bg-[var(--sonpin-background)]' : 'border-white/15 bg-white/5 text-white/90 hover:bg-white/10 hover:text-white'}`}
+                  className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 ${isSolidHeader ? 'border-transparent text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)] hover:bg-[var(--sonpin-background)]' : 'border-white/15 bg-white/5 text-white/90 hover:bg-white/10 hover:text-white'}`}
                 aria-label={t('header.view_cart', '查看購物車')}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-[#2b221d] text-[var(--sonpin-surface)] text-[10px] w-4 h-4 flex items-center justify-center font-medium">
+                    <span className="absolute -top-0.5 -right-0.5 bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-[10px] w-4 h-4 flex items-center justify-center font-medium">
                       {itemCount}
                     </span>
                   )}
@@ -437,7 +437,7 @@ export default function SiteHeader() {
                   <button
                     type="button"
                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                    className={`relative inline-flex h-9 min-w-9 items-center justify-center rounded-full border px-2 transition-all duration-200 ${isSolidHeader ? 'border-white/30 bg-transparent text-[#2b221d] backdrop-blur-[1px] hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)]' : 'mix-blend-difference border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
+                    className={`relative inline-flex h-9 min-w-9 items-center justify-center rounded-full border px-2 transition-all duration-200 ${isSolidHeader ? 'border-white/30 bg-transparent text-[var(--sonpin-ink)] backdrop-blur-[1px] hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)]' : 'mix-blend-difference border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
                     aria-label="切換語系"
                     aria-expanded={showLanguageMenu}
                   >
@@ -455,8 +455,8 @@ export default function SiteHeader() {
                           onClick={() => { setLanguage(lang.code); setShowLanguageMenu(false); }}
                           className={`block w-full px-4 py-3 text-left text-xs tracking-[0.1em] uppercase transition-colors ${
                             normalizeLang(lang.code) === normalizedLanguage
-                              ? 'bg-[var(--sonpin-background)] text-[#2b221d] font-medium'
-                              : 'text-[#a38b00] hover:bg-[var(--sonpin-surface)] hover:text-[#2b221d]'
+                              ? 'bg-[var(--sonpin-background)] text-[var(--sonpin-ink)] font-medium'
+                              : 'text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-surface)] hover:text-[var(--sonpin-ink)]'
                           }`}
                         >
                           {lang.name}
@@ -468,7 +468,7 @@ export default function SiteHeader() {
               )}
 
               <button
-                className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[#a38b00] hover:text-[#2b221d]' : 'text-white/70 hover:text-white'}`}
+                className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
                 aria-expanded={isMenuOpen}
@@ -508,7 +508,7 @@ export default function SiteHeader() {
             </Link>
             <button
               onClick={() => setIsMenuOpen(false)}
-              className="p-2 text-[#a38b00] hover:text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-background)] rounded-full transition-all duration-200"
+              className="p-2 text-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-background)] rounded-full transition-all duration-200"
             >
               <X size={20} />
             </button>
@@ -522,12 +522,12 @@ export default function SiteHeader() {
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 bg-[var(--sonpin-surface)] border border-[var(--sonpin-primary-border)] hover:bg-[var(--sonpin-background)] hover:border-[var(--sonpin-primary-border)] transition-all group"
               >
-                <div className="w-9 h-9 bg-[#2b221d] flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 bg-[var(--sonpin-ink)] flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-medium">{memberInitial}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#2b221d] truncate">{displayName}</p>
-                  <p className="text-xs text-[#a38b00] truncate">{user.email}</p>
+                  <p className="text-sm font-medium text-[var(--sonpin-ink)] truncate">{displayName}</p>
+                  <p className="text-xs text-[var(--sonpin-primary)] truncate">{user.email}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] transition-colors" />
               </Link>
@@ -537,12 +537,12 @@ export default function SiteHeader() {
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 bg-[var(--sonpin-surface)] border border-[var(--sonpin-primary-border)] hover:bg-[var(--sonpin-background)] transition-all group"
               >
-                  <UserCircle className="w-5 h-5 text-[#a38b00]" />
+                  <UserCircle className="w-5 h-5 text-[var(--sonpin-primary)]" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[#2b221d]">{t('header.login_join', '登入 / 加入會員')}</p>
-                  <p className="text-xs text-[#a38b00]">{t('header.login_join_sub', '享受專屬優惠與服務')}</p>
+                  <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('header.login_join', '登入 / 加入會員')}</p>
+                  <p className="text-xs text-[var(--sonpin-primary)]">{t('header.login_join_sub', '享受專屬優惠與服務')}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[#a38b00] transition-colors" />
+                <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] transition-colors" />
               </Link>
             )}
           </div>
@@ -550,7 +550,7 @@ export default function SiteHeader() {
           {/* Scrollable nav area */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
             <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[#a38b00] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
               <nav className="space-y-0.5">
                 {translatedPrimaryNavigation.map((item, index) => {
                   const isActive = isActiveMenuItem(item.href);
@@ -558,13 +558,13 @@ export default function SiteHeader() {
                   <button
                     key={`${item.href}-${index}`}
                     onClick={() => handleNavigation(item.href)}
-                    className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[#2b221d] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
-                      isActive ? 'text-[#2b221d] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
+                    className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-ink)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
+                      isActive ? 'text-[var(--sonpin-ink)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     <span>{item.label}</span>
-                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[#a38b00] group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
                   </button>
                   );
                 })}
@@ -574,7 +574,7 @@ export default function SiteHeader() {
             {/* Footer link groups */}
             {mobileMenu.footerGroups.map((group, index) => (
               <div key={index} className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[#a38b00] uppercase mb-2 px-1">{group.title}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{group.title}</p>
                 <nav className="space-y-0.5">
                   {group.links.map((link, linkIndex) => {
                     const isActive = isActiveMenuItem(link.href);
@@ -582,13 +582,13 @@ export default function SiteHeader() {
                     <button
                       key={linkIndex}
                       onClick={() => handleNavigation(link.href)}
-                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[#2b221d] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
-                        isActive ? 'text-[#2b221d] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
+                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-ink)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
+                        isActive ? 'text-[var(--sonpin-ink)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
                       }`}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       <span>{link.label}</span>
-                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[#a38b00] group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
                     </button>
                     );
                   })}
@@ -599,7 +599,7 @@ export default function SiteHeader() {
             {/* Shop pages */}
             {mobileMenu.shoppingLinks.length > 0 && (
             <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[#a38b00] uppercase mb-2 px-1">{t('header.shop_menu', '商城')}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '商城')}</p>
               <nav className="space-y-0.5">
                 {mobileMenu.shoppingLinks.map((link, index) => {
                   const isActive = isActiveMenuItem(link.href);
@@ -607,13 +607,13 @@ export default function SiteHeader() {
                     <button
                       key={`${link.href}-${index}`}
                       onClick={() => handleNavigation(link.href)}
-                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[#2b221d] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
-                        isActive ? 'text-[#2b221d] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
+                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-ink)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
+                        isActive ? 'text-[var(--sonpin-ink)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
                       }`}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       <span>{link.label}</span>
-                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[#a38b00] group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
                     </button>
                   );
                 })}
@@ -624,7 +624,7 @@ export default function SiteHeader() {
             {/* Legal */}
             {mobileMenu.legalLinks.length > 0 && (
             <div className="mb-2">
-              <p className="text-[10px] tracking-[0.35em] text-[#a38b00] uppercase mb-2 px-1">{t('header.policy_menu', '政策與條款')}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.policy_menu', '政策與條款')}</p>
               <nav className="space-y-0.5">
                 {mobileMenu.legalLinks.map((link, index) => {
                   const isActive = isActiveMenuItem(link.href);
@@ -633,12 +633,12 @@ export default function SiteHeader() {
                       key={`${link.href}-${index}`}
                       onClick={() => handleNavigation(link.href)}
                       className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left ${
-                        isActive ? 'text-[var(--sonpin-primary)] bg-[var(--sonpin-surface)] font-medium' : 'text-[#a38b00]'
+                        isActive ? 'text-[var(--sonpin-primary)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
                       }`}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       <span>{link.label}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[var(--sonpin-primary-border)] group-hover:text-[#a38b00] group-hover:translate-x-0.5 transition-all" />
+                      <ChevronRight className="w-3.5 h-3.5 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
                     </button>
                   );
                 })}
@@ -653,7 +653,7 @@ export default function SiteHeader() {
             {/* Social links */}
             {socials.length > 0 && (
               <div>
-                <p className="text-[10px] tracking-[0.35em] text-[#a38b00] uppercase mb-3">{t('header.follow_us', '追蹤我們')}</p>
+                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-3">{t('header.follow_us', '追蹤我們')}</p>
                 <div className="flex items-center gap-3">
                   {socials.map((social) => {
                     const Icon = PLATFORM_ICONS[social.platform] || ExternalLink;
@@ -663,7 +663,7 @@ export default function SiteHeader() {
                         href={social.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center w-9 h-9 bg-transparent text-[#a38b00] hover:text-[#2b221d] border border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)] transition-all duration-200 active:scale-95"
+                        className="flex items-center justify-center w-9 h-9 bg-transparent text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)] border border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)] transition-all duration-200 active:scale-95"
                         title={social.platform}
                       >
                         <Icon className="w-[18px] h-[18px]" />
@@ -677,7 +677,7 @@ export default function SiteHeader() {
             {/* Language selector */}
             {settings.show_language_selector && languages.length > 0 && (
               <div className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-[#a38b00]" />
+                <Globe className="w-3.5 h-3.5 text-[var(--sonpin-primary)]" />
                 <div className="flex gap-1.5">
                   {languages.map((lang) => (
                     <button
@@ -685,8 +685,8 @@ export default function SiteHeader() {
                       onClick={() => { setLanguage(lang.code); setIsMenuOpen(false); }}
                       className={`px-3 py-1 text-xs font-medium tracking-[0.1em] transition-all duration-200 border ${
                         normalizeLang(lang.code) === normalizedLanguage
-                          ? 'bg-[#2b221d] text-[var(--sonpin-surface)] border-[#2b221d]'
-                          : 'bg-transparent text-[#a38b00] hover:text-[#2b221d] border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)]'
+                          ? 'bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] border-[var(--sonpin-ink)]'
+                          : 'bg-transparent text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)] border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)]'
                       }`}
                     >
                       {lang.code.split('-')[0].toUpperCase()}
