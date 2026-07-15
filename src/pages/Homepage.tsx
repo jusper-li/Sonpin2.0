@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -271,21 +271,20 @@ export default function Homepage() {
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
 
   useSEO({
-    title: '淞品土雞專賣店｜首頁',
-    description:
-      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
-    keywords: '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導',
+    title: '淞品土雞專賣店',
+    description: '淞品土雞專賣店，提供安心、美味且適合送禮與自用的雞品與熟食。',
+    keywords: '淞品土雞,土雞專賣店,雞品,熟食,送禮,自用',
     noSuffix: true,
     schema: [organizationSchema(), localBusinessSchema(), websiteSchema()],
   });
 
   useSEO({
-    title: t('homepage.seo.title', '淞品土雞專賣店｜首頁'),
+    title: t('homepage.seo.title', '淞品土雞專賣店'),
     description: t(
       'homepage.seo.description',
-      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
+      '淞品土雞專賣店，提供安心、美味且適合送禮與自用的雞品與熟食。',
     ),
-    keywords: t('homepage.seo.keywords', '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導'),
+    keywords: t('homepage.seo.keywords', '淞品土雞,土雞專賣店,雞品,熟食,送禮,自用'),
     noSuffix: true,
   });
 
@@ -418,8 +417,8 @@ export default function Homepage() {
             background_image: block.image,
             image: block.image,
             href: block.href,
-            cta_label: '前往商品',
-            submenu: [{ label: '前往商品', title: '前往商品', href: block.href }],
+            cta_label: '????',
+            submenu: [{ label: '????', title: '????', href: block.href }],
           },
           background_image: block.image,
           description: block.description,
@@ -463,7 +462,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '?汗??' : '鈭圾?游?'),
         );
 
         return {
@@ -1015,14 +1014,14 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多');
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '查看商品' : '了解更多');
           const localizedCtaLabel = pickByLang(
             currentLanguage,
             ctaLabel,
-            section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多',
+            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
             section.section_type === 'hero_product' ? 'View products' : 'Learn more',
-            section.section_type === 'hero_product' ? '商品を見る' : '詳しく見る',
-            section.section_type === 'hero_product' ? '상품 보기' : '자세히 보기',
+            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
+            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
           );
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
@@ -1079,22 +1078,6 @@ export default function Homepage() {
                     </Link>
                     <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || 'Brand story'}</span>
                   </div>
-                  {index === 0 && (
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-3 md:mt-5">
-                      <Link
-                        to="/order-query"
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--sonpin-primary-border)] bg-white/90 px-5 text-xs font-medium tracking-[0.18em] text-[var(--sonpin-ink)] shadow-sm transition hover:border-[var(--sonpin-primary)] hover:bg-white"
-                      >
-                        訂單查詢
-                      </Link>
-                      <Link
-                        to="/remittance-notice"
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--sonpin-primary)] bg-[var(--sonpin-ink)] px-5 text-xs font-medium tracking-[0.18em] text-white shadow-sm transition hover:opacity-95"
-                      >
-                        匯款通知
-                      </Link>
-                    </div>
-                  )}
                 </div>
               </div>
             </section>
@@ -1111,4 +1094,5 @@ export default function Homepage() {
     </div>
   );
 }
+
 
