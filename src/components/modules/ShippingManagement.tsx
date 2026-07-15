@@ -238,11 +238,12 @@ export default function ShippingManagement() {
     }
   };
 
-  const removeGroup = async (groupName: string) => {
+  const removeGroup = async (groupName: string, ids: string[]) => {
+    if (!ids.length) return;
     if (!confirm(`確定要刪除「${groupName}」這個運費設定底下的所有級距嗎？`)) return;
 
     try {
-      const { error } = await supabase.from('shipping_categories').delete().eq('name', groupName);
+      const { error } = await supabase.from('shipping_categories').delete().in('id', ids);
       if (error) throw error;
       await load();
     } catch (error) {
@@ -336,7 +337,7 @@ export default function ShippingManagement() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => removeGroup(group.name)}
+                            onClick={() => removeGroup(group.name, group.rows.map((row) => row.id))}
                             className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -364,13 +365,23 @@ export default function ShippingManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          type="button"
-                          onClick={() => openForm(row)}
-                          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-                        >
-                          {t('common.edit', '編輯')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openForm(row)}
+                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                          >
+                            {t('common.edit', '編輯')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => remove(row.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {t('common.delete', '刪除')}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
