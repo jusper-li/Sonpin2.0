@@ -7,6 +7,15 @@ const FROM_NAME = Deno.env.get("RESEND_FROM_NAME")?.trim() || "Sonpin";
 const FALLBACK_ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL")?.trim() || FROM_EMAIL;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const REMITTANCE_INFO = {
+  bankName: "永豐銀行 萬華分行",
+  bankCode: "807",
+  accountNumber: "105-001-0014900-4",
+  accountName: "淞品生技股份有限公司",
+  taxId: "27522811",
+  note: "匯款後請於客服時間 09:00–17:00 來電或私訊告知，並提供訂單編號以利對帳。",
+};
+
 type ContactEmail = {
   name: string;
   email: string;
@@ -22,12 +31,23 @@ type OrderItem = {
   total: number;
 };
 
+type ShippingBreakdownItem = {
+  categoryName: string;
+  quantityLabel: string;
+  quantity: number;
+  fee: number;
+};
+
 type OrderEmail = {
   orderNumber: string;
   customerName: string;
   customerEmail: string;
   items: OrderItem[];
   total: number;
+  subtotal?: number;
+  shipping?: number;
+  shippingMethod?: string;
+  shippingBreakdown?: ShippingBreakdownItem[];
   address: string;
   paymentMethod: string;
 };
@@ -138,10 +158,24 @@ function parseOrderItem(value: unknown, index: number): OrderItem {
   };
 }
 
+function parseShippingBreakdownItem(value: unknown, index: number): ShippingBreakdownItem {
+  const item = asRecord(value, `data.shippingBreakdown[${index}]`);
+  return {
+    categoryName: requiredString(item.categoryName, `data.shippingBreakdown[${index}].categoryName`),
+    quantityLabel: optionalString(item.quantityLabel),
+    quantity: requiredNumber(item.quantity, `data.shippingBreakdown[${index}].quantity`),
+    fee: requiredNumber(item.fee, `data.shippingBreakdown[${index}].fee`),
+  };
+}
+
 function parseOrderEmail(data: Record<string, unknown>): OrderEmail {
   if (!Array.isArray(data.items) || data.items.length === 0) {
     throw new HttpError(400, "invalid_payload", "data.items must be a non-empty array");
   }
+
+  const shippingBreakdown = Array.isArray(data.shippingBreakdown)
+    ? data.shippingBreakdown.map(parseShippingBreakdownItem)
+    : [];
 
   return {
     orderNumber: requiredString(data.orderNumber, "data.orderNumber"),
@@ -149,6 +183,10 @@ function parseOrderEmail(data: Record<string, unknown>): OrderEmail {
     customerEmail: requiredEmail(data.customerEmail, "data.customerEmail"),
     items: data.items.map(parseOrderItem),
     total: requiredNumber(data.total, "data.total"),
+    subtotal: data.subtotal === undefined || data.subtotal === null ? undefined : requiredNumber(data.subtotal, "data.subtotal"),
+    shipping: data.shipping === undefined || data.shipping === null ? undefined : requiredNumber(data.shipping, "data.shipping"),
+    shippingMethod: optionalString(data.shippingMethod),
+    shippingBreakdown,
     address: requiredString(data.address, "data.address"),
     paymentMethod: requiredString(data.paymentMethod, "data.paymentMethod"),
   };
@@ -235,10 +273,10 @@ function wrapEmail(content: string) {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
   </head>
   <body style="font-family: Arial, Helvetica, sans-serif; background:#f5f4f0; margin:0; padding:0;">
-    <div style="max-width:600px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.07);">
+    <div style="max-width:640px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.07);">
       <div style="background:#1c1917;padding:28px 40px;text-align:center;">
         <div style="color:#d6a96a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin:0 0 8px 0;">Sonpin</div>
-        <div style="color:#fff;font-size:22px;font-weight:300;letter-spacing:0.15em;margin:0;">客服通知</div>
+        <div style="color:#fff;font-size:22px;font-weight:300;letter-spacing:0.15em;margin:0;">淞品土雞專賣店</div>
       </div>
       <div style="padding:40px;">${content}</div>
     </div>
@@ -246,17 +284,57 @@ function wrapEmail(content: string) {
 </html>`;
 }
 
+function renderRemittanceSection() {
+  return `
+    <div style="margin-top:24px;padding:20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
+      <h3 style="margin:0 0 12px 0;color:#1c1917;font-size:16px;font-weight:600;">匯款資訊</h3>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>銀行名稱：</strong>${escapeHtml(REMITTANCE_INFO.bankName)}（${escapeHtml(REMITTANCE_INFO.bankCode)}）</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>匯款帳號：</strong>${escapeHtml(REMITTANCE_INFO.accountNumber)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>戶名：</strong>${escapeHtml(REMITTANCE_INFO.accountName)}</p>
+      ${REMITTANCE_INFO.taxId ? `<p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>統編：</strong>${escapeHtml(REMITTANCE_INFO.taxId)}</p>` : ""}
+      <p style="margin:12px 0 0 0;color:#78716c;line-height:1.8;font-size:13px;">${escapeHtml(REMITTANCE_INFO.note)}</p>
+    </div>
+  `;
+}
+
+function renderShippingBreakdown(items: ShippingBreakdownItem[]) {
+  if (items.length === 0) return "";
+
+  const rows = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:10px 0;border-top:1px solid #f0ede8;color:#57534e;font-size:14px;">
+            ${escapeHtml(item.categoryName)}${item.quantityLabel ? ` ${escapeHtml(item.quantityLabel)}` : ""} × ${escapeHtml(item.quantity)}
+          </td>
+          <td style="padding:10px 0;border-top:1px solid #f0ede8;color:#1c1917;font-size:14px;text-align:right;">
+            ${formatMoney(item.fee)}
+          </td>
+        </tr>`
+    )
+    .join("");
+
+  return `
+    <div style="margin-top:16px;">
+      <h3 style="margin:0 0 8px 0;color:#1c1917;font-size:16px;font-weight:600;">運費明細</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        ${rows}
+      </table>
+    </div>
+  `;
+}
+
 function generateContactAutoReply(data: ContactEmail) {
   return wrapEmail(`
     <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">您好，${escapeHtml(data.name)}</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">我們已收到您關於 <strong>${escapeHtml(data.subject)}</strong> 的訊息。</p>
-    <p style="color:#57534e;line-height:1.8;margin:0;">我們會盡快回覆您，謝謝您的聯繫。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">我們已收到您的訊息，主旨為 <strong>${escapeHtml(data.subject)}</strong>。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;">我們會盡快回覆您，謝謝您的聯絡。</p>
   `);
 }
 
 function generateContactAdminNotify(data: ContactEmail) {
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 16px 0;">新的聯絡表單</h2>
+    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 16px 0;">有新的聯絡表單</h2>
     <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>姓名：</strong>${escapeHtml(data.name)}</p>
     <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></p>
     <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>電話：</strong>${escapeHtml(data.phone || "-")}</p>
@@ -273,57 +351,108 @@ function generateOrderConfirmation(data: OrderEmail) {
       (item) => `
         <tr>
           <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(item.product_name)}</td>
-          <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#78716c;font-size:14px;text-align:center;">x${item.quantity}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#78716c;font-size:14px;text-align:center;">x${escapeHtml(item.quantity)}</td>
           <td style="padding:12px 0;border-bottom:1px solid #f0ede8;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(item.total)}</td>
-        </tr>`,
+        </tr>`
     )
     .join("");
 
+  const subtotal = data.subtotal ?? data.items.reduce((sum, item) => sum + item.total, 0);
+  const shipping = data.shipping ?? 0;
+  const shippingMethod = data.shippingMethod || "銀行轉帳";
+
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">訂單確認</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(data.customerName)}，感謝您訂購 Sonpin。</p>
-    <p style="color:#d6a96a;font-size:18px;font-weight:600;margin:0 0 24px 0;">${escapeHtml(data.orderNumber)}</p>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">訂單已送出</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(data.customerName)}，感謝您的訂購。以下是您的訂單資訊與匯款方式。</p>
+    <div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
+      <p style="margin:0;color:#a16207;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">訂單編號</p>
+      <p style="margin:6px 0 0 0;color:#1c1917;font-size:20px;font-weight:700;font-family:monospace;">${escapeHtml(data.orderNumber)}</p>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
       <tr>
         <th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th>
         <th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th>
-        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">金額</th>
+        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th>
       </tr>
       ${itemRows}
       <tr>
-        <td colspan="2" style="padding:16px 0 0 0;color:#1c1917;font-size:15px;font-weight:500;">訂單總計</td>
-        <td style="padding:16px 0 0 0;color:#d6a96a;font-size:18px;font-weight:600;text-align:right;">${formatMoney(data.total)}</td>
+        <td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td>
+        <td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td>
+        <td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td>
+        <td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td>
       </tr>
     </table>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>配送地址：</strong>${escapeHtml(data.address)}</p>
-    <p style="color:#57534e;line-height:1.8;margin:0;"><strong>付款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
+
+    <p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>匯款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
+    <p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>收件地址：</strong>${escapeHtml(data.address)}</p>
+
+    ${renderShippingBreakdown(data.shippingBreakdown || [])}
+    ${renderRemittanceSection()}
   `);
 }
 
 function generateOrderAdminNotify(data: OrderEmail) {
-  const itemList = data.items
-    .map((item) => `${escapeHtml(item.product_name)} x${item.quantity} ${formatMoney(item.total)}`)
-    .join("<br>");
+  const itemRows = data.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:10px 0;border-top:1px solid #f0ede8;color:#1c1917;font-size:14px;">${escapeHtml(item.product_name)}</td>
+          <td style="padding:10px 0;border-top:1px solid #f0ede8;color:#78716c;font-size:14px;text-align:center;">x${escapeHtml(item.quantity)}</td>
+          <td style="padding:10px 0;border-top:1px solid #f0ede8;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(item.total)}</td>
+        </tr>`
+    )
+    .join("");
+
+  const subtotal = data.subtotal ?? data.items.reduce((sum, item) => sum + item.total, 0);
+  const shipping = data.shipping ?? 0;
 
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 4px 0;">新的訂單通知</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>訂單號：</strong>${escapeHtml(data.orderNumber)}</p>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>姓名：</strong>${escapeHtml(data.customerName)}</p>
+    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 4px 0;">新訂單通知</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>訂單編號：</strong>${escapeHtml(data.orderNumber)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>顧客姓名：</strong>${escapeHtml(data.customerName)}</p>
     <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.customerEmail)}">${escapeHtml(data.customerEmail)}</a></p>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>地址：</strong>${escapeHtml(data.address)}</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>收件地址：</strong>${escapeHtml(data.address)}</p>
     <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>付款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
-    <div style="background:#faf9f7;border-radius:8px;padding:16px 20px;">
-      <p style="margin:0 0 8px 0;color:#a8a29e;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">訂單明細</p>
-      <p style="color:#1c1917;font-size:14px;line-height:1.9;margin:0;">${itemList}</p>
-    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+      <tr>
+        <th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th>
+        <th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th>
+        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th>
+      </tr>
+      ${itemRows}
+      <tr>
+        <td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td>
+        <td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td>
+        <td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td>
+        <td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td>
+      </tr>
+    </table>
+
+    ${renderShippingBreakdown(data.shippingBreakdown || [])}
+    ${renderRemittanceSection()}
   `);
 }
 
 function generateWelcomeEmail(data: WelcomeEmail) {
   return wrapEmail(`
     <h2 style="color:#1c1917;font-size:24px;font-weight:300;margin:0 0 4px 0;">歡迎加入 Sonpin</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">親愛的 <strong>${escapeHtml(data.displayName)}</strong>，感謝您加入我們。</p>
-    <p style="color:#57534e;line-height:1.8;margin:0;">您現在可以瀏覽商品、查詢訂單並接收最新消息。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">親愛的 <strong>${escapeHtml(data.displayName)}</strong>，我們很高興您加入我們。</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;">若您之後有任何訂單或商品問題，歡迎隨時與我們聯繫。</p>
   `);
 }
 
@@ -365,12 +494,12 @@ Deno.serve(async (req: Request) => {
         await Promise.allSettled([
           sendEmail({
             to: order.customerEmail,
-            subject: `Sonpin 訂單確認 ${order.orderNumber}`,
+            subject: `Sonpin 訂單已送出 ${order.orderNumber}`,
             html: generateOrderConfirmation(order),
           }),
           sendEmail({
             to: adminEmail,
-            subject: `Sonpin 新訂單 ${order.orderNumber}`,
+            subject: `Sonpin 新訂單通知 ${order.orderNumber}`,
             html: generateOrderAdminNotify(order),
             replyTo: order.customerEmail,
           }),
