@@ -69,6 +69,19 @@ type NotificationMailSettings = {
   order_enabled: boolean;
   remittance_enabled: boolean;
   customer_copy_enabled: boolean;
+  contact_template: ContactNotificationTemplate;
+};
+
+type ContactNotificationTemplate = {
+  admin_subject: string;
+  admin_title: string;
+  admin_intro: string;
+  admin_note: string;
+  show_name: boolean;
+  show_email: boolean;
+  show_phone: boolean;
+  show_subject: boolean;
+  show_message: boolean;
 };
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
@@ -77,6 +90,17 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
   order_enabled: true,
   remittance_enabled: true,
   customer_copy_enabled: true,
+  contact_template: {
+    admin_subject: "Sonpin 聯絡表單：{{subject}}",
+    admin_title: "有新的聯絡表單",
+    admin_intro: "您收到一則來自客服中心的新訊息，以下為表單內容。",
+    admin_note: "請盡快回覆並安排後續處理。",
+    show_name: true,
+    show_email: true,
+    show_phone: true,
+    show_subject: true,
+    show_message: true,
+  },
 };
 
 class HttpError extends Error {
@@ -140,6 +164,10 @@ function isEmail(value: unknown) {
 
 function formatMoney(value: number) {
   return `NT$ ${Math.round(value).toLocaleString("zh-TW")}`;
+}
+
+function renderTemplate(template: string, values: Record<string, string>) {
+  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => values[key] ?? "");
 }
 
 function paymentMethodLabel(method: string) {
@@ -231,12 +259,26 @@ function parseRemittanceNotificationEmail(data: Record<string, unknown>): Remitt
 
 function parseNotificationSettings(value: unknown): NotificationMailSettings {
   const settings = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  const templateValue = settings.contact_template && typeof settings.contact_template === "object" && !Array.isArray(settings.contact_template)
+    ? (settings.contact_template as Record<string, unknown>)
+    : {};
   return {
     admin_email: optionalString(settings.admin_email) || FALLBACK_ADMIN_EMAIL,
     contact_enabled: settings.contact_enabled === undefined ? true : Boolean(settings.contact_enabled),
     order_enabled: settings.order_enabled === undefined ? true : Boolean(settings.order_enabled),
     remittance_enabled: settings.remittance_enabled === undefined ? true : Boolean(settings.remittance_enabled),
     customer_copy_enabled: settings.customer_copy_enabled === undefined ? true : Boolean(settings.customer_copy_enabled),
+    contact_template: {
+      admin_subject: optionalString(templateValue.admin_subject) || DEFAULT_NOTIFICATION_SETTINGS.contact_template.admin_subject,
+      admin_title: optionalString(templateValue.admin_title) || DEFAULT_NOTIFICATION_SETTINGS.contact_template.admin_title,
+      admin_intro: optionalString(templateValue.admin_intro) || DEFAULT_NOTIFICATION_SETTINGS.contact_template.admin_intro,
+      admin_note: optionalString(templateValue.admin_note) || DEFAULT_NOTIFICATION_SETTINGS.contact_template.admin_note,
+      show_name: templateValue.show_name === undefined ? true : Boolean(templateValue.show_name),
+      show_email: templateValue.show_email === undefined ? true : Boolean(templateValue.show_email),
+      show_phone: templateValue.show_phone === undefined ? true : Boolean(templateValue.show_phone),
+      show_subject: templateValue.show_subject === undefined ? true : Boolean(templateValue.show_subject),
+      show_message: templateValue.show_message === undefined ? true : Boolean(templateValue.show_message),
+    },
   };
 }
 
@@ -404,16 +446,45 @@ function generateContactAutoReply(data: ContactEmail) {
   `);
 }
 
-function generateContactAdminNotify(data: ContactEmail) {
+function generateContactAdminNotify(data: ContactEmail, template: ContactNotificationTemplate) {
+  const fields = [
+    template.show_name ? { label: "姓名", value: data.name, link: false } : null,
+    template.show_email ? { label: "Email", value: data.email, link: true } : null,
+    template.show_phone ? { label: "電話", value: data.phone || "-", link: false } : null,
+    template.show_subject ? { label: "主旨", value: data.subject, link: false } : null,
+  ].filter(Boolean) as Array<{ label: string; value: string; link: boolean }>;
+
+  const fieldRows = fields
+    .map(
+      (field) => `
+        <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;">
+          <strong>${escapeHtml(field.label)}：</strong>${
+            field.link ? `<a href="mailto:${escapeHtml(field.value)}">${escapeHtml(field.value)}</a>` : escapeHtml(field.value)
+          }
+        </p>`,
+    )
+    .join("");
+
+  const messageBlock = template.show_message
+    ? `
+      <div style="margin-top:16px;background:#faf9f7;border-radius:8px;padding:16px 20px;border:1px solid #eee7dc;">
+        <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">訊息內容</p>
+        <p style="margin:0;white-space:pre-wrap;color:#1c1917;line-height:1.8;">${escapeHtml(data.message)}</p>
+      </div>
+    `
+    : "";
+
+  const noteBlock = template.admin_note
+    ? `<p style="margin:16px 0 0 0;color:#78716c;line-height:1.8;font-size:13px;">${escapeHtml(template.admin_note)}</p>`
+    : "";
+
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 16px 0;">有新的聯絡表單</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>姓名：</strong>${escapeHtml(data.name)}</p>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></p>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>電話：</strong>${escapeHtml(data.phone || "-")}</p>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>主旨：</strong>${escapeHtml(data.subject)}</p>
-    <div style="background:#faf9f7;border-radius:8px;padding:16px 20px;">
-      <p style="margin:0;white-space:pre-wrap;color:#1c1917;line-height:1.8;">${escapeHtml(data.message)}</p>
-    </div>
+    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">客服中心</p>
+    <h2 style="color:#1c1917;font-size:20px;font-weight:400;margin:0 0 12px 0;">${escapeHtml(template.admin_title)}</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(template.admin_intro)}</p>
+    ${fieldRows || '<p style="color:#78716c;line-height:1.8;margin:0 0 8px 0;">目前未勾選任何顯示欄位。</p>'}
+    ${messageBlock}
+    ${noteBlock}
   `);
 }
 
@@ -584,12 +655,19 @@ Deno.serve(async (req: Request) => {
     switch (type) {
       case "contact": {
         const contact = parseContactEmail(data);
+        const subject = renderTemplate(notificationSettings.contact_template.admin_subject, {
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone || "-",
+          subject: contact.subject,
+          message: contact.message,
+        }).trim() || `Sonpin 聯絡表單：${contact.subject}`;
         await Promise.all([
           notificationSettings.contact_enabled
             ? sendEmail({
                 to: adminEmail,
-                subject: `Sonpin 聯絡表單：${contact.subject}`,
-                html: generateContactAdminNotify(contact),
+                subject,
+                html: generateContactAdminNotify(contact, notificationSettings.contact_template),
                 replyTo: contact.email,
               })
             : Promise.resolve(),
