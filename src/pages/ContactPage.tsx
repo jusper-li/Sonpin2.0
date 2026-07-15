@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Clock, Mail, Phone, ChevronRight, Search, ReceiptText, ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, Mail, Phone, ReceiptText, Search, ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
@@ -24,8 +24,168 @@ interface FormState {
   message: string;
 }
 
+const uiText = {
+  'zh-TW': {
+    home: '首頁',
+    contactCenter: '客服中心',
+    contactCenterShort: '客服中心快速服務',
+    contactCenterIntro: '訂單查詢與匯款通知都集中在這裡，讓你可以更快完成後續流程。',
+    customerService: 'Customer Service',
+    orderQueryTitle: '訂單查詢',
+    orderQueryDesc: '非會員也可以直接查詢訂單狀態、進度與匯款資訊。',
+    remittanceTitle: '匯款通知',
+    remittanceDesc: '完成轉帳後，回到這裡填寫訂單編號與匯款資料通知我們。',
+    loading: '載入中…',
+    notFound: '找不到客服中心內容。',
+    breadcrumb: '客服中心',
+    lead: '淞品土雞專賣店提供客服、訂單與門市資訊，讓你更輕鬆完成聯繫與查詢。',
+    translating: '翻譯中',
+    email: 'Email',
+    phone: '電話',
+    hoursTitle: '服務時間',
+    hours: '週一至週六 09:00 - 17:00',
+    hoursNote: '週日與國定假日休息，若有急件可先透過 Email 聯繫。',
+    messageSent: '已送出訊息',
+    messageSentDesc: '我們已收到您的訊息，若有需要會儘快透過 Email 與您聯繫。',
+    sendAnother: '再送出一則',
+    name: '姓名',
+    namePlaceholder: '請輸入姓名',
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@email.com',
+    phoneLabel: '電話',
+    phonePlaceholder: '02-1234-5678',
+    subject: '主旨',
+    subjectPlaceholder: '請填寫主旨',
+    message: '訊息內容',
+    messagePlaceholder: '請描述您的需求或問題',
+    submit: '送出訊息',
+    validation: '請完整填寫姓名、Email、主旨與訊息內容。',
+    homeAria: '回到首頁',
+    serviceCardTitle: '客服中心快速服務',
+  },
+  en: {
+    home: 'Home',
+    contactCenter: 'Customer Service',
+    contactCenterShort: 'Quick Service',
+    contactCenterIntro: 'Order lookup and remittance notice are gathered here so you can finish the next step quickly.',
+    customerService: 'Customer Service',
+    orderQueryTitle: 'Order Inquiry',
+    orderQueryDesc: 'Even non-members can check order status, progress, and remittance details directly.',
+    remittanceTitle: 'Remittance Notice',
+    remittanceDesc: 'After you complete the transfer, return here to submit the order number and remittance details.',
+    loading: 'Loading…',
+    notFound: 'Customer service content not found.',
+    breadcrumb: 'Customer Service',
+    lead: 'Songpin provides customer service, order, and store information so you can contact us and look up details more easily.',
+    translating: 'Translating',
+    email: 'Email',
+    phone: 'Phone',
+    hoursTitle: 'Service Hours',
+    hours: 'Mon–Sat 09:00 - 17:00',
+    hoursNote: 'Closed on Sundays and public holidays. For urgent matters, email us first.',
+    messageSent: 'Message sent',
+    messageSentDesc: 'We have received your message and will contact you by email if needed.',
+    sendAnother: 'Send another',
+    name: 'Name',
+    namePlaceholder: 'Enter your name',
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@email.com',
+    phoneLabel: 'Phone',
+    phonePlaceholder: '02-1234-5678',
+    subject: 'Subject',
+    subjectPlaceholder: 'Enter a subject',
+    message: 'Message',
+    messagePlaceholder: 'Tell us what you need or what problem you have',
+    submit: 'Send message',
+    validation: 'Please fill in your name, email, subject, and message.',
+    homeAria: 'Back to home',
+    serviceCardTitle: 'Quick Service',
+  },
+  ja: {
+    home: 'ホーム',
+    contactCenter: 'お問い合わせ',
+    contactCenterShort: 'クイックサービス',
+    contactCenterIntro: '注文確認と入金通知をここにまとめています。次の手続きを素早く完了できます。',
+    customerService: 'Customer Service',
+    orderQueryTitle: '注文確認',
+    orderQueryDesc: '会員でなくても、注文状況・進捗・入金情報を直接確認できます。',
+    remittanceTitle: '入金通知',
+    remittanceDesc: 'お振り込み完了後、注文番号と入金情報を入力してお知らせください。',
+    loading: '読み込み中…',
+    notFound: 'お問い合わせ内容が見つかりません。',
+    breadcrumb: 'お問い合わせ',
+    lead: '淞品土雞專賣店では、問い合わせ・注文・店舗情報をまとめてご案内しています。',
+    translating: '翻訳中',
+    email: 'メール',
+    phone: '電話',
+    hoursTitle: '受付時間',
+    hours: '月〜土 09:00 - 17:00',
+    hoursNote: '日曜・祝日は休業です。お急ぎの場合はメールでご連絡ください。',
+    messageSent: '送信しました',
+    messageSentDesc: 'メッセージを受け取りました。必要に応じてメールでご連絡します。',
+    sendAnother: 'もう一件送る',
+    name: 'お名前',
+    namePlaceholder: 'お名前を入力してください',
+    emailLabel: 'メール',
+    emailPlaceholder: 'you@email.com',
+    phoneLabel: '電話番号',
+    phonePlaceholder: '02-1234-5678',
+    subject: '件名',
+    subjectPlaceholder: '件名を入力してください',
+    message: 'お問い合わせ内容',
+    messagePlaceholder: 'ご要望やご質問をご記入ください',
+    submit: '送信する',
+    validation: 'お名前、メール、件名、お問い合わせ内容をご入力ください。',
+    homeAria: 'ホームへ戻る',
+    serviceCardTitle: 'クイックサービス',
+  },
+  ko: {
+    home: '홈',
+    contactCenter: '고객센터',
+    contactCenterShort: '빠른 서비스',
+    contactCenterIntro: '주문 조회와 입금 안내를 한곳에 모아, 다음 절차를 빠르게 진행할 수 있습니다.',
+    customerService: 'Customer Service',
+    orderQueryTitle: '주문 조회',
+    orderQueryDesc: '비회원도 주문 상태, 진행 상황, 입금 정보를 바로 확인할 수 있습니다.',
+    remittanceTitle: '입금 안내',
+    remittanceDesc: '이체를 완료한 후 주문번호와 입금 정보를 입력해 알려주세요.',
+    loading: '불러오는 중…',
+    notFound: '고객센터 내용을 찾을 수 없습니다.',
+    breadcrumb: '고객센터',
+    lead: '淞品土雞專賣店의 고객센터에서는 문의, 주문, 매장 정보를 한곳에서 확인할 수 있습니다.',
+    translating: '번역 중',
+    email: '이메일',
+    phone: '전화',
+    hoursTitle: '운영 시간',
+    hours: '월~토 09:00 - 17:00',
+    hoursNote: '일요일 및 공휴일은 휴무입니다. 급한 문의는 이메일로 먼저 연락해 주세요.',
+    messageSent: '메시지 전송 완료',
+    messageSentDesc: '메시지를 받았습니다. 필요 시 이메일로 연락드리겠습니다.',
+    sendAnother: '다시 보내기',
+    name: '이름',
+    namePlaceholder: '이름을 입력하세요',
+    emailLabel: '이메일',
+    emailPlaceholder: 'you@email.com',
+    phoneLabel: '전화번호',
+    phonePlaceholder: '02-1234-5678',
+    subject: '제목',
+    subjectPlaceholder: '제목을 입력하세요',
+    message: '문의 내용',
+    messagePlaceholder: '요청 사항이나 문제를 자세히 적어주세요',
+    submit: '메시지 보내기',
+    validation: '이름, 이메일, 제목, 문의 내용을 모두 입력해 주세요.',
+    homeAria: '홈으로 이동',
+    serviceCardTitle: '빠른 서비스',
+  },
+} as const;
+
+type UILanguage = keyof typeof uiText;
+
 export default function ContactPage() {
   const { currentLanguage } = useLanguage();
+  const lang = (currentLanguage in uiText ? currentLanguage : 'zh-TW') as UILanguage;
+  const t = uiText[lang];
+
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(null);
   const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: '', contact_phone: '' });
@@ -35,13 +195,31 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
+  const serviceShortcuts = useMemo(
+    () => [
+      {
+        title: t.orderQueryTitle,
+        description: t.orderQueryDesc,
+        to: '/order-query',
+        icon: Search,
+      },
+      {
+        title: t.remittanceTitle,
+        description: t.remittanceDesc,
+        to: '/remittance-notice',
+        icon: ReceiptText,
+      },
+    ],
+    [t],
+  );
+
   useSEO({
-    title: page?.title || '客服中心',
-    description: page?.meta_description || '聯絡淞品土雞客服，取得訂購與售後協助。',
-    keywords: '客服中心,聯絡淞品,訂購,售後,門市',
+    title: page?.title || t.contactCenter,
+    description: page?.meta_description || t.lead,
+    keywords: t.contactCenter,
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '客服中心', url: `${window.location.origin}/contact` },
+      { name: t.home, url: window.location.origin },
+      { name: t.contactCenter, url: `${window.location.origin}/contact` },
     ]),
   });
 
@@ -59,6 +237,7 @@ export default function ContactPage() {
           .eq('slug', 'contact')
           .eq('is_published', true)
           .maybeSingle();
+
         if (data) {
           setSourcePage(data as StaticPageData);
           setPage(data as StaticPageData);
@@ -116,26 +295,12 @@ export default function ContactPage() {
   const sections = page?.sections || [];
   const intro = sections.find((section) => section.type === 'intro');
   const infoSections = sections.filter((section) => section.type === 'section');
-  const serviceShortcuts = [
-    {
-      title: '訂單查詢',
-      description: '非會員也可以直接查詢訂單狀態、進度與匯款資訊。',
-      to: '/order-query',
-      icon: Search,
-    },
-    {
-      title: '匯款通知',
-      description: '完成轉帳後，回到這裡填寫訂單編號與匯款資料通知我們。',
-      to: '/remittance-notice',
-      icon: ReceiptText,
-    },
-  ];
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.subject || !form.message) {
-      setError('請完整填寫姓名、Email、主旨與訊息內容。');
+      setError(t.validation);
       return;
     }
     setSubmitted(true);
@@ -147,7 +312,7 @@ export default function ContactPage() {
       <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
         <SiteHeader />
         <main className="flex-1">
-          <section className="container mx-auto px-6 py-24 text-stone-500">載入中...</section>
+          <section className="container mx-auto px-6 py-24 text-stone-500">{t.loading}</section>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -159,7 +324,7 @@ export default function ContactPage() {
       <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
         <SiteHeader />
         <main className="flex-1">
-          <section className="container mx-auto px-6 py-24 text-stone-500">找不到客服中心內容。</section>
+          <section className="container mx-auto px-6 py-24 text-stone-500">{t.notFound}</section>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -175,15 +340,15 @@ export default function ContactPage() {
           <div className="container mx-auto px-6">
             <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
               <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
-                首頁
+                {t.home}
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[var(--sonpin-background)]">客服中心</span>
+              <span className="text-[var(--sonpin-background)]">{t.breadcrumb}</span>
             </div>
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[var(--sonpin-primary-warm)]">Contact Us</p>
-            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title}</h1>
+            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title || t.contactCenter}</h1>
             <p className="max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-primary-border)]">
-              {intro?.content || '如需訂購、門市資訊或售後協助，歡迎直接與我們聯絡。'}
+              {intro?.content || t.lead}
             </p>
           </div>
         </section>
@@ -193,7 +358,7 @@ export default function ContactPage() {
             <div className="space-y-8 md:col-span-2">
               {translating && (
                 <div className="inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)]/60 bg-[var(--sonpin-surface)]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
-                  翻譯中
+                  {t.translating}
                 </div>
               )}
 
@@ -202,7 +367,7 @@ export default function ContactPage() {
                   <Mail className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">Email</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.email}</p>
                   <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_email || 'service@sonpin.tw'}
                   </a>
@@ -214,7 +379,7 @@ export default function ContactPage() {
                   <Phone className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">客服電話</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.phone}</p>
                   <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_phone || '02-2338-0018'}
                   </a>
@@ -226,9 +391,9 @@ export default function ContactPage() {
                   <Clock className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">服務時間</p>
-                  <p className="font-light text-[var(--sonpin-ink)]">週一至週日 上午 09:00 - 17:00</p>
-                  <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">實際營業時間請以門市公告為準</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.hoursTitle}</p>
+                  <p className="font-light text-[var(--sonpin-ink)]">{t.hours}</p>
+                  <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">{t.hoursNote}</p>
                 </div>
               </div>
 
@@ -245,11 +410,9 @@ export default function ContactPage() {
 
               <div className="space-y-4 border-t border-[var(--sonpin-primary-border)] pt-6">
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-[var(--sonpin-primary-muted)]">Customer Service</p>
-                  <h2 className="text-2xl font-light tracking-wide text-[var(--sonpin-ink)]">客服中心快速服務</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">
-                    訂單查詢與匯款通知都集中在這裡，讓你可以更快完成後續流程。
-                  </p>
+                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-[var(--sonpin-primary-muted)]">{t.customerService}</p>
+                  <h2 className="text-2xl font-light tracking-wide text-[var(--sonpin-ink)]">{t.serviceCardTitle}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{t.contactCenterIntro}</p>
                 </div>
 
                 <div className="grid gap-4">
@@ -284,16 +447,14 @@ export default function ContactPage() {
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--sonpin-background)]">
                     <CheckCircle className="h-10 w-10 text-[var(--sonpin-primary)]" />
                   </div>
-                  <h2 className="mb-3 text-2xl font-light text-[var(--sonpin-ink)]">已送出訊息</h2>
-                  <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-muted)]">
-                    我們已收到您的訊息，若有需要會儘快透過 Email 與您聯繫。
-                  </p>
+                  <h2 className="mb-3 text-2xl font-light text-[var(--sonpin-ink)]">{t.messageSent}</h2>
+                  <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{t.messageSentDesc}</p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
                     className="text-sm font-light text-[var(--sonpin-primary)] hover:underline"
                   >
-                    再送出一則
+                    {t.sendAnother}
                   </button>
                 </div>
               ) : (
@@ -307,25 +468,25 @@ export default function ContactPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
-                        姓名 <span className="text-[var(--sonpin-primary)]">*</span>
+                        {t.name} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="請輸入姓名"
+                        placeholder={t.namePlaceholder}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
-                        Email <span className="text-[var(--sonpin-primary)]">*</span>
+                        {t.emailLabel} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="you@email.com"
+                        placeholder={t.emailPlaceholder}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
@@ -333,24 +494,24 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">電話</label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.phoneLabel}</label>
                       <input
                         type="tel"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="02-1234-5678"
+                        placeholder={t.phonePlaceholder}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
                       <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
-                        主旨 <span className="text-[var(--sonpin-primary)]">*</span>
+                        {t.subject} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        placeholder="請填寫主旨"
+                        placeholder={t.subjectPlaceholder}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
@@ -358,13 +519,13 @@ export default function ContactPage() {
 
                   <div>
                     <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
-                      訊息內容 <span className="text-[var(--sonpin-primary)]">*</span>
+                      {t.message} <span className="text-[var(--sonpin-primary)]">*</span>
                     </label>
                     <textarea
                       rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="請描述您的需求或問題"
+                      placeholder={t.messagePlaceholder}
                       className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[var(--sonpin-ink)] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                     />
                   </div>
@@ -373,7 +534,7 @@ export default function ContactPage() {
                     type="submit"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sonpin-ink)] px-8 py-4 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
                   >
-                    送出訊息
+                    {t.submit}
                   </button>
                 </form>
               )}
