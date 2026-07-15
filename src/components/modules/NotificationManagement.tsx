@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Bell, Mail, RefreshCw, Save, ShieldCheck, ShoppingCart, MessageSquare, RotateCcw, Pencil } from 'lucide-react';
+import { Bell, Mail, Pencil, RefreshCw, RotateCcw, Save, ShieldCheck, ShoppingCart, MessageSquare } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS } from '../../data/homepageContent';
 
@@ -95,7 +95,7 @@ const DEFAULT_REMITTANCE_TEMPLATE: RemittanceNotificationTemplate = {
   admin_subject: 'Sonpin 匯款通知：{{orderNumber}}',
   admin_title: '匯款通知',
   admin_intro: '顧客已回報匯款資訊，請盡快核對帳務。',
-  admin_note: '若匯款金額或帳號末五碼有誤，請聯繫顧客確認。',
+  admin_note: '若匯款金額或帳號後五碼有誤，請聯繫顧客確認。',
   show_order_number: true,
   show_remittance_amount: true,
   show_remitter_last5: true,
@@ -117,15 +117,6 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const templateTabs = [
-  { id: 'general', label: '通知總覽' },
-  { id: 'contact', label: '客服中心' },
-  { id: 'order', label: '訂單通知' },
-  { id: 'remittance', label: '匯款通知' },
-] as const;
-
-type TemplateTabId = (typeof templateTabs)[number]['id'];
-
 const normalizeBoolean = (value: unknown, fallback: boolean) => {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') return value === 'true';
@@ -135,17 +126,29 @@ const normalizeBoolean = (value: unknown, fallback: boolean) => {
 
 const normalizeTemplate = <T extends Record<string, unknown>>(value: unknown, fallback: T): T => {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-  return Object.keys(fallback).reduce((acc, key) => {
-    const fallbackValue = fallback[key as keyof T];
-    const currentValue = source[key];
+  const result = { ...fallback } as T;
+
+  (Object.keys(fallback) as Array<keyof T>).forEach((key) => {
+    const fallbackValue = fallback[key];
+    const currentValue = source[String(key)];
     if (typeof fallbackValue === 'boolean') {
-      acc[key as keyof T] = normalizeBoolean(currentValue, fallbackValue) as T[keyof T];
+      result[key] = normalizeBoolean(currentValue, fallbackValue) as T[keyof T];
     } else {
-      acc[key as keyof T] = (String(currentValue ?? fallbackValue).trim() || fallbackValue) as T[keyof T];
+      result[key] = (typeof currentValue === 'string' && currentValue.trim() ? currentValue.trim() : fallbackValue) as T[keyof T];
     }
-    return acc;
-  }, { ...fallback });
+  });
+
+  return result;
 };
+
+const templateTabs = [
+  { id: 'general', label: '通知總覽' },
+  { id: 'contact', label: '客服中心' },
+  { id: 'order', label: '訂單通知' },
+  { id: 'remittance', label: '匯款通知' },
+] as const;
+
+type TemplateTabId = (typeof templateTabs)[number]['id'];
 
 const templateFieldOptions = {
   contact: [
@@ -192,16 +195,8 @@ export default function NotificationManagement() {
     setLoading(true);
     try {
       const [notificationResponse, footerResponse] = await Promise.all([
-        supabase
-          .from('site_settings')
-          .select('id,setting_key,setting_value,updated_at')
-          .eq('setting_key', NOTIFICATION_SETTING_KEY)
-          .maybeSingle(),
-        supabase
-          .from('site_settings')
-          .select('id,setting_key,setting_value,updated_at')
-          .eq('setting_key', FOOTER_SETTING_KEY)
-          .maybeSingle(),
+        supabase.from('site_settings').select('id,setting_key,setting_value,updated_at').eq('setting_key', NOTIFICATION_SETTING_KEY).maybeSingle(),
+        supabase.from('site_settings').select('id,setting_key,setting_value,updated_at').eq('setting_key', FOOTER_SETTING_KEY).maybeSingle(),
       ]);
 
       if (notificationResponse.error) throw notificationResponse.error;
@@ -212,7 +207,8 @@ export default function NotificationManagement() {
       const footerRow = footerResponse.data as SiteSettingRow | null;
       const footerValue = (footerRow?.setting_value || {}) as Record<string, unknown>;
 
-      const adminEmail = String(notificationValue.admin_email || footerValue.contact_email || DEFAULT_NOTIFICATION_SETTINGS.admin_email).trim() || DEFAULT_NOTIFICATION_SETTINGS.admin_email;
+      const adminEmail = String(notificationValue.admin_email || footerValue.contact_email || DEFAULT_NOTIFICATION_SETTINGS.admin_email).trim()
+        || DEFAULT_NOTIFICATION_SETTINGS.admin_email;
 
       setSettings({
         admin_email: adminEmail,
@@ -308,18 +304,10 @@ export default function NotificationManagement() {
       if (footerExisting.error) throw footerExisting.error;
 
       if (notificationExisting.data?.id) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({ setting_value: notificationPayload })
-          .eq('id', notificationExisting.data.id);
+        const { error } = await supabase.from('site_settings').update({ setting_value: notificationPayload }).eq('id', notificationExisting.data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('site_settings').insert([
-          {
-            setting_key: NOTIFICATION_SETTING_KEY,
-            setting_value: notificationPayload,
-          },
-        ]);
+        const { error } = await supabase.from('site_settings').insert([{ setting_key: NOTIFICATION_SETTING_KEY, setting_value: notificationPayload }]);
         if (error) throw error;
       }
 
@@ -327,12 +315,7 @@ export default function NotificationManagement() {
         const { error } = await supabase.from('site_settings').update({ setting_value: footerPayload }).eq('id', footerExisting.data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('site_settings').insert([
-          {
-            setting_key: FOOTER_SETTING_KEY,
-            setting_value: footerPayload,
-          },
-        ]);
+        const { error } = await supabase.from('site_settings').insert([{ setting_key: FOOTER_SETTING_KEY, setting_value: footerPayload }]);
         if (error) throw error;
       }
 
@@ -440,33 +423,10 @@ export default function NotificationManagement() {
                 <p className="mt-2 text-xs text-slate-500">客服中心、訂單與匯款通知都會寄到這個信箱。</p>
               </div>
 
-              <ToggleField
-                title="客服中心通知"
-                description="顧客從聯絡表單送出訊息時寄給管理員。"
-                checked={settings.contact_enabled}
-                onChange={(checked) => setSettings({ ...settings, contact_enabled: checked })}
-              />
-
-              <ToggleField
-                title="訂單通知"
-                description="顧客完成下單後寄給管理員。"
-                checked={settings.order_enabled}
-                onChange={(checked) => setSettings({ ...settings, order_enabled: checked })}
-              />
-
-              <ToggleField
-                title="匯款通知"
-                description="顧客回報匯款後寄給管理員。"
-                checked={settings.remittance_enabled}
-                onChange={(checked) => setSettings({ ...settings, remittance_enabled: checked })}
-              />
-
-              <ToggleField
-                title="顧客副本"
-                description="寄送匯款通知時，同步寄給顧客一份。"
-                checked={settings.customer_copy_enabled}
-                onChange={(checked) => setSettings({ ...settings, customer_copy_enabled: checked })}
-              />
+              <ToggleField title="客服中心通知" description="顧客從聯絡表單送出訊息時寄給管理員。" checked={settings.contact_enabled} onChange={(checked) => setSettings({ ...settings, contact_enabled: checked })} />
+              <ToggleField title="訂單通知" description="顧客完成下單後寄給管理員。" checked={settings.order_enabled} onChange={(checked) => setSettings({ ...settings, order_enabled: checked })} />
+              <ToggleField title="匯款通知" description="顧客回報匯款後寄給管理員。" checked={settings.remittance_enabled} onChange={(checked) => setSettings({ ...settings, remittance_enabled: checked })} />
+              <ToggleField title="顧客副本" description="寄送匯款通知時，同步寄給顧客一份。" checked={settings.customer_copy_enabled} onChange={(checked) => setSettings({ ...settings, customer_copy_enabled: checked })} />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -508,7 +468,7 @@ export default function NotificationManagement() {
           template={settings.contact_template}
           onChange={(template) => setSettings((prev) => ({ ...prev, contact_template: template }))}
           fieldOptions={templateFieldOptions.contact}
-          preview={renderContactPreview(settings.contact_template)}
+          preview={<ContactPreview template={settings.contact_template} />}
         />
       )}
 
@@ -518,7 +478,7 @@ export default function NotificationManagement() {
           template={settings.order_template}
           onChange={(template) => setSettings((prev) => ({ ...prev, order_template: template }))}
           fieldOptions={templateFieldOptions.order}
-          preview={renderOrderPreview(settings.order_template)}
+          preview={<OrderPreview template={settings.order_template} />}
         />
       )}
 
@@ -528,7 +488,7 @@ export default function NotificationManagement() {
           template={settings.remittance_template}
           onChange={(template) => setSettings((prev) => ({ ...prev, remittance_template: template }))}
           fieldOptions={templateFieldOptions.remittance}
-          preview={renderRemittancePreview(settings.remittance_template)}
+          preview={<RemittancePreview template={settings.remittance_template} />}
         />
       )}
     </div>
@@ -570,7 +530,16 @@ function TemplateEditor<T extends { admin_subject: string; admin_title: string; 
               value={template.admin_subject}
               onChange={(e) => update('admin_subject' as keyof T, e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Sonpin 訂單通知：{{orderNumber}}"
             />
+            <p className="mt-2 text-xs text-slate-500">
+              可用變數：<code className="rounded bg-slate-100 px-1 py-0.5">{'{{name}}'}</code>、
+              <code className="rounded bg-slate-100 px-1 py-0.5">{'{{email}}'}</code>、
+              <code className="rounded bg-slate-100 px-1 py-0.5">{'{{phone}}'}</code>、
+              <code className="rounded bg-slate-100 px-1 py-0.5">{'{{subject}}'}</code>、
+              <code className="rounded bg-slate-100 px-1 py-0.5">{'{{message}}'}</code>、
+              <code className="rounded bg-slate-100 px-1 py-0.5">{'{{orderNumber}}'}</code>
+            </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -620,16 +589,12 @@ function TemplateEditor<T extends { admin_subject: string; admin_title: string; 
               ))}
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-500">儲存後，對應通知信就會套用這些設定。</span>
-          </div>
         </div>
       </section>
 
       <aside className="space-y-4">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-lg font-semibold text-slate-900">預覽</h3>
+          <h3 className="mb-3 text-lg font-semibold text-slate-900">即時預覽</h3>
           {preview}
         </section>
       </aside>
@@ -671,7 +636,7 @@ function ToggleField({
   );
 }
 
-function renderContactPreview(template: ContactNotificationTemplate) {
+function ContactPreview({ template }: { template: ContactNotificationTemplate }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
       <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">客服中心</div>
@@ -689,7 +654,7 @@ function renderContactPreview(template: ContactNotificationTemplate) {
   );
 }
 
-function renderOrderPreview(template: OrderNotificationTemplate) {
+function OrderPreview({ template }: { template: OrderNotificationTemplate }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
       <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">訂單通知</div>
@@ -710,7 +675,7 @@ function renderOrderPreview(template: OrderNotificationTemplate) {
   );
 }
 
-function renderRemittancePreview(template: RemittanceNotificationTemplate) {
+function RemittancePreview({ template }: { template: RemittanceNotificationTemplate }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
       <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">匯款通知</div>
