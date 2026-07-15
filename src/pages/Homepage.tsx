@@ -2,7 +2,6 @@
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
-import { pickByLang } from '../lib/language';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
@@ -269,6 +268,12 @@ export default function Homepage() {
   });
   const [loading, setLoading] = useState(false);
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
+  const heroButtonLabels = {
+    'zh-TW': '查看商品',
+    en: 'View products',
+    ja: '商品を見る',
+    ko: '상품 보기',
+  } as const;
 
   useSEO({
     title: '淞品土雞專賣店',
@@ -1015,14 +1020,10 @@ export default function Homepage() {
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
           const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '查看商品' : '了解更多');
-          const localizedCtaLabel = pickByLang(
-            currentLanguage,
-            ctaLabel,
-            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
-            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
-            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
-            section.section_type === 'hero_product' ? '查看商品' : '了解更多',
-          );
+          const localizedCtaLabel =
+            section.section_type === 'hero_product'
+              ? section.content?.cta_label || heroButtonLabels[currentLanguage as keyof typeof heroButtonLabels] || '查看商品'
+              : ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
           const sectionStyle = {
