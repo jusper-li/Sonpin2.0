@@ -185,7 +185,7 @@ export default function SiteFooter() {
 
   return (
     <footer className="bg-[#f7f0e6] text-stone-700 w-full">
-      <div className="h-px bg-gradient-to-r from-transparent via-[#cfa87a]/50 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-[#ffdb27]/50 to-transparent" />
 
       <div className="w-full max-w-7xl mx-auto px-6 pt-20 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-14">
@@ -210,7 +210,7 @@ export default function SiteFooter() {
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
+                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#ffdb27] hover:text-[#b38f00] transition-all duration-300 hover:-translate-y-0.5"
                     aria-label={item.platform}
                   >
                     <Icon size={16} />
@@ -220,7 +220,7 @@ export default function SiteFooter() {
               {settings.contact_email && (
                 <a
                   href={`mailto:${settings.contact_email}`}
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#a97a4f] hover:text-[#8e6448] transition-all duration-300 hover:-translate-y-0.5"
+                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#ffdb27] hover:text-[#b38f00] transition-all duration-300 hover:-translate-y-0.5"
                   aria-label="Email"
                 >
                   <Mail size={16} />
@@ -231,7 +231,7 @@ export default function SiteFooter() {
 
           {settings.link_groups.map((group, index) => (
             <div key={index}>
-              <h3 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[#a97a4f]/90 mb-6">
+              <h3 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[#b38f00]/90 mb-6">
                 {t(`footer.group_title.${index}`, group.title)}
               </h3>
               <ul className="flex flex-col gap-3.5">

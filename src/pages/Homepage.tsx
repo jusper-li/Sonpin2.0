@@ -58,37 +58,37 @@ interface ProductStagePalette {
 const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
   {
     background: '#fbf6ee',
-    panel: '#d8bda4',
-    accent: '#e8d2aa',
-    stripe: '#cfa87a',
+    panel: '#fff0a6',
+    accent: '#fff5cc',
+    stripe: '#ffdb27',
     ink: '#2b221d',
   },
   {
     background: '#f4ecdf',
-    panel: '#caa384',
-    accent: '#d8b19d',
-    stripe: '#e4c992',
+    panel: '#ffe16a',
+    accent: '#fff1a8',
+    stripe: '#ffd400',
     ink: '#2b221d',
   },
   {
     background: '#fffaf2',
-    panel: '#d7b4aa',
-    accent: '#d9aeb8',
-    stripe: '#efd4bf',
+    panel: '#ffe37f',
+    accent: '#fff4c4',
+    stripe: '#ffdb27',
     ink: '#2b221d',
   },
   {
     background: '#f7f0e7',
-    panel: '#c7a08d',
-    accent: '#d9c5df',
-    stripe: '#d7b06f',
+    panel: '#ffd84d',
+    accent: '#fff0aa',
+    stripe: '#f3ca12',
     ink: '#2b221d',
   },
   {
     background: '#f5eadf',
-    panel: '#c99a8c',
-    accent: '#e7b5a5',
-    stripe: '#ead1a1',
+    panel: '#ffe66d',
+    accent: '#fff6cf',
+    stripe: '#ffdb27',
     ink: '#2b221d',
   },
 ];
@@ -97,27 +97,27 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   hero: {
     media: '/product-images/reserved-for-you-huasitian-huo-limited-1.jpg',
     objectPosition: 'center center',
-    accent: '#d7b4aa',
+    accent: '#ffdb27',
   },
   shop: {
     media: '/product-images/champion-coffee-chocolate-huo-gang-gift-box-1.jpg',
     objectPosition: 'center center',
-    accent: '#caa384',
+    accent: '#ffd84d',
   },
   story: {
     media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
     objectPosition: 'center center',
-    accent: '#e8d2aa',
+    accent: '#fff0aa',
   },
   contact: {
     media: '/product-images/huo-gang-coffee-letter-gift-2.jpg',
     objectPosition: 'center center',
-    accent: '#d9c5df',
+    accent: '#fff4c4',
   },
   default: {
     media: '/product-images/the-one-and-only-15-drip-canvas-set-1.jpg',
     objectPosition: 'center center',
-    accent: '#d9aeb8',
+    accent: '#ffe37f',
   },
 };
 
@@ -636,7 +636,7 @@ export default function Homepage() {
   }
 
   return (
-    <div className="ym-homepage overflow-x-hidden bg-[#fbf6ee] text-[#2b221d]">
+    <div className="ym-homepage overflow-x-hidden bg-[#fffdf4] text-[#2b221d]">
       <style>{`
         .ym-homepage header {
           background: transparent !important;
