@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Clock, Mail, Phone, ChevronRight } from 'lucide-react';
+import { CheckCircle, Clock, Mail, Phone, ChevronRight, Search, ReceiptText, ArrowRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
@@ -116,6 +116,20 @@ export default function ContactPage() {
   const sections = page?.sections || [];
   const intro = sections.find((section) => section.type === 'intro');
   const infoSections = sections.filter((section) => section.type === 'section');
+  const serviceShortcuts = [
+    {
+      title: '訂單查詢',
+      description: '非會員也可以直接查詢訂單狀態、進度與匯款資訊。',
+      to: '/order-query',
+      icon: Search,
+    },
+    {
+      title: '匯款通知',
+      description: '完成轉帳後，回到這裡填寫訂單編號與匯款資料通知我們。',
+      to: '/remittance-notice',
+      icon: ReceiptText,
+    },
+  ];
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -228,6 +242,40 @@ export default function ContactPage() {
                   ))}
                 </div>
               )}
+
+              <div className="space-y-4 border-t border-[var(--sonpin-primary-border)] pt-6">
+                <div>
+                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-[var(--sonpin-primary-muted)]">Customer Service</p>
+                  <h2 className="text-2xl font-light tracking-wide text-[var(--sonpin-ink)]">客服中心快速服務</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">
+                    訂單查詢與匯款通知都集中在這裡，讓你可以更快完成後續流程。
+                  </p>
+                </div>
+
+                <div className="grid gap-4">
+                  {serviceShortcuts.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className="group flex items-center justify-between rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-5 shadow-sm transition hover:border-[var(--sonpin-primary)] hover:bg-[var(--sonpin-background)]"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--sonpin-background)] text-[var(--sonpin-primary)]">
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-medium text-[var(--sonpin-ink)]">{item.title}</h3>
+                            <p className="mt-1 max-w-md text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{item.description}</p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-[var(--sonpin-primary-muted)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--sonpin-primary)]" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="md:col-span-3">
