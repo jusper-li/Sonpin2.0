@@ -4,12 +4,15 @@
 
 @layer base {
   :root {
-    --sonpin-primary: #ffdb27;
-    --sonpin-primary-strong: #b38f00;
-    --sonpin-primary-soft: rgba(255, 219, 39, 0.16);
-    --sonpin-primary-bg: #fff7c7;
-    --sonpin-primary-border: #f3dc77;
-    --sonpin-primary-ink: #2b221d;
+    --sonpin-primary: #351e0d;
+    --sonpin-primary-strong: #211208;
+    --sonpin-primary-soft: var(--sonpin-primary-soft);
+    --sonpin-primary-muted: var(--sonpin-primary-muted);
+    --sonpin-primary-warm: var(--sonpin-primary);
+    --sonpin-primary-border: var(--sonpin-primary-border);
+    --sonpin-surface: var(--sonpin-surface);
+    --sonpin-background: var(--sonpin-background);
+    --sonpin-ink: #2b221d;
   }
 
   html {
@@ -20,9 +23,9 @@
   body {
     @apply overflow-x-hidden text-stone-700;
     background:
-      radial-gradient(circle at top left, var(--sonpin-primary-soft), transparent 32%),
-      radial-gradient(circle at top right, rgba(255, 235, 120, 0.1), transparent 28%),
-      linear-gradient(180deg, #fbf6ee 0%, #f7f0e6 100%);
+      radial-gradient(circle at top left, rgba(53, 30, 13, 0.12), transparent 32%),
+      radial-gradient(circle at top right, rgba(141, 108, 86, 0.08), transparent 28%),
+      linear-gradient(180deg, var(--sonpin-background) 0%, var(--sonpin-background) 100%);
     overscroll-behavior-y: none;
     font-feature-settings: 'kern' 1, 'liga' 1;
     -webkit-font-smoothing: antialiased;
@@ -52,16 +55,16 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--sonpin-primary-border);
+    background: rgba(53, 30, 13, 0.24);
     border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--sonpin-primary-strong);
+    background: var(--sonpin-primary);
   }
 
   ::selection {
-    background: rgba(255, 219, 39, 0.28);
+    background: rgba(53, 30, 13, 0.18);
     color: #2b221d;
   }
 
@@ -102,23 +105,23 @@
   }
 
   .accent-label {
-    @apply text-xs font-medium tracking-[0.25em] uppercase text-[var(--sonpin-primary-strong)];
+    @apply text-xs font-medium tracking-[0.25em] uppercase text-[var(--sonpin-primary)];
   }
 
   .luxury-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[var(--sonpin-primary)] text-[var(--sonpin-primary-ink)] text-xs font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:bg-[#f2cf00] hover:tracking-[0.2em];
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[var(--sonpin-primary)] text-[var(--sonpin-surface)] text-xs font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:bg-[var(--sonpin-primary-strong)] hover:tracking-[0.2em];
   }
 
   .luxury-btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-[var(--sonpin-primary-border)] text-stone-600 text-xs font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:border-[var(--sonpin-primary-strong)] hover:text-[var(--sonpin-primary-strong)];
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-[var(--sonpin-primary-border)] text-stone-600 text-xs font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)];
   }
 
   .gold-divider {
-    @apply w-12 h-px bg-[rgba(255,219,39,0.7)];
+    @apply w-12 h-px bg-[rgba(53,30,13,0.7)];
   }
 
   .card-luxury {
-    @apply bg-[#fffaf2] border border-[#eadfd1] transition-all duration-500 hover:border-[#d7c0ad] hover:shadow-[0_20px_60px_-10px_rgba(80,55,35,0.08)] hover:-translate-y-1;
+    @apply bg-[var(--sonpin-surface)] border border-[var(--sonpin-primary-border)] transition-all duration-500 hover:border-[var(--sonpin-primary-border)] hover:shadow-[0_20px_60px_-10px_rgba(53,30,13,0.08)] hover:-translate-y-1;
   }
 
   .ym-product-content {
@@ -155,7 +158,7 @@
   }
 
   .ym-product-copy-note {
-    @apply mt-6 rounded-xl border border-[var(--sonpin-primary-border)] bg-[rgba(255,247,199,0.8)] p-4;
+    @apply mt-6 rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-4;
   }
 
   .ym-blog-content {
@@ -227,32 +230,32 @@
 }
 
 @layer utilities {
-  .text-amber-300 { color: #f7df7d !important; }
-  .text-amber-400 { color: #d8b000 !important; }
-  .text-amber-500 { color: var(--sonpin-primary-strong) !important; }
-  .text-amber-600 { color: #a88400 !important; }
-  .text-amber-700 { color: #8a6c00 !important; }
-  .text-amber-800 { color: #6f5600 !important; }
+  .text-amber-300 { color: var(--sonpin-primary-border) !important; }
+  .text-amber-400 { color: #b18a73 !important; }
+  .text-amber-500 { color: var(--sonpin-primary) !important; }
+  .text-amber-600 { color: var(--sonpin-primary) !important; }
+  .text-amber-700 { color: var(--sonpin-primary) !important; }
+  .text-amber-800 { color: var(--sonpin-primary-strong) !important; }
 
-  .bg-amber-50 { background-color: rgba(255, 219, 39, 0.12) !important; }
-  .bg-amber-100 { background-color: rgba(255, 219, 39, 0.2) !important; }
-  .bg-amber-200 { background-color: rgba(255, 219, 39, 0.3) !important; }
-  .bg-amber-300 { background-color: rgba(255, 219, 39, 0.42) !important; }
-  .bg-amber-400 { background-color: #ffd934 !important; }
+  .bg-amber-50 { background-color: rgba(53, 30, 13, 0.06) !important; }
+  .bg-amber-100 { background-color: rgba(53, 30, 13, 0.1) !important; }
+  .bg-amber-200 { background-color: rgba(53, 30, 13, 0.16) !important; }
+  .bg-amber-300 { background-color: rgba(53, 30, 13, 0.22) !important; }
+  .bg-amber-400 { background-color: rgba(53, 30, 13, 0.34) !important; }
   .bg-amber-500 { background-color: var(--sonpin-primary) !important; }
 
-  .border-amber-100 { border-color: rgba(255, 219, 39, 0.22) !important; }
-  .border-amber-200 { border-color: rgba(255, 219, 39, 0.4) !important; }
-  .border-amber-300 { border-color: rgba(255, 219, 39, 0.58) !important; }
-  .border-amber-400 { border-color: #f0cf40 !important; }
+  .border-amber-100 { border-color: rgba(53, 30, 13, 0.08) !important; }
+  .border-amber-200 { border-color: rgba(53, 30, 13, 0.16) !important; }
+  .border-amber-300 { border-color: rgba(53, 30, 13, 0.24) !important; }
+  .border-amber-400 { border-color: rgba(53, 30, 13, 0.34) !important; }
 
   .accent-amber-500 { accent-color: var(--sonpin-primary) !important; }
-  .focus\:ring-amber-100:focus { --tw-ring-color: rgba(255, 219, 39, 0.28) !important; }
-  .focus\:ring-amber-400:focus { --tw-ring-color: rgba(255, 219, 39, 0.65) !important; }
-  .hover\:text-amber-700:hover { color: #8a6c00 !important; }
-  .hover\:text-amber-800:hover { color: #6f5600 !important; }
-  .hover\:border-amber-700:hover { border-color: #8a6c00 !important; }
-  .hover\:border-amber-600:hover { border-color: #a88400 !important; }
+  .focus\:ring-amber-100:focus { --tw-ring-color: rgba(53, 30, 13, 0.14) !important; }
+  .focus\:ring-amber-400:focus { --tw-ring-color: rgba(53, 30, 13, 0.35) !important; }
+  .hover\:text-amber-700:hover { color: var(--sonpin-primary) !important; }
+  .hover\:text-amber-800:hover { color: var(--sonpin-primary-strong) !important; }
+  .hover\:border-amber-700:hover { border-color: var(--sonpin-primary) !important; }
+  .hover\:border-amber-600:hover { border-color: var(--sonpin-primary-soft) !important; }
 
   .animate-fade-in-up {
     animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -184,8 +184,8 @@ export default function SiteFooter() {
       ].filter(Boolean) as Array<{ platform: string; url: string }>);
 
   return (
-    <footer className="bg-[#f7f0e6] text-stone-700 w-full">
-      <div className="h-px bg-gradient-to-r from-transparent via-[#ffdb27]/50 to-transparent" />
+    <footer className="bg-[var(--sonpin-background)] text-stone-700 w-full">
+      <div className="h-px bg-gradient-to-r from-transparent via-[var(--sonpin-primary)]/50 to-transparent" />
 
       <div className="w-full max-w-7xl mx-auto px-6 pt-20 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-14">
@@ -210,7 +210,7 @@ export default function SiteFooter() {
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#ffdb27] hover:text-[#b38f00] transition-all duration-300 hover:-translate-y-0.5"
+                    className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
                     aria-label={item.platform}
                   >
                     <Icon size={16} />
@@ -220,7 +220,7 @@ export default function SiteFooter() {
               {settings.contact_email && (
                 <a
                   href={`mailto:${settings.contact_email}`}
-                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[#ffdb27] hover:text-[#b38f00] transition-all duration-300 hover:-translate-y-0.5"
+                  className="w-9 h-9 flex items-center justify-center border border-[#dac7b4] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
                   aria-label="Email"
                 >
                   <Mail size={16} />
@@ -231,7 +231,7 @@ export default function SiteFooter() {
 
           {settings.link_groups.map((group, index) => (
             <div key={index}>
-              <h3 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[#b38f00]/90 mb-6">
+              <h3 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[var(--sonpin-primary)]/90 mb-6">
                 {t(`footer.group_title.${index}`, group.title)}
               </h3>
               <ul className="flex flex-col gap-3.5">
@@ -250,7 +250,7 @@ export default function SiteFooter() {
           ))}
         </div>
 
-        <div className="border-t border-[#eadfd1] mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-[var(--sonpin-primary-border)] mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-stone-400 font-light tracking-[0.1em]">
             {t('footer.copyright', settings.copyright_text)}
           </p>

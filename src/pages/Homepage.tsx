@@ -57,24 +57,24 @@ interface ProductStagePalette {
 
 const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
   {
-    background: '#fbf6ee',
+    background: 'var(--sonpin-background)',
     panel: '#fff0a6',
     accent: '#fff5cc',
-    stripe: '#ffdb27',
+    stripe: 'var(--sonpin-primary)',
     ink: '#2b221d',
   },
   {
-    background: '#f4ecdf',
+    background: 'var(--sonpin-background)',
     panel: '#ffe16a',
     accent: '#fff1a8',
     stripe: '#ffd400',
     ink: '#2b221d',
   },
   {
-    background: '#fffaf2',
-    panel: '#ffe37f',
+    background: 'var(--sonpin-surface)',
+    panel: 'var(--sonpin-primary-warm)',
     accent: '#fff4c4',
-    stripe: '#ffdb27',
+    stripe: 'var(--sonpin-primary)',
     ink: '#2b221d',
   },
   {
@@ -88,7 +88,7 @@ const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
     background: '#f5eadf',
     panel: '#ffe66d',
     accent: '#fff6cf',
-    stripe: '#ffdb27',
+    stripe: 'var(--sonpin-primary)',
     ink: '#2b221d',
   },
 ];
@@ -97,7 +97,7 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   hero: {
     media: '/product-images/reserved-for-you-huasitian-huo-limited-1.jpg',
     objectPosition: 'center center',
-    accent: '#ffdb27',
+    accent: 'var(--sonpin-primary)',
   },
   shop: {
     media: '/product-images/champion-coffee-chocolate-huo-gang-gift-box-1.jpg',
@@ -117,7 +117,7 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   default: {
     media: '/product-images/the-one-and-only-15-drip-canvas-set-1.jpg',
     objectPosition: 'center center',
-    accent: '#ffe37f',
+    accent: 'var(--sonpin-primary-warm)',
   },
 };
 
@@ -661,7 +661,7 @@ export default function Homepage() {
           scroll-behavior: smooth;
           scroll-snap-type: y mandatory;
           -webkit-overflow-scrolling: touch;
-          background: #fbf6ee;
+          background: var(--sonpin-background);
         }
         .homepage-main section,
         .homepage-main > div {
@@ -720,11 +720,11 @@ export default function Homepage() {
           min-height: 30vh;
           justify-content: flex-end;
           padding-bottom: calc(4.8rem + env(safe-area-inset-bottom));
-          color: #fffaf2;
+          color: var(--sonpin-surface);
           text-shadow: 0 2px 18px rgba(36, 27, 21, 0.48);
         }
         .ym-stage-title {
-          color: #fffaf2 !important;
+          color: var(--sonpin-surface) !important;
           font-family: "Noto Serif TC", "Songti TC", "Noto Serif CJK TC", Georgia, serif;
           font-size: clamp(1.08rem, 2.1vw, 2rem) !important;
           font-weight: 540 !important;
@@ -755,8 +755,8 @@ export default function Homepage() {
           pointer-events: auto;
           height: 34px !important;
           min-width: 108px !important;
-          border-color: color-mix(in srgb, var(--ym-stripe) 82%, #fffaf2) !important;
-          color: #fffaf2 !important;
+          border-color: color-mix(in srgb, var(--ym-stripe) 82%, var(--sonpin-surface)) !important;
+          color: var(--sonpin-surface) !important;
           background: color-mix(in srgb, var(--ym-panel) 26%, transparent) !important;
           padding-inline: 16px !important;
           font-size: 11px !important;
@@ -766,13 +766,13 @@ export default function Homepage() {
         }
         .ym-stage-cta:hover {
           background: color-mix(in srgb, var(--ym-stripe) 36%, rgba(255, 250, 242, 0.14)) !important;
-          color: #fffaf2 !important;
+          color: var(--sonpin-surface) !important;
         }
         .ym-stage-side-label {
           display: block;
-          border-bottom: 1px solid color-mix(in srgb, var(--ym-stripe) 78%, #fffaf2);
+          border-bottom: 1px solid color-mix(in srgb, var(--ym-stripe) 78%, var(--sonpin-surface));
           padding-bottom: 5px;
-          color: #fffaf2;
+          color: var(--sonpin-surface);
           font-size: 9px;
           font-weight: 560;
           letter-spacing: 0.055em;
@@ -934,7 +934,7 @@ export default function Homepage() {
             min-height: 32vh;
             justify-content: flex-end;
             padding-bottom: calc(116px + env(safe-area-inset-bottom));
-            color: #fffaf2;
+            color: var(--sonpin-surface);
             text-shadow: 0 2px 16px rgba(36, 27, 21, 0.48);
           }
           .ym-stage {
@@ -966,7 +966,7 @@ export default function Homepage() {
             max-width: min(76vw, 328px) !important;
           }
           .ym-stage-title {
-            color: #fffaf2 !important;
+            color: var(--sonpin-surface) !important;
             font-family: "Noto Serif TC", "Songti TC", "Noto Serif CJK TC", Georgia, serif;
             font-size: clamp(0.88rem, 3.65vw, 1.14rem) !important;
             font-weight: 520 !important;

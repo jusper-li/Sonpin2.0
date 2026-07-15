@@ -68,7 +68,7 @@ export default function MediaDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+      <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
           <p className="text-sm text-stone-500">{t('media.detail.loading', '載入中...')}</p>
@@ -86,7 +86,7 @@ export default function MediaDetailPage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+      <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24 pt-28">
           <p className="text-sm text-stone-500">{t('media.detail.notFound', '找不到這篇報導。')}</p>
@@ -107,7 +107,7 @@ export default function MediaDetailPage() {
   const showVideoLast = article.kind === 'video' && article.videoPlacement === 'bottom';
   const videoBlock =
     article.kind === 'video' && article.iframeUrl ? (
-      <div className="overflow-hidden rounded-2xl border border-[#eadfd1] bg-black shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-black shadow-sm">
         <div className="aspect-video w-full">
           <iframe
             src={article.iframeUrl}
@@ -125,11 +125,11 @@ export default function MediaDetailPage() {
     ) : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="flex-1 pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -142,7 +142,7 @@ export default function MediaDetailPage() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">{group?.title || t('media.detail.groupFallback', '相關報導')}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
               {group?.label || 'Media'}
             </p>
             <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
@@ -158,7 +158,7 @@ export default function MediaDetailPage() {
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 transition-colors hover:text-[#8e6448]"
+                  className="inline-flex items-center gap-2 transition-colors hover:text-[var(--sonpin-primary)]"
                 >
                   {t('media.detail.external', '原始來源')}
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -169,7 +169,7 @@ export default function MediaDetailPage() {
         </section>
 
         <section className="container mx-auto px-6 py-14">
-          <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+          <article className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
             {!article.htmlContent && (showVideoFirst ? videoBlock : article.featuredImage) ? (
               <div className="bg-stone-100">
                 <img src={article.featuredImage} alt={translatedTitle} className="h-auto w-full object-cover" loading="eager" decoding="async" />
@@ -178,7 +178,7 @@ export default function MediaDetailPage() {
 
             <div className="p-6 md:p-8">
               {article.kind === 'video' ? (
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#eadfd1] bg-white px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] bg-white px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                   <Play className="h-3.5 w-3.5" />
                   {t('media.detail.videoBadge', '影音報導')}
                 </div>
@@ -186,11 +186,11 @@ export default function MediaDetailPage() {
 
               {translatedContent ? (
                 <div
-                  className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]"
+                  className="space-y-5 text-sm leading-8 text-[var(--sonpin-primary-soft)] md:text-[15px]"
                   dangerouslySetInnerHTML={{ __html: translatedContent }}
                 />
               ) : article.bodyParagraphs.length > 0 ? (
-                <div className="space-y-5 text-sm leading-8 text-[#6d4f3d] md:text-[15px]">
+                <div className="space-y-5 text-sm leading-8 text-[var(--sonpin-primary-soft)] md:text-[15px]">
                   {article.bodyParagraphs.map((paragraph) => (
                     <p key={paragraph} className="whitespace-pre-line">
                       {paragraph}
@@ -198,7 +198,7 @@ export default function MediaDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-[#eadfd1] bg-white/70 p-5 text-sm leading-8 text-[#6d4f3d]">
+                <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white/70 p-5 text-sm leading-8 text-[var(--sonpin-primary-soft)]">
                   <p>{t('media.detail.empty', '目前沒有內容。')}</p>
                 </div>
               )}

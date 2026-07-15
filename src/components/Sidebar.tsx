@@ -22,6 +22,7 @@
   Store,
   Users,
   MessageSquare,
+  Palette,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -86,6 +87,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
     {
       title: t('admin.sidebar.group.settings', '系統設定'),
       items: [
+        { id: 'theme', label: '色系管理', icon: Palette },
         { id: 'social', label: t('admin.sidebar.social', '社群連結'), icon: Share2 },
         { id: 'languages', label: t('admin.sidebar.languages', '語系管理'), icon: Languages },
         { id: 'seo', label: t('admin.sidebar.seo', 'SEO 設定'), icon: Search },

@@ -130,7 +130,7 @@ export default function ContactPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+      <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
         <SiteHeader />
         <main className="flex-1">
           <section className="container mx-auto px-6 py-24 text-stone-500">載入中...</section>
@@ -142,7 +142,7 @@ export default function ContactPage() {
 
   if (!page) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+      <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
         <SiteHeader />
         <main className="flex-1">
           <section className="container mx-auto px-6 py-24 text-stone-500">找不到客服中心內容。</section>
@@ -153,22 +153,22 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] pt-32 pb-20 text-[#fffaf2]">
+        <section className="bg-gradient-to-br from-[#2b221d] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] pt-32 pb-20 text-[var(--sonpin-surface)]">
           <div className="container mx-auto px-6">
-            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
-              <Link to="/" className="transition-colors hover:text-[#fffaf2]">
+            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
+              <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
                 首頁
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">客服中心</span>
+              <span className="text-[var(--sonpin-background)]">客服中心</span>
             </div>
-            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#cfa87a]">Contact Us</p>
+            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[var(--sonpin-primary-warm)]">Contact Us</p>
             <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title}</h1>
-            <p className="max-w-2xl text-base font-light leading-relaxed text-[#eadfd1]">
+            <p className="max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-primary-border)]">
               {intro?.content || '如需訂購、門市資訊或售後協助，歡迎直接與我們聯絡。'}
             </p>
           </div>
@@ -178,52 +178,52 @@ export default function ContactPage() {
           <div className="grid gap-16 md:grid-cols-5">
             <div className="space-y-8 md:col-span-2">
               {translating && (
-                <div className="inline-flex items-center rounded-full border border-[#eadfd1]/60 bg-[#fffaf2]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                <div className="inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)]/60 bg-[var(--sonpin-surface)]/70 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                   翻譯中
                 </div>
               )}
 
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
-                  <Mail className="h-5 w-5 text-[#8e6448]" />
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
+                  <Mail className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">Email</p>
-                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">Email</p>
+                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[#2b221d] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_email || 'service@sonpin.tw'}
                   </a>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
-                  <Phone className="h-5 w-5 text-[#8e6448]" />
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
+                  <Phone className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">客服電話</p>
-                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[#8e6448]">
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">客服電話</p>
+                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[#2b221d] transition-colors hover:text-[var(--sonpin-primary)]">
                     {siteInfo.contact_phone || '02-2338-0018'}
                   </a>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf]">
-                  <Clock className="h-5 w-5 text-[#8e6448]" />
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
+                  <Clock className="h-5 w-5 text-[var(--sonpin-primary)]" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[#9f8a7b]">服務時間</p>
+                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">服務時間</p>
                   <p className="font-light text-[#2b221d]">週一至週日 上午 09:00 - 17:00</p>
-                  <p className="text-sm font-light text-[#9f8a7b]">實際營業時間請以門市公告為準</p>
+                  <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">實際營業時間請以門市公告為準</p>
                 </div>
               </div>
 
               {infoSections.length > 0 && (
-                <div className="space-y-6 border-t border-[#eadfd1] pt-4">
+                <div className="space-y-6 border-t border-[var(--sonpin-primary-border)] pt-4">
                   {infoSections.map((section) => (
                     <div key={section.title}>
-                      <h3 className="mb-2 text-sm font-medium text-[#6d4f3d]">{section.title}</h3>
-                      <p className="whitespace-pre-line text-sm leading-relaxed font-light text-[#9f8a7b]">{section.content}</p>
+                      <h3 className="mb-2 text-sm font-medium text-[var(--sonpin-primary-soft)]">{section.title}</h3>
+                      <p className="whitespace-pre-line text-sm leading-relaxed font-light text-[var(--sonpin-primary-muted)]">{section.content}</p>
                     </div>
                   ))}
                 </div>
@@ -233,17 +233,17 @@ export default function ContactPage() {
             <div className="md:col-span-3">
               {submitted ? (
                 <div className="flex h-full flex-col items-center justify-center py-20 text-center">
-                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#f4ecdf]">
-                    <CheckCircle className="h-10 w-10 text-[#8e6448]" />
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--sonpin-background)]">
+                    <CheckCircle className="h-10 w-10 text-[var(--sonpin-primary)]" />
                   </div>
                   <h2 className="mb-3 text-2xl font-light text-[#2b221d]">已送出訊息</h2>
-                  <p className="mb-8 max-w-sm leading-relaxed text-[#9f8a7b]">
+                  <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-muted)]">
                     我們已收到您的訊息，若有需要會儘快透過 Email 與您聯繫。
                   </p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
-                    className="text-sm font-light text-[#8e6448] hover:underline"
+                    className="text-sm font-light text-[var(--sonpin-primary)] hover:underline"
                   >
                     再送出一則
                   </button>
@@ -258,72 +258,72 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        姓名 <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                        姓名 <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder="請輸入姓名"
-                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        Email <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                        Email <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@email.com"
-                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">電話</label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">電話</label>
                       <input
                         type="tel"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="02-1234-5678"
-                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                        主旨 <span className="text-[#a97a4f]">*</span>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                        主旨 <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
                         placeholder="請填寫主旨"
-                        className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                        className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs uppercase tracking-widest text-[#9f8a7b]">
-                      訊息內容 <span className="text-[#a97a4f]">*</span>
+                    <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                      訊息內容 <span className="text-[var(--sonpin-primary)]">*</span>
                     </label>
                     <textarea
                       rows={6}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       placeholder="請描述您的需求或問題"
-                      className="w-full rounded-xl border border-[#eadfd1] bg-[#fffaf2] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[#d8c9ba] focus:border-transparent focus:ring-2 focus:ring-[#cfa87a]"
+                      className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-4 py-3 font-light text-[#2b221d] outline-none transition-all placeholder:text-[var(--sonpin-primary-border)] focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[#fffaf2] transition-colors hover:bg-[#5f4636]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-8 py-4 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
                   >
                     送出訊息
                   </button>

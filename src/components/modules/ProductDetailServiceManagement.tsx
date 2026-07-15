@@ -237,7 +237,7 @@ export default function ProductDetailServiceManagement() {
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">前台預覽</h2>
-          <div className="space-y-4 rounded-2xl border border-[#eadfd1] bg-[#fffaf2] p-5 text-sm">
+          <div className="space-y-4 rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-5 text-sm">
             {previewSections.length > 0 ? (
               previewSections.map((section) => (
                 <div key={section.title}>

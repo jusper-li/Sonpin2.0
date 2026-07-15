@@ -103,7 +103,7 @@ export default function BlogDetail() {
   }, [currentLanguage, sourceArticles, sourceCategories, sourceCategoryMap]);
 
   return (
-    <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="pt-20">
@@ -136,7 +136,7 @@ export default function BlogDetail() {
         ) : (
           <>
             <article>
-              <header className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_45%,#fffaf2_100%)]">
+              <header className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_45%,var(--sonpin-surface)_100%)]">
                 <div className="container mx-auto px-6 py-12 md:py-18">
                   <nav className="mb-9 flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
                     <Link to="/" className="transition-colors hover:text-stone-700">
@@ -163,7 +163,7 @@ export default function BlogDetail() {
                       <ArrowLeft className="h-3.5 w-3.5" />
                       {t('blog.detail.back', '返回列表')}
                     </Link>
-                    <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+                    <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
                       {stripBrandPrefix(article.category_name)}
                     </p>
                     <h1 className="max-w-4xl text-3xl font-light leading-[1.45] tracking-[0.08em] text-stone-950 md:text-5xl">
@@ -179,7 +179,7 @@ export default function BlogDetail() {
                           href={article.source_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 transition-colors hover:text-[#8e6448]"
+                          className="inline-flex items-center gap-2 transition-colors hover:text-[var(--sonpin-primary)]"
                         >
                           {t('blog.detail.source', '原文來源')}
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -193,7 +193,7 @@ export default function BlogDetail() {
               <div className="container mx-auto px-6 py-10 md:py-16">
                 <div className="mx-auto max-w-4xl">
                   {translating && (
-                    <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                    <div className="mb-4 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                       {t('common.translating', '翻譯中...')}
                     </div>
                   )}
@@ -219,11 +219,11 @@ export default function BlogDetail() {
             </article>
 
             {relatedArticles.length > 0 && (
-              <section className="border-t border-[#eadfd1] bg-[#f7f0e6]/60">
+              <section className="border-t border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]/60">
                 <div className="container mx-auto px-6 py-12 md:py-16">
                   <div className="mb-8 flex items-end justify-between gap-6">
                     <div>
-                      <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.34em] text-[#8e6448]/80">
+                      <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.34em] text-[var(--sonpin-primary)]/80">
                         Related
                       </p>
                       <h2 className="text-2xl font-light tracking-[0.12em] text-stone-900">

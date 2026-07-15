@@ -80,9 +80,9 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed inset-x-4 bottom-4 z-[70] mx-auto max-w-2xl">
-      <div className="overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#fffaf2] shadow-[0_24px_70px_-30px_rgba(41,37,36,0.35)]">
-        <div className="flex items-start gap-4 border-b border-[#eadfd1] px-5 py-4">
-          <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf] text-[#8e6448]">
+      <div className="overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_24px_70px_-30px_rgba(41,37,36,0.35)]">
+        <div className="flex items-start gap-4 border-b border-[var(--sonpin-primary-border)] px-5 py-4">
+          <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)] text-[var(--sonpin-primary)]">
             <ShieldCheck className="h-5 w-5" />
           </div>
 
@@ -90,7 +90,7 @@ export default function CookieConsent() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-[#2b221d]">{t('cookie.title', 'Cookie 與隱私偏好')}</p>
-                <p className="mt-1 text-sm leading-6 text-[#6d4f3d]">
+                <p className="mt-1 text-sm leading-6 text-[var(--sonpin-primary-soft)]">
                   {t(
                     'cookie.description',
                     '我們使用必要 Cookie 來維持網站運作，並可依你的選擇啟用分析與行銷用途。',
@@ -101,7 +101,7 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={close}
-                className="rounded-full p-1 text-[#9f8a7b] transition-colors hover:bg-[#f4ecdf] hover:text-[#2b221d]"
+                className="rounded-full p-1 text-[var(--sonpin-primary-muted)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[#2b221d]"
                 aria-label={t('cookie.close', '關閉')}
               >
                 <X className="h-4 w-4" />
@@ -114,26 +114,26 @@ export default function CookieConsent() {
           <button
             type="button"
             onClick={() => setShowDetails((value) => !value)}
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#8e6448] transition-colors hover:text-[#6d4f3d]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--sonpin-primary)] transition-colors hover:text-[var(--sonpin-primary-soft)]"
           >
             <Settings2 className="h-4 w-4" />
             {showDetails ? t('cookie.hide_details', '收起設定') : t('cookie.show_details', '調整 Cookie 設定')}
           </button>
 
           {showDetails && (
-            <div className="mt-4 grid gap-3 rounded-xl border border-[#eadfd1] bg-[#fbf6ee] p-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] p-4 sm:grid-cols-2">
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   checked
                   disabled
-                  className="mt-1 h-4 w-4 rounded border-[#d8c9ba] text-[#8e6448] focus:ring-[#cfa87a]"
+                  className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
                   <span className="block text-sm font-medium text-[#2b221d]">
                     {t('cookie.necessary.title', '必要 Cookie')}
                   </span>
-                  <span className="mt-1 block text-sm leading-6 text-[#6d4f3d]">
+                  <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
                     {t('cookie.necessary.description', '這些 Cookie 是網站基本運作所必需。')}
                   </span>
                 </span>
@@ -144,13 +144,13 @@ export default function CookieConsent() {
                   type="checkbox"
                   checked={state.analytics}
                   onChange={(event) => setState((current) => ({ ...current, analytics: event.target.checked }))}
-                  className="mt-1 h-4 w-4 rounded border-[#d8c9ba] text-[#8e6448] focus:ring-[#cfa87a]"
+                  className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
                   <span className="block text-sm font-medium text-[#2b221d]">
                     {t('cookie.analytics.title', '分析 Cookie')}
                   </span>
-                  <span className="mt-1 block text-sm leading-6 text-[#6d4f3d]">
+                  <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
                     {t('cookie.analytics.description', '幫助我們了解網站使用情況並持續改進。')}
                   </span>
                 </span>
@@ -161,13 +161,13 @@ export default function CookieConsent() {
                   type="checkbox"
                   checked={state.marketing}
                   onChange={(event) => setState((current) => ({ ...current, marketing: event.target.checked }))}
-                  className="mt-1 h-4 w-4 rounded border-[#d8c9ba] text-[#8e6448] focus:ring-[#cfa87a]"
+                  className="mt-1 h-4 w-4 rounded border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary)] focus:ring-[var(--sonpin-primary-warm)]"
                 />
                 <span>
                   <span className="block text-sm font-medium text-[#2b221d]">
                     {t('cookie.marketing.title', '行銷 Cookie')}
                   </span>
-                  <span className="mt-1 block text-sm leading-6 text-[#6d4f3d]">
+                  <span className="mt-1 block text-sm leading-6 text-[var(--sonpin-primary-soft)]">
                     {t('cookie.marketing.description', '用於個人化內容與廣告投放。')}
                   </span>
                 </span>
@@ -176,8 +176,8 @@ export default function CookieConsent() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-[#eadfd1] bg-[#f7f0e6] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs leading-5 tracking-[0.08em] text-[#9f8a7b]">
+        <div className="flex flex-col gap-3 border-t border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs leading-5 tracking-[0.08em] text-[var(--sonpin-primary-muted)]">
             {t('cookie.footer', '你可以隨時重新調整 Cookie 設定，變更會立即生效。')}
           </p>
 
@@ -185,7 +185,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={acceptNecessaryOnly}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8c9ba] px-4 py-2 text-sm font-medium text-[#6d4f3d] transition-colors hover:border-[#cfa87a] hover:text-[#2b221d]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary-soft)] transition-colors hover:border-[var(--sonpin-primary-warm)] hover:text-[#2b221d]"
             >
               <Check className="h-4 w-4" />
               {t('cookie.necessary_only', '只接受必要')}
@@ -193,7 +193,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={saveCurrent}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#8e6448] px-4 py-2 text-sm font-medium text-[#8e6448] transition-colors hover:bg-[#8e6448] hover:text-[#fffaf2]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--sonpin-primary)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary)] transition-colors hover:bg-[var(--sonpin-primary)] hover:text-[var(--sonpin-surface)]"
             >
               <Settings2 className="h-4 w-4" />
               {t('cookie.save', '儲存設定')}
@@ -201,7 +201,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={acceptAll}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-4 py-2 text-sm font-medium text-[#fffaf2] transition-colors hover:bg-[#8e6448]"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2b221d] px-4 py-2 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary)]"
             >
               <ShieldCheck className="h-4 w-4" />
               {t('cookie.accept_all', '全部接受')}

@@ -27,12 +27,12 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#fbf6ee_0%,#f7efe4_55%,#efe0d1_100%)] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,var(--sonpin-background)_0%,var(--sonpin-background)_55%,var(--sonpin-background)_100%)] p-4">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-[#eadfd1] bg-[#fffaf2] p-8 shadow-[0_24px_60px_rgba(61,43,31,0.12)]">
+        <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-8 shadow-[0_24px_60px_rgba(61,43,31,0.12)]">
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#2b221d] shadow-lg">
-              <ShieldCheck className="h-8 w-8 text-[#fffaf2]" />
+              <ShieldCheck className="h-8 w-8 text-[var(--sonpin-surface)]" />
             </div>
             <h1 className="text-3xl font-bold text-stone-800">{t('admin.login.title', '後台管理登入')}</h1>
             <p className="mt-2 leading-relaxed text-stone-500">
@@ -57,7 +57,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-[#d8c8b6] bg-[#fffaf2] py-3 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-[#a97a4f]"
+                  className="w-full rounded-lg border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] py-3 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary)]"
                   placeholder="k286336@gmail.com"
                   autoComplete="email"
                   required
@@ -75,7 +75,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-[#d8c8b6] bg-[#fffaf2] py-3 pl-10 pr-12 focus:border-transparent focus:ring-2 focus:ring-[#a97a4f]"
+                  className="w-full rounded-lg border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] py-3 pl-10 pr-12 focus:border-transparent focus:ring-2 focus:ring-[var(--sonpin-primary)]"
                   placeholder="888888"
                   autoComplete="current-password"
                   required
@@ -94,7 +94,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-lg bg-[#2b221d] py-3 font-medium text-[#fffaf2] transition-colors hover:bg-[#5b4637] disabled:cursor-not-allowed disabled:bg-[#d9c9b7]"
+              className="w-full rounded-lg bg-[#2b221d] py-3 font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)] disabled:cursor-not-allowed disabled:bg-[var(--sonpin-primary-border)]"
             >
               {isSubmitting ? t('admin.login.sending', '登入中...') : t('admin.login.sendCode', '登入後台')}
             </button>

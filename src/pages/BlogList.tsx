@@ -113,11 +113,11 @@ export default function BlogList() {
     articles.filter((article) => article.category_slug === slug).length;
 
   return (
-    <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -129,13 +129,13 @@ export default function BlogList() {
 
             <div className="grid gap-10 md:grid-cols-[1fr_360px] md:items-end">
               <div>
-                <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+                <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
                   Journal
                 </p>
                 <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
                   {activeCategory?.name || t('blog.heading', '淞品部落格')}
                 </h1>
-                <div className="mt-7 h-px w-14 bg-[#cfa87a]/70" />
+                <div className="mt-7 h-px w-14 bg-[var(--sonpin-primary-warm)]/70" />
                 <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
                   {activeCategory?.description || t('blog.subheading', '閱讀淞品土雞的最新文章、品牌故事與精選內容。')}
                 </p>
@@ -148,13 +148,13 @@ export default function BlogList() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t('blog.search', '搜尋文章')}
-                  className="w-full border border-[#d8c8b6] bg-[#fffaf2]/90 py-3.5 pl-11 pr-4 text-sm text-stone-700 outline-none transition-all placeholder:text-stone-300 focus:border-[#a97a4f] focus:bg-white focus:ring-4 focus:ring-[#d8bda4]/40"
+                  className="w-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)]/90 py-3.5 pl-11 pr-4 text-sm text-stone-700 outline-none transition-all placeholder:text-stone-300 focus:border-[var(--sonpin-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--sonpin-primary-border)]/40"
                 />
               </div>
             </div>
 
             {translating && (
-              <div className="mt-6 inline-flex items-center rounded-full border border-[#eadfd1] bg-[#fffaf2]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+              <div className="mt-6 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                   {t('common.translating', '翻譯中...')}
               </div>
             )}

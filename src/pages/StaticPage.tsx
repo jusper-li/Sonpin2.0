@@ -134,13 +134,13 @@ export default function StaticPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee]">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
       <SiteHeader />
 
       <main className="flex-1 pt-24">
         {loading && (
           <div className="flex items-center justify-center py-40">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#8e6448] border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--sonpin-primary)] border-t-transparent" />
           </div>
         )}
 
@@ -149,12 +149,12 @@ export default function StaticPage() {
             <h1 className="mb-4 text-3xl font-light text-[#2b221d]">
               {t('static.not_found.title', '找不到頁面')}
             </h1>
-            <p className="mb-8 text-[#9f8a7b]">
+            <p className="mb-8 text-[var(--sonpin-primary-muted)]">
               {t('static.not_found.description', '找不到你要查看的頁面。')}
             </p>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--sonpin-primary)] px-6 py-3 text-sm text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
             >
               {t('common.home', '首頁')}
               <ChevronRight size={16} />
@@ -164,27 +164,27 @@ export default function StaticPage() {
 
         {!loading && page && (
           <>
-            <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] py-20 text-[#fffaf2]">
+            <section className="bg-gradient-to-br from-[#2b221d] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] py-20 text-[var(--sonpin-surface)]">
               <div className="container mx-auto px-6">
                 {translating && (
-                  <div className="mb-4 inline-flex items-center rounded-full border border-[#eadfd1]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[#fffaf2]">
+                  <div className="mb-4 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)]/30 bg-white/10 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-surface)]">
                     {t('static.translating', '翻譯中...')}
                   </div>
                 )}
-                <div className="mb-6 flex items-center gap-2 text-sm text-[#9f8a7b]">
-                  <Link to="/" className="transition-colors hover:text-[#cfa87a]">
+                <div className="mb-6 flex items-center gap-2 text-sm text-[var(--sonpin-primary-muted)]">
+                  <Link to="/" className="transition-colors hover:text-[var(--sonpin-primary-warm)]">
                     {t('common.home', '首頁')}
                   </Link>
                   <ChevronRight size={14} />
-                  <span className="text-[#eadfd1]">{pageTitle}</span>
+                  <span className="text-[var(--sonpin-primary-border)]">{pageTitle}</span>
                 </div>
                 <h1 className="text-4xl font-light tracking-wide md:text-5xl">{pageTitle}</h1>
                 {pageDescription && (
-                  <p className="mt-4 max-w-2xl font-light leading-relaxed text-[#f4ecdf]">
+                  <p className="mt-4 max-w-2xl font-light leading-relaxed text-[var(--sonpin-background)]">
                     {pageDescription}
                   </p>
                 )}
-                <p className="mt-6 text-sm text-[#9f8a7b]">
+                <p className="mt-6 text-sm text-[var(--sonpin-primary-muted)]">
                   {t('static.updated_at', 'Updated: ')}
                   {formatDate(page.updated_at)}
                 </p>
@@ -193,21 +193,21 @@ export default function StaticPage() {
 
             <div className="container mx-auto max-w-4xl px-6 py-16">
               {page.sections.map((section, index) => (
-                <div key={index} className={`mb-12 ${section.type === 'intro' ? 'border-b border-[#eadfd1] pb-12' : ''}`}>
+                <div key={index} className={`mb-12 ${section.type === 'intro' ? 'border-b border-[var(--sonpin-primary-border)] pb-12' : ''}`}>
                   {section.type === 'intro' ? (
-                    <div className="rounded-2xl border border-[#eadfd1] bg-[#f4ecdf] p-8">
+                    <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] p-8">
                       <h2 className="mb-4 text-2xl font-light text-[#2b221d]">{localizeStaticText(section.title, currentLanguage)}</h2>
-                      <p className="whitespace-pre-line text-lg font-light leading-relaxed text-[#6d4f3d]">
+                      <p className="whitespace-pre-line text-lg font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
                         {localizeStaticText(section.content, currentLanguage)}
                       </p>
                     </div>
                   ) : (
                     <div>
                       <div className="mb-4 flex items-start gap-4">
-                        <div className="mt-1 h-6 w-1 flex-shrink-0 rounded-full bg-[#cfa87a]" />
+                        <div className="mt-1 h-6 w-1 flex-shrink-0 rounded-full bg-[var(--sonpin-primary-warm)]" />
                         <h2 className="text-xl font-medium text-[#2b221d]">{localizeStaticText(section.title, currentLanguage)}</h2>
                       </div>
-                      <div className="ml-5 whitespace-pre-line font-light leading-relaxed text-[#6d4f3d]">
+                      <div className="ml-5 whitespace-pre-line font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
                         {formatContent(section.content)}
                       </div>
                     </div>
@@ -215,22 +215,22 @@ export default function StaticPage() {
                 </div>
               ))}
 
-              <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#eadfd1] pt-8 sm:flex-row">
-                <p className="text-sm font-light text-[#9f8a7b]">{t('static.more_pages', '更多頁面')}</p>
+              <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[var(--sonpin-primary-border)] pt-8 sm:flex-row">
+                <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">{t('static.more_pages', '更多頁面')}</p>
                 <div className="flex flex-wrap items-center justify-center gap-4">
-                  <Link to="/privacy" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                  <Link to="/privacy" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {t('static.more_pages.privacy', '隱私權政策')}
                   </Link>
-                  <span className="text-[#eadfd1]">|</span>
-                  <Link to="/terms" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                  <span className="text-[var(--sonpin-primary-border)]">|</span>
+                  <Link to="/terms" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {t('static.more_pages.terms', '服務條款')}
                   </Link>
-                  <span className="text-[#eadfd1]">|</span>
-                  <Link to="/shipping" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                  <span className="text-[var(--sonpin-primary-border)]">|</span>
+                  <Link to="/shipping" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {t('static.more_pages.shipping', '配送說明')}
                   </Link>
-                  <span className="text-[#eadfd1]">|</span>
-                  <Link to="/returns" className="text-sm text-[#9f8a7b] transition-colors hover:text-[#8e6448]">
+                  <span className="text-[var(--sonpin-primary-border)]">|</span>
+                  <Link to="/returns" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
                     {t('static.more_pages.returns', '退換貨政策')}
                   </Link>
                 </div>
