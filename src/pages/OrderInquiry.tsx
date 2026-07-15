@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, BadgeInfo, CalendarDays, CheckCircle2, Clock3, Search, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowLeft, BadgeInfo, CalendarDays, CheckCircle2, Clock3, Copy, Search, ShieldCheck, Truck } from 'lucide-react';
 import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
@@ -35,6 +35,13 @@ type OrderLookupResult = {
   completed_at: string | null;
 };
 
+type TimelineStep = {
+  title: string;
+  description: string;
+  state: 'done' | 'active' | 'pending';
+  time?: string;
+};
+
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 const paymentStatusLabel: Record<string, string> = {
@@ -58,7 +65,7 @@ const shippingStatusLabel: Record<string, string> = {
   returned: '已退回',
 };
 
-const shippingTone = (value?: string | null) => {
+const statusTone = (value?: string | null) => {
   const normalized = (value || '').toLowerCase();
   if (normalized === 'paid' || normalized === 'completed' || normalized === 'shipped' || normalized === 'delivered') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-700';
@@ -69,12 +76,15 @@ const shippingTone = (value?: string | null) => {
   return 'border-amber-200 bg-amber-50 text-amber-700';
 };
 
+const copyButtonLabel = (state: 'idle' | 'copied') => (state === 'copied' ? '已複製訂單編號' : '複製訂單編號');
+
 export default function OrderInquiry() {
   const [searchParams] = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order_number') || '');
   const [verifier, setVerifier] = useState(searchParams.get('contact') || '');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [result, setResult] = useState<{
     order: OrderLookupResult;
     items: OrderItem[];
@@ -93,11 +103,64 @@ export default function OrderInquiry() {
     [orderNumber, verifier],
   );
 
+  const timeline = useMemo<TimelineStep[]>(() => {
+    if (!result) return [];
+
+    const createdAt = result.order.created_at ? new Date(result.order.created_at).toLocaleString('zh-TW') : '';
+    const completedAt = result.order.completed_at ? new Date(result.order.completed_at).toLocaleString('zh-TW') : '';
+    const paymentStatus = (result.order.payment_status || '').toLowerCase();
+    const shippingStatus = (result.order.shipping_status || '').toLowerCase();
+    const orderStatus = (result.order.status || '').toLowerCase();
+
+    const paymentDone = paymentStatus === 'paid';
+    const shippingDone = shippingStatus === 'shipped' || shippingStatus === 'delivered';
+    const orderDone = orderStatus === 'completed' || shippingStatus === 'delivered';
+
+    return [
+      {
+        title: '訂單已建立',
+        description: '系統已收到您的訂單資料。',
+        state: 'done',
+        time: createdAt,
+      },
+      {
+        title: '付款確認',
+        description: paymentDone ? '已確認匯款或付款成功。' : '等待匯款通知或付款確認。',
+        state: paymentDone ? 'done' : 'active',
+        time: paymentDone ? completedAt || createdAt : undefined,
+      },
+      {
+        title: '出貨處理',
+        description: shippingDone ? '訂單已出貨，配送中。' : '備貨完成後將安排出貨。',
+        state: shippingDone ? 'done' : paymentDone ? 'active' : 'pending',
+      },
+      {
+        title: '訂單完成',
+        description: orderDone ? '訂單已完成。' : '送達後將更新完成狀態。',
+        state: orderDone ? 'done' : shippingDone ? 'active' : 'pending',
+        time: completedAt || undefined,
+      },
+    ];
+  }, [result]);
+
+  const copyOrderNumber = async () => {
+    const text = result?.order.order_number || orderNumber;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 2000);
+    } catch {
+      setCopyState('idle');
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setErrorMessage('');
     setResult(null);
+    setCopyState('idle');
 
     try {
       const response = await fetch(`${supabaseBaseUrl}/functions/v1/order-lookup`, {
@@ -147,7 +210,7 @@ export default function OrderInquiry() {
                 <p className="mb-2 text-xs tracking-[0.28em] text-[var(--sonpin-primary)] uppercase">Order Lookup</p>
                 <h1 className="text-3xl font-light tracking-[0.08em] text-stone-800 md:text-4xl">訂單查詢</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
-                  非會員也可以查詢訂單。請輸入「訂單編號」以及「下單時使用的 Email 或手機號碼」。
+                  非會員也可以查詢訂單。請輸入「訂單編號」與「下單時使用的 Email 或手機號碼」。
                 </p>
               </div>
 
@@ -162,6 +225,7 @@ export default function OrderInquiry() {
                         onChange={(event) => setOrderNumber(event.target.value)}
                         placeholder="例如：ORD-1784014376030"
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[var(--sonpin-primary)] focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/50"
+                        required
                       />
                     </div>
 
@@ -173,6 +237,7 @@ export default function OrderInquiry() {
                         onChange={(event) => setVerifier(event.target.value)}
                         placeholder="例如：k286336@gmail.com 或 0912345678"
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[var(--sonpin-primary)] focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/50"
+                        required
                       />
                     </div>
 
@@ -209,9 +274,19 @@ export default function OrderInquiry() {
                             <p className="text-xs tracking-[0.18em] text-stone-400 uppercase">查詢結果</p>
                             <h2 className="mt-1 text-2xl font-light text-stone-900">訂單 {result.order.order_number}</h2>
                           </div>
-                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${shippingTone(result.order.payment_status)}`}>
-                            {paymentStatusLabel[(result.order.payment_status || '').toLowerCase()] || result.order.payment_status || '未知'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${statusTone(result.order.payment_status)}`}>
+                              {paymentStatusLabel[(result.order.payment_status || '').toLowerCase()] || result.order.payment_status || '未知'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void copyOrderNumber()}
+                              className="inline-flex items-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-3 py-1 text-xs font-medium text-[var(--sonpin-primary)] transition hover:bg-[var(--sonpin-background)]"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              {copyButtonLabel(copyState)}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -219,6 +294,35 @@ export default function OrderInquiry() {
                           <InfoCard icon={<ShieldCheck className="h-4 w-4" />} label="訂單狀態" value={orderStatusLabel[(result.order.status || '').toLowerCase()] || result.order.status || '—'} />
                           <InfoCard icon={<CheckCircle2 className="h-4 w-4" />} label="付款狀態" value={paymentStatusLabel[(result.order.payment_status || '').toLowerCase()] || result.order.payment_status || '—'} />
                           <InfoCard icon={<Truck className="h-4 w-4" />} label="出貨狀態" value={shippingStatusLabel[(result.order.shipping_status || '').toLowerCase()] || result.order.shipping_status || '—'} />
+                        </div>
+                      </section>
+
+                      <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
+                        <h3 className="mb-4 text-lg font-semibold text-stone-900">訂單進度時間軸</h3>
+                        <div className="space-y-4">
+                          {timeline.map((step, index) => (
+                            <div key={step.title} className="flex gap-4">
+                              <div className="flex flex-col items-center">
+                                <div
+                                  className={`flex h-10 w-10 items-center justify-center rounded-full border ${
+                                    step.state === 'done'
+                                      ? 'border-emerald-300 bg-emerald-50 text-emerald-600'
+                                      : step.state === 'active'
+                                        ? 'border-amber-300 bg-amber-50 text-amber-600'
+                                        : 'border-stone-200 bg-stone-50 text-stone-400'
+                                  }`}
+                                >
+                                  {step.state === 'done' ? <CheckCircle2 className="h-5 w-5" /> : <Clock3 className="h-5 w-5" />}
+                                </div>
+                                {index < timeline.length - 1 && <div className="mt-2 h-full w-px flex-1 bg-stone-200" />}
+                              </div>
+                              <div className="pb-4">
+                                <p className="text-sm font-medium text-stone-900">{step.title}</p>
+                                <p className="mt-1 text-sm leading-7 text-stone-500">{step.description}</p>
+                                {step.time ? <p className="mt-1 text-xs tracking-[0.12em] text-stone-400">{step.time}</p> : null}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </section>
 
@@ -283,9 +387,9 @@ export default function OrderInquiry() {
                   <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]/70 p-6">
                     <p className="text-xs tracking-[0.2em] text-[var(--sonpin-primary)] uppercase">查詢說明</p>
                     <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
-                      <li>1. 先找到訂單成立後收到的訂單編號。</li>
+                      <li>1. 先找出訂單成立後收到的訂單編號。</li>
                       <li>2. 輸入下單時使用的 Email 或手機號碼。</li>
-                      <li>3. 查詢成功後可看到訂單明細、運費與出貨狀態。</li>
+                      <li>3. 查詢成功後可看到訂單明細、付款與出貨進度。</li>
                     </ul>
                   </section>
 
@@ -300,9 +404,12 @@ export default function OrderInquiry() {
                       <p>帳號：{REMITTANCE_INFO.accountNumber}</p>
                       <p>戶名：{REMITTANCE_INFO.accountName}</p>
                     </div>
-                    <p className="mt-4 rounded-2xl bg-stone-50 p-4 text-sm leading-7 text-stone-600">
-                      查到訂單後，您可以對照匯款資訊完成付款，或把訂單編號提供給客服協助處理。
-                    </p>
+                    <Link
+                      to="/remittance-notice"
+                      className="mt-4 inline-flex items-center justify-center rounded-full border border-[var(--sonpin-primary-border)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary)] transition hover:bg-[var(--sonpin-background)]"
+                    >
+                      前往匯款通知
+                    </Link>
                   </section>
                 </aside>
               </div>

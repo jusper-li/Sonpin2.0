@@ -1079,6 +1079,22 @@ export default function Homepage() {
                     </Link>
                     <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || 'Brand story'}</span>
                   </div>
+                  {index === 0 && (
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-3 md:mt-5">
+                      <Link
+                        to="/order-query"
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--sonpin-primary-border)] bg-white/90 px-5 text-xs font-medium tracking-[0.18em] text-[var(--sonpin-ink)] shadow-sm transition hover:border-[var(--sonpin-primary)] hover:bg-white"
+                      >
+                        訂單查詢
+                      </Link>
+                      <Link
+                        to="/remittance-notice"
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--sonpin-primary)] bg-[var(--sonpin-ink)] px-5 text-xs font-medium tracking-[0.18em] text-white shadow-sm transition hover:opacity-95"
+                      >
+                        匯款通知
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
