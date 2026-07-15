@@ -66,7 +66,8 @@ export function useShippingQuote(items: CartItem[]) {
             .from('shipping_categories')
             .select('id, name, quantity, quantity_to, amount, is_active')
             .in('id', shippingCategoryIds)
-            .eq('is_active', true);
+            .order('name')
+            .order('quantity', { ascending: true });
 
           if (error) throw error;
           shippingCategories = data || [];
