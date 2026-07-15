@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
-import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
+import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { useShippingQuote } from '../hooks/useShippingQuote';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
@@ -18,7 +18,6 @@ export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -66,28 +65,64 @@ export default function Checkout() {
       const orderId = crypto.randomUUID();
       const shippingAmount = Number(shippingTotal || 0);
       const finalTotal = total + shippingAmount;
+      const shippingMethodSummary =
+        shippingBreakdown.length > 0
+          ? shippingBreakdown.map((item) => item.categoryName + (item.quantityLabel ? ' ' + item.quantityLabel : '')).join('、')
+          : '銀行轉帳';
 
-      const { error: orderError } = await supabase.from('orders').insert({
+      const insertMinimal = async (table: string, payload: unknown) => {
+        const response = await fetch(`${supabaseBaseUrl}/rest/v1/${table}`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            authorization: `Bearer ${supabaseAnonKey}`,
+            'content-type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const details = await response.text();
+          throw new Error(`Failed to insert ${table}: ${details || response.statusText}`);
+        }
+      };
+
+      await insertMinimal('orders', {
         id: orderId,
         order_number: orderNumber,
         status: 'pending',
+        source: 'frontend',
+        channel: 'storefront',
         subtotal: total,
         tax: 0,
         shipping: shippingAmount,
         total: finalTotal,
         payment_status: 'pending',
+        shipping_method: shippingMethodSummary,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        recipient_name: formData.name,
+        recipient_phone: formData.phone,
+        shipping_country: '台灣',
+        shipping_postal_code: formData.postalCode,
+        shipping_city: formData.city,
+        shipping_line1: formData.address,
         shipping_address: {
           name: formData.name,
+          recipient_name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          recipient_phone: formData.phone,
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
+          postal_code: formData.postalCode,
+          country: '台灣',
         },
         notes: formData.notes,
       });
-
-      if (orderError) throw orderError;
 
       const orderItems = items.map((item) => ({
         order_id: orderId,
@@ -98,10 +133,9 @@ export default function Checkout() {
         total: (item.salePrice || item.price) * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
+      await insertMinimal('order_items', orderItems);
 
-      const { error: paymentError } = await supabase.from('payments').insert({
+      await insertMinimal('payments', {
         order_id: orderId,
         amount: finalTotal,
         method: 'bank_transfer',
@@ -111,8 +145,6 @@ export default function Checkout() {
           customer_email: formData.email,
         },
       });
-
-      if (paymentError) throw paymentError;
 
       fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
         method: 'POST',
@@ -127,9 +159,11 @@ export default function Checkout() {
             customerName: formData.name,
             customerEmail: formData.email,
             items: orderItems,
+            subtotal: total,
             total: finalTotal,
             shipping: shippingAmount,
             shippingBreakdown,
+            shippingMethod: shippingMethodSummary,
             address: `${formData.address}, ${formData.city} ${formData.postalCode}`,
             paymentMethod: 'bank_transfer',
           },
@@ -137,7 +171,7 @@ export default function Checkout() {
       }).catch(() => {});
 
       clearCart();
-      setOrderSuccess({ orderNumber });
+      navigate('/checkout/result?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNumber), { replace: true });
     } catch (error) {
       console.error('Checkout failed:', error);
       alert('結帳失敗，請稍後再試。');
@@ -149,42 +183,6 @@ export default function Checkout() {
   const inputCls =
     'w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm tracking-wide text-stone-800 placeholder-stone-300 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100';
   const labelCls = 'mb-2 block text-xs tracking-[0.15em] text-stone-500 uppercase';
-
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
-        <SiteHeader />
-        <main className="flex flex-1 items-center justify-center bg-stone-50 px-6 py-20">
-          <div className="w-full max-w-md text-center">
-            <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-green-100 bg-green-50">
-              <div className="h-10 w-10 rounded-full border-4 border-green-600/80" />
-            </div>
-            <p className="mb-3 text-xs tracking-[0.3em] text-amber-700 uppercase">訂單已成立</p>
-            <h1 className="mb-3 text-3xl font-light text-stone-800">感謝您的訂購</h1>
-            <p className="mb-2 font-light text-stone-500">我們已收到您的訂單，稍後會寄出確認信。</p>
-            <p className="mb-8 text-sm font-light text-stone-400">
-              訂單編號：<span className="font-medium text-stone-700">{orderSuccess.orderNumber}</span>
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <button
-                onClick={() => navigate('/products')}
-                className="rounded-xl bg-stone-800 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-700"
-              >
-                繼續購物
-              </button>
-              <button
-                onClick={() => navigate('/')}
-                className="rounded-xl border border-stone-200 bg-white px-6 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50"
-              >
-                回首頁
-              </button>
-            </div>
-          </div>
-        </main>
-        <DeferredSiteFooter />
-      </div>
-    );
-  }
 
   const finalShippingTotal = Number(shippingTotal || 0);
   const finalOrderTotal = total + finalShippingTotal;

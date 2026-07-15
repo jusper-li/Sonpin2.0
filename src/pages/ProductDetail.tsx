@@ -29,6 +29,13 @@ import { extractProductPageDocument, type ExtractedProductPageDocument } from '.
 import { normalizeLang } from '../lib/language';
 import { shouldTranslateProductPage, translateHtmlContentWithT, translateProductPageDocumentWithT } from '../lib/productPageLiveTranslation';
 import { loadCatalogProducts } from '../lib/supabaseCatalog';
+import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
+import {
+  DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS,
+  normalizeProductDetailServiceSettings,
+  PRODUCT_DETAIL_SERVICE_SETTING_KEY,
+  type ProductDetailServiceSection,
+} from '../data/productDetailServiceInfo';
 const ProductPageCardRenderer = lazy(() => import('../components/product-page/ProductPageCardRenderer'));
 
 interface Product {
@@ -116,7 +123,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
     <div className="flex flex-col gap-3">
       <div
         ref={imgRef}
-        className="relative aspect-square overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#f7efe5] select-none cursor-zoom-in"
+        className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] select-none cursor-zoom-in"
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
@@ -145,7 +152,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
         )}
 
         {zoomed && images.length > 0 && (
-          <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#fffaf2]/90 p-1.5">
+          <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[var(--sonpin-surface)]/90 p-1.5">
             <ZoomIn className="h-4 w-4 text-stone-500" />
           </div>
         )}
@@ -155,14 +162,14 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
             <button
               onClick={prev}
               disabled={selected === 0}
-              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#fffaf2]/90 shadow-md backdrop-blur-sm transition-all hover:bg-white disabled:opacity-20"
+              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--sonpin-surface)]/90 shadow-md backdrop-blur-sm transition-all hover:bg-white disabled:opacity-20"
             >
               <ChevronLeft className="h-4 w-4 text-stone-700" />
             </button>
             <button
               onClick={next}
               disabled={selected === images.length - 1}
-              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#fffaf2]/90 shadow-md backdrop-blur-sm transition-all hover:bg-white disabled:opacity-20"
+              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--sonpin-surface)]/90 shadow-md backdrop-blur-sm transition-all hover:bg-white disabled:opacity-20"
             >
               <ChevronRight className="h-4 w-4 text-stone-700" />
             </button>
@@ -172,7 +179,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
                   key={index}
                   onClick={() => setSelected(index)}
                   className={`h-1.5 rounded-full transition-all ${
-                    index === selected ? 'w-5 bg-[#cfa87a]' : 'w-1.5 bg-stone-300'
+                    index === selected ? 'w-5 bg-[var(--sonpin-primary-warm)]' : 'w-1.5 bg-stone-300'
                   }`}
                 />
               ))}
@@ -187,10 +194,10 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
             <button
               key={index}
               onClick={() => setSelected(index)}
-              className={`aspect-square overflow-hidden rounded-xl border-2 bg-[#f7efe5] transition-all ${
+              className={`aspect-square overflow-hidden rounded-xl border-2 bg-[var(--sonpin-background)] transition-all ${
                 selected === index
-                  ? 'border-[#cfa87a] shadow-md scale-[1.03]'
-                  : 'border-[#eadfd1] opacity-70 hover:border-[#c7a08d] hover:opacity-100'
+                  ? 'border-[var(--sonpin-primary-warm)] shadow-md scale-[1.03]'
+                  : 'border-[var(--sonpin-primary-border)] opacity-70 hover:border-[var(--sonpin-primary-warm)] hover:opacity-100'
               }`}
             >
               <ProductImage
@@ -218,7 +225,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
   return (
     <article className="group">
         <Link to={`/products/${getProductCategoryPath(product.categories?.slug)}/${product.slug}`} className="block">
-        <div className="relative mb-3 overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#f7efe5] transition-all group-hover:border-[#d8bda4] group-hover:shadow-lg aspect-square">
+        <div className="relative mb-3 overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] transition-all group-hover:border-[var(--sonpin-primary-border)] group-hover:shadow-lg aspect-square">
           {storeOnly && (
             <span className="absolute left-3 top-3 z-10 rounded-full bg-stone-900/90 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-white shadow-lg">
               門市限定
@@ -233,7 +240,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
             sizes="(max-width: 768px) 46vw, 220px"
           />
         </div>
-        <h3 className="mb-1.5 text-sm font-medium leading-snug text-stone-800 transition-colors line-clamp-2 group-hover:text-[#8e6448]">
+        <h3 className="mb-1.5 text-sm font-medium leading-snug text-stone-800 transition-colors line-clamp-2 group-hover:text-[var(--sonpin-primary)]">
           {translatedName}
         </h3>
         <div className="flex items-center gap-2">
@@ -259,7 +266,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
               1
             );
           }}
-          className="mt-3 w-full rounded-xl border border-[#d8c8b6] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[#2b221d] hover:bg-[#2b221d] hover:text-[#fffaf2]"
+          className="mt-3 w-full rounded-xl border border-[var(--sonpin-primary-border)] py-2.5 text-xs font-medium text-stone-600 transition-all hover:border-[var(--sonpin-ink)] hover:bg-[var(--sonpin-ink)] hover:text-[var(--sonpin-surface)]"
         >
           {t('product.detail.related.add', '加入購物車')}
         </button>
@@ -271,50 +278,21 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 function ProductInfoSections({
   product,
   productPage,
+  serviceSections,
 }: {
   product: Product;
   productPage: ExtractedProductPageDocument;
+  serviceSections: ProductDetailServiceSection[];
 }) {
   const { t } = useLanguage();
-  const shippingGroups = [
-    {
-      title: t('product.detail.shipping.payment', '付款方式'),
-      items: [
-        t('product.detail.shipping.paymentItem1', '信用卡線上刷卡、Apple Pay'),
-        t('product.detail.shipping.paymentItem2', 'ATM 轉帳，請提供帳號後五碼方便對帳'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.delivery', '運送方式'),
-      items: [
-        t('product.detail.shipping.deliveryItem1', '7-11 取件：每件 NT$65'),
-        t('product.detail.shipping.deliveryItem2', '常溫宅配：黑貓宅急便或中華郵政，每件 NT$100'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.arrival', '出貨與到貨'),
-      items: [
-        t('product.detail.shipping.arrivalItem1', '收到訂單後約 1-2 個工作天出貨'),
-        t('product.detail.shipping.arrivalItem2', '7-11 取貨約 3-4 個工作天送達'),
-        t('product.detail.shipping.arrivalItem3', '宅配到府約 1-3 個工作天送達'),
-      ],
-    },
-    {
-      title: t('product.detail.shipping.return', '退換貨提醒'),
-      items: [
-        t('product.detail.shipping.returnItem1', '商品到貨後享有 7 天猶豫期，猶豫期並非試用期'),
-        t('product.detail.shipping.returnItem2', '食品基於衛生安全，已拆封商品恕無法辦理換貨'),
-        t('product.detail.shipping.returnItem3', '商品瑕疵請於 7 天內聯繫我們協助處理'),
-      ],
-    },
-  ];
+  const shippingGroups = serviceSections.length > 0 ? serviceSections : DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS;
 
   return (
-    <div className="space-y-8 border-t border-[#eadfd1] pt-8">
+    <div className="space-y-8 border-t border-[var(--sonpin-primary-border)] pt-8">
       <section className="scroll-mt-28">
         <div className="mb-4">
-          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.storyTag', '商品故事')}
+          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[var(--sonpin-primary)]">
+            {t('product.detail.storyTag', '故事')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.story', '商品故事')}
@@ -325,13 +303,13 @@ function ProductInfoSections({
             <ProductPageCardRenderer document={productPage.document} />
           </Suspense>
         ) : (
-          <div className="rounded-2xl border border-[#eadfd1] bg-[#fffaf2] p-5 md:p-6">
+          <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-5 md:p-6">
             {productPage.fallbackHtml ? (
               <div className="ym-product-content" dangerouslySetInnerHTML={{ __html: productPage.fallbackHtml }} />
             ) : product.description ? (
               <p className="whitespace-pre-line text-sm leading-8 text-stone-600">{product.description}</p>
             ) : (
-              <p className="text-sm italic text-stone-400">{t('product.detail.storyEmpty', '尚未提供商品故事內容。')}</p>
+              <p className="text-sm italic text-stone-400">{t('product.detail.storyEmpty', '尚未設定商品故事')}</p>
             )}
           </div>
         )}
@@ -339,20 +317,20 @@ function ProductInfoSections({
 
       <section className="scroll-mt-28">
         <div className="mb-4">
-          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
-            {t('product.detail.specTag', '規格資訊')}
+          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[var(--sonpin-primary)]">
+            {t('product.detail.specTag', '規格')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
-            {t('product.detail.spec', '規格資訊')}
+            {t('product.detail.spec', '商品規格')}
           </h2>
         </div>
         {product.specifications && product.specifications.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-[#eadfd1]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)]">
             {product.specifications.map((spec, index) => (
               <div
                 key={index}
                 className={`grid grid-cols-[35%_1fr] gap-4 px-4 py-3.5 text-sm ${
-                  index % 2 === 0 ? 'bg-[#f7efe5]/80' : 'bg-[#fffaf2]'
+                  index % 2 === 0 ? 'bg-[var(--sonpin-background)]/80' : 'bg-[var(--sonpin-surface)]'
                 }`}
               >
                 <span className="font-medium text-stone-500">
@@ -368,20 +346,20 @@ function ProductInfoSections({
             ))}
           </div>
         ) : (
-          <p className="text-sm italic text-stone-400">{t('product.detail.specEmpty', '暫無規格資訊')}</p>
+          <p className="text-sm italic text-stone-400">{t('product.detail.specEmpty', '尚未設定商品規格')}</p>
         )}
       </section>
 
       <section className="scroll-mt-28">
         <div className="mb-4">
-          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[#8e6448]">
+          <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-[var(--sonpin-primary)]">
             {t('product.detail.serviceTag', '配送與服務')}
           </p>
           <h2 className="text-xl font-light tracking-[0.08em] text-stone-800">
             {t('product.detail.service', '配送與服務')}
           </h2>
         </div>
-        <div className="space-y-5 rounded-2xl border border-[#eadfd1] bg-[#fffaf2] p-5 text-sm">
+        <div className="space-y-5 rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-5 text-sm">
           {shippingGroups.map(({ title, items }) => (
             <div key={title}>
               <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-[0.15em] text-stone-700">{title}</h3>
@@ -400,7 +378,6 @@ function ProductInfoSections({
     </div>
   );
 }
-
 export default function ProductDetail() {
   const { t, currentLanguage, translationRevision } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
@@ -414,6 +391,7 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [serviceSections, setServiceSections] = useState(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
   const productSectionRef = useRef<HTMLElement>(null);
   const extractedProductPage = useMemo(
     () => (product ? extractProductPageDocument(product.content) : { document: null, fallbackHtml: '' }),
@@ -500,6 +478,40 @@ export default function ProductDetail() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadServiceSections = async () => {
+      if (!isSupabaseContentEnabled) {
+        setServiceSections(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', PRODUCT_DETAIL_SERVICE_SETTING_KEY)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (cancelled) return;
+
+        setServiceSections(normalizeProductDetailServiceSettings(data?.setting_value).sections);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Failed to load product detail service settings:', error);
+        setServiceSections(DEFAULT_PRODUCT_DETAIL_SERVICE_SECTIONS);
+      }
+    };
+
+    void loadServiceSections();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const loadProduct = async () => {
@@ -914,7 +926,9 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-10 lg:mt-14">
-            <Suspense fallback={null}><ProductInfoSections product={product} productPage={activeProductPage} /></Suspense>
+            <Suspense fallback={null}>
+              <ProductInfoSections product={product} productPage={activeProductPage} serviceSections={serviceSections} />
+            </Suspense>
           </div>
         </section>
 

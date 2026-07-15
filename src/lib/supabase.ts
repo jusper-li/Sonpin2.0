@@ -20,7 +20,7 @@ const isExplicitlyDisabled = (value: unknown) => {
   return normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'disabled';
 };
 
-export const isSupabaseContentEnabled = import.meta.env.VITE_ENABLE_SUPABASE_CONTENT === 'true';
+export const isSupabaseContentEnabled = !isExplicitlyDisabled(import.meta.env.VITE_ENABLE_SUPABASE_CONTENT);
 export const isSupabaseAdminAuthEnabled = import.meta.env.VITE_ENABLE_SUPABASE_ADMIN_AUTH === 'true';
 export const isSupabaseAiEnabled = !isExplicitlyDisabled(import.meta.env.VITE_ENABLE_SUPABASE_AI);
 

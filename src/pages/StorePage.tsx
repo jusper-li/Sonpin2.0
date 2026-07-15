@@ -57,8 +57,8 @@ const sortStores = (items: StoreView[]) =>
 const StoreImage = ({ src, alt }: { src?: string; alt: string }) => {
   if (!src) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-[#f4ecdf] to-[#eadfd1]">
-        <MapPin className="h-12 w-12 text-[#8e6448]/70" />
+      <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-[var(--sonpin-background)] to-[var(--sonpin-primary-border)]">
+        <MapPin className="h-12 w-12 text-[var(--sonpin-primary)]/70" />
       </div>
     );
   }
@@ -159,15 +159,15 @@ export default function StorePage() {
   );
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('store.loading', '門市資訊載入中...')}</div>;
+    return <div className="min-h-screen bg-[var(--sonpin-background)] p-6 text-stone-500">{t('store.loading', '門市資訊載入中...')}</div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="flex-1 pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -176,7 +176,7 @@ export default function StorePage() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">{t('store.breadcrumb', '門市資訊')}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
               {t('store.kicker', 'Stores')}
             </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
@@ -190,41 +190,41 @@ export default function StorePage() {
 
         <section className="container mx-auto px-6 py-10">
           {normalizedStores.length === 0 ? (
-            <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
+            <div className="rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-10 text-center text-stone-500">
               {t('store.empty', '目前沒有門市資料。')}
             </div>
           ) : (
             <>
               {northStores.length > 0 && (
                 <div className="mb-10">
-                  <div className="mb-4 inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                  <div className="mb-4 inline-flex rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                     {t('store.section.branches', '門市')}
                   </div>
                   <div className="grid gap-6 lg:grid-cols-2">
                     {northStores.map((store) => (
-                      <article key={store.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                      <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
                         <StoreImage src={store.images[0]} alt={t(`store.items.${store.id}.name`, store.name)} />
                         <div className="p-6">
-                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
-                          <p className="mt-2 text-sm text-[#9f8a7b]">
+                          <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <p className="mt-2 text-sm text-[var(--sonpin-primary-muted)]">
                             {store.city === 'factory' ? t('store.section.factory', '工廠') : t(`store.city.${store.city}`, store.city)}
                           </p>
-                          <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
+                          <div className="mt-5 space-y-3 text-sm text-[var(--sonpin-primary-soft)]">
                             <p className="flex items-start gap-3">
-                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                               <span>{store.phone}</span>
                             </p>
                             <p className="flex items-start gap-3">
-                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                               <span>{t(`store.items.${store.id}.address`, store.address)}</span>
                             </p>
                             {store.openingHours && (
                               <p className="flex items-start gap-3">
-                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                                 <span className="whitespace-pre-line">{t(`store.items.${store.id}.openingHours`, store.openingHours)}</span>
                               </p>
                             )}
-                            {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
+                            {store.email && <p className="text-sm text-[var(--sonpin-primary-muted)]">{store.email}</p>}
                           </div>
                         </div>
                       </article>
@@ -235,30 +235,30 @@ export default function StorePage() {
 
               {factoryStores.length > 0 && (
                 <div className="space-y-6">
-                  <div className="inline-flex rounded-full border border-[#eadfd1] bg-[#fffaf2] px-3 py-1 text-[11px] tracking-[0.18em] text-[#8e6448]">
+                  <div className="inline-flex rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                     {t('store.section.factory', '工廠')}
                   </div>
                   {factoryStores.map((store) => (
-                    <article key={store.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                    <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
                       <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
                         <div>
-                          <h2 className="text-xl font-medium text-[#2b221d]">{t(`store.items.${store.id}.name`, store.name)}</h2>
-                          <div className="mt-5 space-y-3 text-sm text-[#6d4f3d]">
+                          <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <div className="mt-5 space-y-3 text-sm text-[var(--sonpin-primary-soft)]">
                             <p className="flex items-start gap-3">
-                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                               <span>{store.phone}</span>
                             </p>
                             <p className="flex items-start gap-3">
-                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                               <span>{t(`store.items.${store.id}.address`, store.address)}</span>
                             </p>
                             {store.openingHours && (
                               <p className="flex items-start gap-3">
-                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8e6448]" />
+                                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
                                 <span className="whitespace-pre-line">{t(`store.items.${store.id}.openingHours`, store.openingHours)}</span>
                               </p>
                             )}
-                            {store.email && <p className="text-sm text-[#9f8a7b]">{store.email}</p>}
+                            {store.email && <p className="text-sm text-[var(--sonpin-primary-muted)]">{store.email}</p>}
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -276,8 +276,8 @@ export default function StorePage() {
                               />
                             ))
                           ) : (
-                            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[#f4ecdf] to-[#eadfd1]">
-                              <MapPin className="h-10 w-10 text-[#8e6448]/70" />
+                            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--sonpin-background)] to-[var(--sonpin-primary-border)]">
+                              <MapPin className="h-10 w-10 text-[var(--sonpin-primary)]/70" />
                             </div>
                           )}
                         </div>

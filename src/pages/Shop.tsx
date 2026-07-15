@@ -177,15 +177,15 @@ export default function Shop() {
   const categoryCount = (id: string | null) => (id ? products.filter((item) => item.category_slug === id).length : products.length);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ee] p-6 text-stone-500">{t('shop.loading', '商品列表載入中...')}</div>;
+    return <div className="min-h-screen bg-[var(--sonpin-background)] p-6 text-stone-500">{t('shop.loading', '商品列表載入中...')}</div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="flex-1 pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -194,7 +194,7 @@ export default function Shop() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">{t('shop.breadcrumb', '商品列表')}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
               {t('shop.kicker', '商品系列')}
             </p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
@@ -205,7 +205,7 @@ export default function Shop() {
 
         <section className="container mx-auto px-6 py-12">
           <div className="flex flex-col gap-4">
-            <div className="flex gap-2 rounded-full border border-[#d8c8b6] bg-[#fffaf2] p-2">
+            <div className="flex gap-2 rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-2">
               <Search className="ml-2 mt-2.5 h-4 w-4 text-stone-400" />
               <input
                 value={searchQuery}
@@ -275,7 +275,7 @@ export default function Shop() {
 
         <section className="container mx-auto px-6 pb-16">
           {filteredProducts.length === 0 ? (
-            <div className="rounded-3xl border border-[#eadfd1] bg-[#fffaf2] p-10 text-center text-stone-500">
+            <div className="rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-10 text-center text-stone-500">
               {t('shop.empty', '目前沒有符合條件的商品。')}
             </div>
           ) : (
@@ -303,7 +303,7 @@ export default function Shop() {
                 };
 
                 return (
-                  <article key={product.id} className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+                  <article key={product.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
                     <Link to={getProductPath(product.slug, product.category_slug)}>
                       <div className="relative aspect-square bg-stone-100">
                         {storeOnly && (

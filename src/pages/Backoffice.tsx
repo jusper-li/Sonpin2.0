@@ -27,6 +27,8 @@ const KnowledgeBaseManagement = lazy(() => import('../components/modules/Knowled
 const AITraining = lazy(() => import('../components/modules/AITraining'));
 const StaticPageManagement = lazy(() => import('../components/modules/StaticPageManagement'));
 const VersionLogManagement = lazy(() => import('../components/modules/VersionLogManagement'));
+const ProductDetailServiceManagement = lazy(() => import('../components/modules/ProductDetailServiceManagement'));
+const ThemeManagement = lazy(() => import('../components/modules/ThemeManagement'));
 
 function ModuleLoading() {
   return (
@@ -121,6 +123,10 @@ function AdminPanel() {
         return <PermissionManagement />;
       case 'static-pages':
         return <StaticPageManagement />;
+      case 'product-detail-service':
+        return <ProductDetailServiceManagement />;
+      case 'theme':
+        return <ThemeManagement />;
       case 'version-logs':
         return <VersionLogManagement />;
       default:

@@ -4,6 +4,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { CartProvider } from './contexts/CartContext';
 import { MemberAuthProvider } from './contexts/MemberAuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import ThemeBootstrap from './components/ThemeBootstrap';
 
 const Homepage = lazy(() => import('./pages/Homepage'));
 const Backoffice = lazy(() => import('./pages/Backoffice'));
@@ -65,6 +66,7 @@ function App() {
         <MemberAuthProvider>
           <BrowserRouter>
             <ScrollToTop />
+            <ThemeBootstrap />
             <Suspense fallback={<RouteLoading />}>
               <Routes>
                 <Route path="/" element={<Homepage />} />

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Coffee, Eye, EyeOff, KeyRound, Lock, Mail, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -268,7 +268,7 @@ export default function MemberAuth() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fbf6ee]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--sonpin-background)]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700" />
       </div>
     );
@@ -292,13 +292,13 @@ export default function MemberAuth() {
           : '輸入信箱後，我們會寄送重設密碼連結。';
 
   return (
-    <div className="flex min-h-screen bg-[#fbf6ee]">
-      <div className="relative hidden overflow-hidden bg-[#c7a08d] lg:flex lg:w-1/2">
+    <div className="flex min-h-screen bg-[var(--sonpin-background)]">
+      <div className="relative hidden overflow-hidden bg-[var(--sonpin-primary-warm)] lg:flex lg:w-1/2">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-30"
           style={{ backgroundImage: 'url(https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=1200)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2b221d]/70 via-[#5b4637]/50 to-[#d8bda4]/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--sonpin-ink)]/70 via-[var(--sonpin-primary-soft)]/50 to-[var(--sonpin-primary-border)]/30" />
         <div className="relative z-10 flex w-full flex-col justify-between p-12">
           <Link to="/" className="inline-block">
             <img src="/LOGO-1.png" alt="Sonpin" className="h-20 opacity-95 drop-shadow-[0_2px_6px_rgba(43,34,29,0.22)]" />
@@ -306,20 +306,20 @@ export default function MemberAuth() {
 
           <div>
             <div className="mb-6 flex items-center gap-3">
-              <div className="h-px w-10 bg-[#eadfd1]" />
-              <Coffee className="h-5 w-5 text-[#f3e6d3]" />
+              <div className="h-px w-10 bg-[var(--sonpin-primary-border)]" />
+              <Coffee className="h-5 w-5 text-[var(--sonpin-primary-border)]" />
             </div>
-            <h2 className="mb-4 text-4xl font-light leading-snug text-[#fffaf2]">
+            <h2 className="mb-4 text-4xl font-light leading-snug text-[var(--sonpin-surface)]">
               登入後，收藏與訂單都在這裡
               <br />
               <span className="text-amber-300">會員登入後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。</span>
             </h2>
-            <p className="max-w-xs text-sm font-light leading-relaxed text-[#f7efe5]">
+            <p className="max-w-xs text-sm font-light leading-relaxed text-[var(--sonpin-background)]">
               登入會員後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。
             </p>
           </div>
 
-          <div className="flex items-center gap-8 text-xs uppercase tracking-widest text-[#eadfd1]">
+          <div className="flex items-center gap-8 text-xs uppercase tracking-widest text-[var(--sonpin-primary-border)]">
             <span>Premium Coffee</span>
             <span className="h-1 w-1 rounded-full bg-amber-500" />
             <span>Since 2020</span>
@@ -375,7 +375,7 @@ export default function MemberAuth() {
 
             {error && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
             {successMsg && (
-              <div className="mb-5 flex items-center gap-2 rounded-xl border border-[#e1c7b4] bg-[#f3e6d3] px-4 py-3 text-sm text-[#8e6448]">
+              <div className="mb-5 flex items-center gap-2 rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-primary-border)] px-4 py-3 text-sm text-[var(--sonpin-primary)]">
                 <Coffee className="h-4 w-4 flex-shrink-0" />
                 {successMsg}
               </div>
@@ -393,7 +393,7 @@ export default function MemberAuth() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
-                      className="w-full rounded-xl border border-[#e1d4c6] bg-[#fffaf2] py-3 pl-10 pr-4 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-[#a97a4f] focus:outline-none focus:ring-2 focus:ring-[#d8bda4]/40"
+                      className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] py-3 pl-10 pr-4 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-[var(--sonpin-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/40"
                     />
                   </div>
                 </div>
@@ -408,7 +408,7 @@ export default function MemberAuth() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="請輸入密碼"
                       required
-                      className="w-full rounded-xl border border-[#e1d4c6] bg-[#fffaf2] py-3 pl-10 pr-11 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-[#a97a4f] focus:outline-none focus:ring-2 focus:ring-[#d8bda4]/40"
+                      className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] py-3 pl-10 pr-11 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-[var(--sonpin-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/40"
                     />
                     <button
                       type="button"
@@ -421,7 +421,7 @@ export default function MemberAuth() {
                 </div>
 
                 <div className="flex justify-end">
-                  <button type="button" onClick={() => switchTab('forgot')} className="text-xs text-stone-400 transition-colors hover:text-[#8e6448]">
+                  <button type="button" onClick={() => switchTab('forgot')} className="text-xs text-stone-400 transition-colors hover:text-[var(--sonpin-primary)]">
                     忘記密碼？
                   </button>
                 </div>
@@ -429,14 +429,14 @@ export default function MemberAuth() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2b221d] py-3 text-sm font-medium text-[#fffaf2] transition-all hover:bg-[#5b4637] active:bg-[#433226] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--sonpin-ink)] py-3 text-sm font-medium text-[var(--sonpin-surface)] transition-all hover:bg-[var(--sonpin-primary-soft)] active:bg-[var(--sonpin-primary-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : '登入'}
                 </button>
 
                 <p className="text-center text-sm text-stone-500">
                   還沒有帳號？{' '}
-                  <button type="button" onClick={() => switchTab('register')} className="font-medium text-[#8e6448] transition-colors hover:text-[#6d4f3d]">
+                  <button type="button" onClick={() => switchTab('register')} className="font-medium text-[var(--sonpin-primary)] transition-colors hover:text-[var(--sonpin-primary-soft)]">
                     立即註冊
                   </button>
                 </p>
@@ -534,7 +534,7 @@ export default function MemberAuth() {
               </form>
             ) : tab === 'verify' ? (
               <div className="space-y-5">
-                <div className="rounded-xl border border-[#e1d4c6] bg-white px-4 py-4 text-sm leading-relaxed text-stone-600">
+                <div className="rounded-xl border border-[var(--sonpin-primary-border)] bg-white px-4 py-4 text-sm leading-relaxed text-stone-600">
                   請輸入寄到 <strong className="text-stone-800">{pendingVerificationEmail || email}</strong> 的 6 碼驗證碼。
                 </div>
 

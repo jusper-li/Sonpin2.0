@@ -289,7 +289,7 @@ export default function ServiceManagement() {
 
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-2 text-slate-900">
-          <Sparkles className="h-5 w-5 text-[#8e6448]" />
+          <Sparkles className="h-5 w-5 text-[var(--sonpin-primary)]" />
           <h2 className="text-lg font-bold">說明</h2>
         </div>
         <p className="text-sm leading-7 text-slate-600">

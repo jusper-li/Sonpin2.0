@@ -55,7 +55,7 @@ export default function ServiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+      <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
           <p className="text-sm text-stone-500">{t('service.detail.loading', '載入中...')}</p>
@@ -67,7 +67,7 @@ export default function ServiceDetailPage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-[#fbf6ee] text-stone-800">
+      <div className="min-h-screen bg-[var(--sonpin-background)] text-stone-800">
         <SiteHeader />
         <main className="container mx-auto px-6 py-24">
           <p className="text-sm text-stone-500">{t('service.detail.notFound', '找不到這篇文章。')}</p>
@@ -78,11 +78,11 @@ export default function ServiceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="flex-1 pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -93,7 +93,7 @@ export default function ServiceDetailPage() {
                 {t('service.list.title', '老饕分享')}
               </Link>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
               {t('service.detail.kicker', 'Article')}
             </p>
             <h1 className="max-w-4xl text-3xl font-light leading-tight tracking-[0.06em] text-stone-900 md:text-4xl">
@@ -103,7 +103,7 @@ export default function ServiceDetailPage() {
         </section>
 
         <section className="container mx-auto px-6 py-14">
-          <article className="overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm">
+          <article className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
             <img src={article.featured_image || '/sonpin-images/153285217452.jpg'} alt={translatedTitle} className="h-auto w-full object-cover" loading="lazy" />
             <div className="p-6 md:p-8">
               <div className="overflow-hidden rounded-2xl bg-stone-50">

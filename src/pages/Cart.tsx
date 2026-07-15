@@ -29,12 +29,12 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
         <SiteHeader />
-        <main className="flex-1 bg-[#fbf6ee] flex items-center justify-center pt-20 pb-20">
+        <main className="flex-1 bg-[var(--sonpin-background)] flex items-center justify-center pt-20 pb-20">
           <div className="text-center">
             <div className="w-20 h-20 bg-stone-100 flex items-center justify-center mx-auto mb-6">
               <ShoppingBag className="w-10 h-10 text-stone-300" />
             </div>
-            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[#8e6448]/70 mb-3">Cart</p>
+            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-3">Cart</p>
             <h1 className="text-2xl font-light text-stone-700 mb-3 tracking-[0.15em]">
               {t('cart.empty.title', '購物車目前是空的')}
             </h1>
@@ -43,7 +43,7 @@ export default function Cart() {
             </p>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#2b221d] hover:bg-[#5b4637] text-[#fffaf2] transition-all duration-300 text-xs tracking-[0.2em] uppercase font-medium"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[var(--sonpin-ink)] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] transition-all duration-300 text-xs tracking-[0.2em] uppercase font-medium"
             >
               {t('cart.go_shop', '前往購物')}
             </Link>
@@ -59,8 +59,8 @@ export default function Cart() {
   return (
     <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
       <SiteHeader />
-      <main className="flex-1 bg-[#fbf6ee] pt-20 pb-20">
-        <div className="bg-[#f7f0e6] border-b border-[#eadfd1]">
+      <main className="flex-1 bg-[var(--sonpin-background)] pt-20 pb-20">
+        <div className="bg-[var(--sonpin-background)] border-b border-[var(--sonpin-primary-border)]">
           <div className="container mx-auto px-6 py-14 md:py-20">
             <Link
               to="/shop"
@@ -69,12 +69,12 @@ export default function Cart() {
               <ChevronLeft className="w-3.5 h-3.5" />
               {t('cart.continue', '繼續購物')}
             </Link>
-            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[#8e6448]/70 mb-4">Cart</p>
+            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-4">Cart</p>
             <h1 className="text-4xl md:text-5xl font-light text-stone-700 tracking-[0.15em] mb-5">
               {t('cart.title', '購物車')}
             </h1>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-px bg-[#cfa87a]/50" />
+              <div className="w-10 h-px bg-[var(--sonpin-primary-warm)]/50" />
               <p className="text-xs text-stone-400 tracking-[0.2em] font-light">
                 {t('cart.count', `共 ${itemCount} 件商品`)}
               </p>
@@ -88,11 +88,11 @@ export default function Cart() {
               {localizedItems.map((item) => (
                 <div
                   key={item.productId}
-                  className="bg-[#fffaf2] p-5 border border-[#eadfd1] hover:border-[#d8bda4] hover:shadow-[0_6px_24px_rgba(120,100,80,0.08)] transition-all duration-300"
+                  className="bg-[var(--sonpin-surface)] p-5 border border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary-border)] hover:shadow-[0_6px_24px_rgba(120,100,80,0.08)] transition-all duration-300"
                 >
                   <div className="flex gap-5">
                     <Link to={`/product/${item.slug}`} className="flex-shrink-0">
-                      <div className="w-20 h-20 md:w-24 md:h-24 bg-[#f7efe5] overflow-hidden border border-[#eadfd1]">
+                      <div className="w-20 h-20 md:w-24 md:h-24 bg-[var(--sonpin-background)] overflow-hidden border border-[var(--sonpin-primary-border)]">
                         {item.image ? (
                           <ProductImage
                             src={item.image}
@@ -111,7 +111,7 @@ export default function Cart() {
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 pr-3">
                           <Link to={`/product/${item.slug}`}>
-                            <h3 className="text-sm font-medium text-stone-700 mb-1.5 hover:text-[#8e6448] transition-colors tracking-wide line-clamp-1">
+                            <h3 className="text-sm font-medium text-stone-700 mb-1.5 hover:text-[var(--sonpin-primary)] transition-colors tracking-wide line-clamp-1">
                               {item.translatedName}
                             </h3>
                           </Link>
@@ -142,17 +142,17 @@ export default function Cart() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center border border-[#d8c8b6]">
+                        <div className="flex items-center border border-[var(--sonpin-primary-border)]">
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-[#f7efe5] transition-all duration-200 text-stone-500"
+                            className="w-7 h-7 flex items-center justify-center hover:bg-[var(--sonpin-background)] transition-all duration-200 text-stone-500"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
                           <span className="w-10 text-center text-sm text-stone-700 font-medium">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-[#f7efe5] transition-all duration-200 text-stone-500"
+                            className="w-7 h-7 flex items-center justify-center hover:bg-[var(--sonpin-background)] transition-all duration-200 text-stone-500"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
@@ -178,8 +178,8 @@ export default function Cart() {
             </div>
 
             <div className="lg:col-span-1">
-              <div className="bg-[#f7f0e6] p-6 border border-[#eadfd1] sticky top-28">
-                <p className="text-[10px] font-medium tracking-[0.3em] uppercase text-[#8e6448]/70 mb-6">
+              <div className="bg-[var(--sonpin-background)] p-6 border border-[var(--sonpin-primary-border)] sticky top-28">
+                <p className="text-[10px] font-medium tracking-[0.3em] uppercase text-[var(--sonpin-primary)]/70 mb-6">
                   {t('cart.summary', '訂單摘要')}
                 </p>
 
@@ -193,7 +193,7 @@ export default function Cart() {
                     <span>{shippingLoading ? '計算中...' : formatCurrency(shippingTotal)}</span>
                   </div>
                   {shippingBreakdown.length > 0 && (
-                    <div className="space-y-2 rounded-lg bg-[#fffaf2] px-3 py-3 text-xs text-stone-500">
+                    <div className="space-y-2 rounded-lg bg-[var(--sonpin-surface)] px-3 py-3 text-xs text-stone-500">
                       {shippingBreakdown.map((item) => (
                         <div key={item.breakdownKey} className="flex items-center justify-between gap-3">
                           <span className="truncate">
@@ -205,7 +205,7 @@ export default function Cart() {
                       ))}
                     </div>
                   )}
-                  <div className="border-t border-[#d8c8b6] pt-4 mt-4">
+                  <div className="border-t border-[var(--sonpin-primary-border)] pt-4 mt-4">
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs text-stone-500 tracking-[0.1em] uppercase font-medium">
                         {t('cart.total', '合計')}
@@ -216,14 +216,14 @@ export default function Cart() {
                 </div>
 
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="w-6 h-px bg-[#cfa87a]/50" />
+                  <div className="w-6 h-px bg-[var(--sonpin-primary-warm)]/50" />
                   <p className="text-xs text-stone-400 tracking-wide font-light">運費依商品分類與數量自動計算</p>
                 </div>
 
                 <div className="space-y-2.5 mb-6">
                   {cartPromises.map(({ icon: Icon, label, text }) => (
-                    <div key={label} className="flex items-center gap-3 border border-[#eadfd1] bg-[#fffaf2] px-3 py-2.5">
-                      <Icon className="w-4 h-4 text-[#8e6448] flex-shrink-0" />
+                    <div key={label} className="flex items-center gap-3 border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-2.5">
+                      <Icon className="w-4 h-4 text-[var(--sonpin-primary)] flex-shrink-0" />
                       <div>
                         <p className="text-xs font-medium text-stone-700">{label}</p>
                         <p className="text-[11px] text-stone-400 mt-0.5">{text}</p>
@@ -234,14 +234,14 @@ export default function Cart() {
 
                 <Link
                   to="/checkout"
-                  className="w-full block py-3.5 bg-[#2b221d] hover:bg-[#5b4637] text-[#fffaf2] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
+                  className="w-full block py-3.5 bg-[var(--sonpin-ink)] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
                 >
                   前往結帳
                 </Link>
 
                 <Link
                   to="/shop"
-                  className="w-full block mt-3 py-3.5 text-stone-500 hover:text-stone-700 text-center transition-all duration-300 border border-[#d8c8b6] hover:border-[#a97a4f] text-xs tracking-[0.15em] uppercase font-light"
+                  className="w-full block mt-3 py-3.5 text-stone-500 hover:text-stone-700 text-center transition-all duration-300 border border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)] text-xs tracking-[0.15em] uppercase font-light"
                 >
                   繼續購物
                 </Link>

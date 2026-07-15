@@ -64,11 +64,11 @@ export default function MediaPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
+    <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
 
       <main className="flex-1 pt-20">
-        <section className="border-b border-[#eadfd1] bg-[linear-gradient(135deg,#fbf6ee_0%,#f7efe5_44%,#fffaf2_100%)]">
+        <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
@@ -77,7 +77,7 @@ export default function MediaPage() {
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">{pageTitle}</span>
             </nav>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">
               {pageTitle}
             </p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
@@ -117,7 +117,7 @@ export default function MediaPage() {
                 <Link
                   key={`${article.groupSlug}-${article.articleSlug}`}
                   to={`/media/${article.groupSlug}/${article.articleSlug}`}
-                  className="group block overflow-hidden rounded-3xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-stone-200 hover:shadow-[0_24px_58px_-26px_rgba(41,37,36,0.18)]"
+                  className="group block overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-stone-200 hover:shadow-[0_24px_58px_-26px_rgba(41,37,36,0.18)]"
                 >
                   <div className="aspect-[4/3] bg-stone-100">
                     <img src={cardImage} alt={article.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />

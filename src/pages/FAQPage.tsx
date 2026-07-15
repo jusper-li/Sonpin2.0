@@ -111,23 +111,23 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#fbf6ee]">
+    <div className="flex min-h-screen flex-col bg-[var(--sonpin-background)]">
       <SiteHeader />
 
       <main className="flex-1 pt-24">
-        <section className="bg-gradient-to-br from-[#2b221d] via-[#5f4636] to-[#8e6448] py-20 text-[#fffaf2]">
+        <section className="bg-gradient-to-br from-[var(--sonpin-ink)] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] py-20 text-[var(--sonpin-surface)]">
           <div className="container mx-auto px-6">
-            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[#eadfd1]">
-              <Link to="/" className="transition-colors hover:text-[#fffaf2]">
+            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
+              <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
                 {t('common.home', '首頁')}
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[#f4ecdf]">{t('faq.breadcrumb', '常見問題')}</span>
+              <span className="text-[var(--sonpin-background)]">{t('faq.breadcrumb', '常見問題')}</span>
             </div>
             <h1 className="text-4xl font-light tracking-wide md:text-5xl">
               {t('faq.title', '常見問題')}
             </h1>
-            <p className="mt-4 max-w-2xl text-base font-light leading-relaxed text-[#f4ecdf]">
+            <p className="mt-4 max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-background)]">
               {t('faq.description', '整理訂購、付款、配送、門市與產品相關的常見問題。')}
             </p>
           </div>
@@ -135,13 +135,13 @@ export default function FAQPage() {
 
         <div className="container mx-auto max-w-4xl px-6 py-12">
           <div className="relative mb-8">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9f8a7b]" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--sonpin-primary-muted)]" />
             <input
               type="text"
               placeholder={t('faq.search', '搜尋問題...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-2xl border border-[#eadfd1] bg-[#fffaf2] py-4 pl-12 pr-4 text-[#2b221d] placeholder-[#d8c9ba] focus:outline-none focus:ring-2 focus:ring-[#cfa87a]"
+              className="w-full rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] py-4 pl-12 pr-4 text-[var(--sonpin-ink)] placeholder-[var(--sonpin-primary-border)] focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-primary-warm)]"
             />
           </div>
 
@@ -153,8 +153,8 @@ export default function FAQPage() {
                   onClick={() => setActiveCategory(cat)}
                   className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-200 ${
                     activeCategory === cat
-                      ? 'bg-[#2b221d] text-[#fffaf2] shadow-sm'
-                      : 'border border-[#eadfd1] bg-[#fffaf2] text-[#6d4f3d] hover:border-[#cfa87a] hover:text-[#2b221d]'
+                      ? 'bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] shadow-sm'
+                      : 'border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] text-[var(--sonpin-primary-soft)] hover:border-[var(--sonpin-primary-warm)] hover:text-[var(--sonpin-ink)]'
                   }`}
                 >
                   {categoryLabel(cat)}
@@ -165,13 +165,13 @@ export default function FAQPage() {
 
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#8e6448] border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--sonpin-primary)] border-t-transparent" />
             </div>
           )}
 
           {!loading && filtered.length === 0 && (
             <div className="py-20 text-center">
-              <p className="text-lg font-light text-[#9f8a7b]">
+              <p className="text-lg font-light text-[var(--sonpin-primary-muted)]">
                 {t('faq.empty', '目前沒有符合條件的問題。')}
               </p>
               <button
@@ -179,7 +179,7 @@ export default function FAQPage() {
                   setSearchTerm('');
                   setActiveCategory('all');
                 }}
-                className="mt-4 text-sm text-[#8e6448] hover:underline"
+                className="mt-4 text-sm text-[var(--sonpin-primary)] hover:underline"
               >
                 {t('faq.reset', '清除篩選條件')}
               </button>
@@ -190,8 +190,8 @@ export default function FAQPage() {
             Object.entries(grouped).map(([category, items]) => (
               <div key={category} className="mb-10">
                 {activeCategory === 'all' && (
-                  <h2 className="mb-4 flex items-center gap-3 text-sm font-medium uppercase tracking-widest text-[#9f8a7b]">
-                    <span className="h-px w-8 bg-[#cfa87a]" />
+                  <h2 className="mb-4 flex items-center gap-3 text-sm font-medium uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                    <span className="h-px w-8 bg-[var(--sonpin-primary-warm)]" />
                     {categoryLabel(category)}
                   </h2>
                 )}
@@ -202,22 +202,22 @@ export default function FAQPage() {
                     return (
                       <div
                         key={faq.id}
-                        className="overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#fffaf2] shadow-sm transition-shadow duration-300 hover:shadow-md"
+                        className="overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm transition-shadow duration-300 hover:shadow-md"
                       >
                         <button
                           onClick={() => setOpenId((prev) => (prev === faq.id ? null : faq.id))}
                           className="flex w-full items-start justify-between gap-4 p-6 text-left"
                         >
-                          <span className="font-medium leading-snug text-[#2b221d]">{faq.question}</span>
-                          <span className="mt-0.5 flex-shrink-0 text-[#9f8a7b]">
+                          <span className="font-medium leading-snug text-[var(--sonpin-ink)]">{faq.question}</span>
+                          <span className="mt-0.5 flex-shrink-0 text-[var(--sonpin-primary-muted)]">
                             {open ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                           </span>
                         </button>
 
                         {open && (
                           <div className="px-6 pb-6 pt-0">
-                            <div className="border-t border-[#eadfd1] pt-5">
-                              <p className="whitespace-pre-line leading-relaxed font-light text-[#6d4f3d]">
+                            <div className="border-t border-[var(--sonpin-primary-border)] pt-5">
+                              <p className="whitespace-pre-line leading-relaxed font-light text-[var(--sonpin-primary-soft)]">
                                 {faq.answer}
                               </p>
                             </div>
@@ -230,16 +230,16 @@ export default function FAQPage() {
               </div>
             ))}
 
-          <div className="mt-16 rounded-3xl border border-[#eadfd1] bg-[#fffaf2] px-6 py-8 shadow-sm">
-            <h3 className="mb-2 text-lg font-medium text-[#2b221d]">
+          <div className="mt-16 rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-6 py-8 shadow-sm">
+            <h3 className="mb-2 text-lg font-medium text-[var(--sonpin-ink)]">
               {t('faq.cta.title', '找不到答案嗎？')}
             </h3>
-            <p className="mb-6 font-light text-[#6d4f3d]">
+            <p className="mb-6 font-light text-[var(--sonpin-primary-soft)]">
               {t('faq.cta.description', '可以直接聯絡客服，我們會協助您確認訂購、配送或門市資訊。')}
             </p>
             <a
               href="mailto:service@sonpin.tw"
-              className="inline-flex items-center gap-2 rounded-full bg-[#8e6448] px-6 py-3 text-sm text-[#fffaf2] transition-colors hover:bg-[#6d4f3d]"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--sonpin-primary)] px-6 py-3 text-sm text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary-soft)]"
             >
               {t('faq.cta.button', '聯絡客服')}
               <ChevronRight size={16} />

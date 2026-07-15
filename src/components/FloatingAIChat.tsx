@@ -65,6 +65,7 @@ function FloatingAIChatContent() {
     .join(' ');
 
   const quickPrompts = [
+    t('floating_ai_chat.prompt.recommend', '推薦我 3 個人氣商品'),
     t('floating_ai_chat.prompt.gift', '有推薦的送禮禮盒嗎？'),
     t('floating_ai_chat.prompt.shipping', '配送需要多久時間？'),
     t('floating_ai_chat.prompt.payment', '付款方式有哪些？'),
@@ -118,7 +119,7 @@ function FloatingAIChatContent() {
         .insert([
           {
             session_id: sid,
-            message: t('floating_ai_chat.greeting', '您好，我是 AI 客服助理「小 M」。有需要我可以幫您查詢商品、配送、付款或退換貨資訊。'),
+            message: t('floating_ai_chat.greeting', '您好，我是 AI 客服助理「小 M」。有需要我可以幫您推薦商品、查詢配送、付款或退換貨資訊。'),
             sender_type: 'bot',
           },
         ])

@@ -22,6 +22,7 @@
   Store,
   Users,
   MessageSquare,
+  Palette,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -76,6 +77,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
       title: t('admin.sidebar.group.content', '內容管理'),
       items: [
         { id: 'homepage', label: t('admin.sidebar.homepage', '首頁管理'), icon: Home },
+        { id: 'product-detail-service', label: '商品頁配送與服務', icon: Truck },
         { id: 'service', label: t('admin.sidebar.service', '老饕分享'), icon: Share2 },
         { id: 'articles', label: t('admin.sidebar.articles', '文章管理'), icon: FileText },
         { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 管理'), icon: HelpCircle },
@@ -85,6 +87,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
     {
       title: t('admin.sidebar.group.settings', '系統設定'),
       items: [
+        { id: 'theme', label: '色系管理', icon: Palette },
         { id: 'social', label: t('admin.sidebar.social', '社群連結'), icon: Share2 },
         { id: 'languages', label: t('admin.sidebar.languages', '語系管理'), icon: Languages },
         { id: 'seo', label: t('admin.sidebar.seo', 'SEO 設定'), icon: Search },

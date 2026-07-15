@@ -56,6 +56,19 @@ const pickTierForQuantity = (quantity: number, categories: ShippingCategoryRow[]
 
   if (exactMatch) return exactMatch;
 
+  const nextMatch = candidates
+    .filter((row) => quantity < Number(row.quantity || 0))
+    .sort((a, b) => {
+      const quantityA = Number(a.quantity || 0);
+      const quantityB = Number(b.quantity || 0);
+      if (quantityA !== quantityB) return quantityA - quantityB;
+      const endA = a.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(a.quantity_to || 0);
+      const endB = b.quantity_to === null ? Number.MAX_SAFE_INTEGER : Number(b.quantity_to || 0);
+      return endA - endB;
+    })[0];
+
+  if (nextMatch) return nextMatch;
+
   const floorMatch = [...candidates]
     .reverse()
     .find((row) => quantity >= Number(row.quantity || 0));
@@ -89,32 +102,60 @@ export function calculateShippingQuote(
     categoriesByName.set(groupName, existing);
   }
 
-  const breakdown = items
-    .map((item) => {
-      const quantity = normalizeQuantity(item.quantity);
-      if (quantity <= 0) return null;
+  const groupedItems = new Map<
+    string,
+    {
+      groupName: string;
+      productId: string;
+      quantity: number;
+    }
+  >();
 
-      const product = productById.get(item.productId);
-      const categoryId = product?.shipping_category_id;
-      if (!categoryId) return null;
+  for (const item of items) {
+    const quantity = normalizeQuantity(item.quantity);
+    if (quantity <= 0) continue;
 
-      const category = categoryById.get(categoryId);
-      if (!category) return null;
+    const product = productById.get(item.productId);
+    const categoryId = product?.shipping_category_id;
+    if (!categoryId) continue;
 
-      const groupName = category.name.trim();
-      if (!groupName) return null;
+    const category = categoryById.get(categoryId);
+    if (!category) continue;
 
-      const matchingCategories = categoriesByName.get(groupName) || [category];
-      const chosen = pickTierForQuantity(quantity, matchingCategories) || category;
+    const groupName = category.name.trim();
+    if (!groupName) continue;
+
+    const existing = groupedItems.get(groupName);
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      groupedItems.set(groupName, {
+        groupName,
+        productId: item.productId,
+        quantity,
+      });
+    }
+  }
+
+  const breakdown = Array.from(groupedItems.values())
+    .map((group) => {
+      const matchingCategories = categoriesByName.get(group.groupName) || [];
+      const chosen =
+        pickTierForQuantity(group.quantity, matchingCategories) ||
+        matchingCategories[0] ||
+        null;
+
+      if (!chosen) return null;
+
       const fee = Math.max(0, Number(chosen.amount || 0));
       const quantityLabel = formatQuantityLabel(chosen);
 
       return {
-        breakdownKey: `${item.productId}:${chosen.id}`,
-        productId: item.productId,
+        breakdownKey: `${group.groupName}:${chosen.id}`,
+        productId: group.productId,
         categoryId: chosen.id,
-        categoryName: groupName,
-        quantity,
+        categoryName: group.groupName,
+        quantity: group.quantity,
         quantityLabel,
         amount: fee,
         fee,

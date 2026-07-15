@@ -12,7 +12,7 @@ interface SEOProps {
   noSuffix?: boolean;
 }
 
-const SITE_NAME = 'Sonpin';
+const SITE_NAME = '淞品土雞專賣店';
 const SCHEMA_ID = 'json-ld-schema';
 
 function getMeta(selector: string): HTMLMetaElement | null {

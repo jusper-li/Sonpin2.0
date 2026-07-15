@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
+import { pickByLang } from '../lib/language';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
@@ -56,39 +57,39 @@ interface ProductStagePalette {
 
 const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
   {
-    background: '#fbf6ee',
-    panel: '#d8bda4',
-    accent: '#e8d2aa',
-    stripe: '#cfa87a',
-    ink: '#2b221d',
+    background: 'var(--sonpin-background)',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 12%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 6%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary)',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#f4ecdf',
-    panel: '#caa384',
-    accent: '#d8b19d',
-    stripe: '#e4c992',
-    ink: '#2b221d',
+    background: 'var(--sonpin-background)',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 16%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary-warm)',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#fffaf2',
-    panel: '#d7b4aa',
-    accent: '#d9aeb8',
-    stripe: '#efd4bf',
-    ink: '#2b221d',
+    background: 'var(--sonpin-surface)',
+    panel: 'var(--sonpin-primary-warm)',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary)',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#f7f0e7',
-    panel: '#c7a08d',
-    accent: '#d9c5df',
-    stripe: '#d7b06f',
-    ink: '#2b221d',
+    background: 'color-mix(in srgb, var(--sonpin-background) 90%, var(--sonpin-surface))',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 20%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 10%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary)',
+    ink: 'var(--sonpin-ink)',
   },
   {
-    background: '#f5eadf',
-    panel: '#c99a8c',
-    accent: '#e7b5a5',
-    stripe: '#ead1a1',
-    ink: '#2b221d',
+    background: 'color-mix(in srgb, var(--sonpin-background) 84%, var(--sonpin-surface))',
+    panel: 'color-mix(in srgb, var(--sonpin-primary) 18%, var(--sonpin-surface))',
+    accent: 'color-mix(in srgb, var(--sonpin-primary) 8%, var(--sonpin-surface))',
+    stripe: 'var(--sonpin-primary)',
+    ink: 'var(--sonpin-ink)',
   },
 ];
 
@@ -96,27 +97,27 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   hero: {
     media: '/product-images/reserved-for-you-huasitian-huo-limited-1.jpg',
     objectPosition: 'center center',
-    accent: '#d7b4aa',
+    accent: 'var(--sonpin-primary)',
   },
   shop: {
     media: '/product-images/champion-coffee-chocolate-huo-gang-gift-box-1.jpg',
     objectPosition: 'center center',
-    accent: '#caa384',
+    accent: 'var(--sonpin-primary-warm)',
   },
   story: {
     media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
     objectPosition: 'center center',
-    accent: '#e8d2aa',
+    accent: 'var(--sonpin-primary-border)',
   },
   contact: {
     media: '/product-images/huo-gang-coffee-letter-gift-2.jpg',
     objectPosition: 'center center',
-    accent: '#d9c5df',
+    accent: 'var(--sonpin-primary-muted)',
   },
   default: {
     media: '/product-images/the-one-and-only-15-drip-canvas-set-1.jpg',
     objectPosition: 'center center',
-    accent: '#d9aeb8',
+    accent: 'var(--sonpin-primary-warm)',
   },
 };
 
@@ -241,7 +242,7 @@ const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual =
 };
 
 export default function Homepage() {
-  const { t } = useLanguage();
+  const { currentLanguage, t } = useLanguage();
   const [activeSection, setActiveSection] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set([0]));
   const [sections, setSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
@@ -270,21 +271,21 @@ export default function Homepage() {
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
 
   useSEO({
-    title: 'Songpin local chicken｜Brand homepage',
+    title: '淞品土雞專賣店｜首頁',
     description:
-      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
-    keywords: 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports',
+      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
+    keywords: '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導',
     noSuffix: true,
     schema: [organizationSchema(), localBusinessSchema(), websiteSchema()],
   });
 
   useSEO({
-    title: t('homepage.seo.title', 'Songpin local chicken｜Brand homepage'),
+    title: t('homepage.seo.title', '淞品土雞專賣店｜首頁'),
     description: t(
       'homepage.seo.description',
-      'Songpin local chicken provides chicken essence, gift boxes, store information, and brand stories, all kept in sync from the back office.',
+      '淞品土雞專賣店提供滴雞精、禮盒、門市資訊與品牌故事，並與後台內容同步。',
     ),
-    keywords: t('homepage.seo.keywords', 'Songpin local chicken, chicken essence, gift boxes, brand story, store information, media reports'),
+    keywords: t('homepage.seo.keywords', '淞品土雞專賣店,滴雞精,禮盒,品牌故事,門市資訊,媒體報導'),
     noSuffix: true,
   });
 
@@ -408,21 +409,21 @@ export default function Homepage() {
         title: block.title,
         number: String(index + 1).padStart(2, '0'),
         section_type: 'hero_product',
-        content: {
-          label: block.subtitle,
-          subtitle: block.subtitle,
-          title: block.title,
-          number: String(index + 1).padStart(2, '0'),
-          description: block.description,
+          content: {
+            label: block.subtitle,
+            subtitle: block.subtitle,
+            title: block.title,
+            number: String(index + 1).padStart(2, '0'),
+            description: block.description,
+            background_image: block.image,
+            image: block.image,
+            href: block.href,
+            cta_label: '前往商品',
+            submenu: [{ label: '前往商品', title: '前往商品', href: block.href }],
+          },
           background_image: block.image,
-          image: block.image,
-          href: block.href,
-          cta_label: 'View products',
-          submenu: [{ label: 'View products', title: 'View products', href: block.href }],
-        },
-        background_image: block.image,
-        description: block.description,
-      }));
+          description: block.description,
+        }));
     }
 
     const displaySections = sections.length > 0 ? sections : DEFAULT_HOMEPAGE_SECTIONS;
@@ -462,7 +463,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多'),
         );
 
         return {
@@ -563,18 +564,18 @@ export default function Homepage() {
 
   if (loading) {
     return (
-      <div className="ym-home-loading relative flex h-screen items-center justify-center overflow-hidden text-[#2f261b]">
+      <div className="ym-home-loading relative flex h-screen items-center justify-center overflow-hidden text-[var(--sonpin-ink)]">
         <style>{`
           .ym-home-loading {
             background:
-              linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(245, 232, 205, 0.82) 22%, rgba(214, 180, 116, 0.74) 48%, rgba(252, 239, 213, 0.9) 73%, rgba(188, 147, 72, 0.68) 100%),
-              linear-gradient(180deg, #f7efe2 0%, #e4c98e 58%, #b9893f 100%);
+              linear-gradient(135deg, color-mix(in srgb, var(--sonpin-surface) 72%, transparent) 0%, color-mix(in srgb, var(--sonpin-primary-border) 78%, transparent) 22%, color-mix(in srgb, var(--sonpin-primary) 60%, transparent) 48%, color-mix(in srgb, var(--sonpin-surface) 90%, transparent) 73%, color-mix(in srgb, var(--sonpin-primary-warm) 68%, transparent) 100%),
+              linear-gradient(180deg, color-mix(in srgb, var(--sonpin-background) 92%, white) 0%, color-mix(in srgb, var(--sonpin-primary-border) 64%, var(--sonpin-background)) 58%, color-mix(in srgb, var(--sonpin-primary-warm) 72%, var(--sonpin-primary)) 100%);
           }
           .ym-home-loading::before {
             content: '';
             position: absolute;
             inset: -42%;
-            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.58) 49%, transparent 63%);
+            background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--sonpin-surface) 58%, transparent) 49%, transparent 63%);
             opacity: 0.45;
             transform: translateX(-16%) rotate(8deg);
             animation: ymLoadingSheen 4.6s ease-in-out infinite;
@@ -584,8 +585,8 @@ export default function Homepage() {
             position: absolute;
             inset: 0;
             background:
-              repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 8px),
-              linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(108, 78, 32, 0.12));
+              repeating-linear-gradient(90deg, color-mix(in srgb, var(--sonpin-surface) 7%, transparent) 0 1px, transparent 1px 8px),
+              linear-gradient(180deg, color-mix(in srgb, var(--sonpin-surface) 34%, transparent), color-mix(in srgb, var(--sonpin-primary) 12%, transparent));
             mix-blend-mode: soft-light;
             pointer-events: none;
           }
@@ -594,7 +595,7 @@ export default function Homepage() {
             z-index: 1;
           }
           .ym-home-loading p {
-            color: rgba(59, 45, 28, 0.86);
+            color: color-mix(in srgb, var(--sonpin-ink) 86%, transparent);
             font-size: 13px;
             font-weight: 500;
             letter-spacing: 0.18em;
@@ -603,12 +604,12 @@ export default function Homepage() {
             width: 34px;
             height: 34px;
             border-radius: 9999px;
-            border: 1px solid rgba(81, 61, 32, 0.16);
-            border-top-color: rgba(78, 53, 20, 0.8);
-            border-right-color: rgba(255, 255, 255, 0.76);
+            border: 1px solid color-mix(in srgb, var(--sonpin-primary) 16%, transparent);
+            border-top-color: color-mix(in srgb, var(--sonpin-primary) 80%, transparent);
+            border-right-color: color-mix(in srgb, var(--sonpin-surface) 76%, transparent);
             box-shadow:
-              0 0 0 1px rgba(255, 255, 255, 0.22) inset,
-              0 12px 34px rgba(112, 78, 30, 0.18);
+              0 0 0 1px color-mix(in srgb, var(--sonpin-surface) 22%, transparent) inset,
+              0 12px 34px color-mix(in srgb, var(--sonpin-primary) 18%, transparent);
             animation: ymLoadingSpin 1.05s linear infinite;
           }
           @keyframes ymLoadingSpin {
@@ -635,7 +636,7 @@ export default function Homepage() {
   }
 
   return (
-    <div className="ym-homepage overflow-x-hidden bg-[#fbf6ee] text-[#2b221d]">
+    <div className="ym-homepage overflow-x-hidden bg-[var(--sonpin-surface)] text-[var(--sonpin-ink)]">
       <style>{`
         .ym-homepage header {
           background: transparent !important;
@@ -649,7 +650,7 @@ export default function Homepage() {
         }
         .ym-homepage header nav a,
         .ym-homepage header nav button {
-          color: #ffffff !important;
+          color: var(--sonpin-surface) !important;
           filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
         }
         .homepage-main {
@@ -660,7 +661,7 @@ export default function Homepage() {
           scroll-behavior: smooth;
           scroll-snap-type: y mandatory;
           -webkit-overflow-scrolling: touch;
-          background: #fbf6ee;
+          background: var(--sonpin-background);
         }
         .homepage-main section,
         .homepage-main > div {
@@ -719,11 +720,11 @@ export default function Homepage() {
           min-height: 30vh;
           justify-content: flex-end;
           padding-bottom: calc(4.8rem + env(safe-area-inset-bottom));
-          color: #fffaf2;
+          color: var(--sonpin-surface);
           text-shadow: 0 2px 18px rgba(36, 27, 21, 0.48);
         }
         .ym-stage-title {
-          color: #fffaf2 !important;
+          color: var(--sonpin-surface) !important;
           font-family: "Noto Serif TC", "Songti TC", "Noto Serif CJK TC", Georgia, serif;
           font-size: clamp(1.08rem, 2.1vw, 2rem) !important;
           font-weight: 540 !important;
@@ -754,8 +755,8 @@ export default function Homepage() {
           pointer-events: auto;
           height: 34px !important;
           min-width: 108px !important;
-          border-color: color-mix(in srgb, var(--ym-stripe) 82%, #fffaf2) !important;
-          color: #fffaf2 !important;
+          border-color: color-mix(in srgb, var(--ym-stripe) 82%, var(--sonpin-surface)) !important;
+          color: var(--sonpin-surface) !important;
           background: color-mix(in srgb, var(--ym-panel) 26%, transparent) !important;
           padding-inline: 16px !important;
           font-size: 11px !important;
@@ -765,13 +766,13 @@ export default function Homepage() {
         }
         .ym-stage-cta:hover {
           background: color-mix(in srgb, var(--ym-stripe) 36%, rgba(255, 250, 242, 0.14)) !important;
-          color: #fffaf2 !important;
+          color: var(--sonpin-surface) !important;
         }
         .ym-stage-side-label {
           display: block;
-          border-bottom: 1px solid color-mix(in srgb, var(--ym-stripe) 78%, #fffaf2);
+          border-bottom: 1px solid color-mix(in srgb, var(--ym-stripe) 78%, var(--sonpin-surface));
           padding-bottom: 5px;
-          color: #fffaf2;
+          color: var(--sonpin-surface);
           font-size: 9px;
           font-weight: 560;
           letter-spacing: 0.055em;
@@ -898,12 +899,12 @@ export default function Homepage() {
           .ym-homepage header nav > div > div:last-child > a:first-child {
             display: none !important;
           }
-          .ym-homepage header nav > div > div:last-child > a,
-          .ym-homepage header nav > div > div:last-child > button {
-            pointer-events: auto;
-            color: #ffffff !important;
-            filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
-          }
+        .ym-homepage header nav > div > div:last-child > a,
+        .ym-homepage header nav > div > div:last-child > button {
+          pointer-events: auto;
+          color: var(--sonpin-surface) !important;
+          filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
+        }
         .ym-homepage header nav > div > div:last-child > div {
           pointer-events: auto;
         }
@@ -912,12 +913,12 @@ export default function Homepage() {
         }
         .ym-homepage header nav .ym-language-menu,
         .ym-homepage header nav .ym-language-menu button {
-          color: #2b221d !important;
+          color: var(--sonpin-ink) !important;
           filter: none !important;
           text-shadow: none !important;
         }
         .ym-homepage header nav .ym-language-menu button:hover {
-          color: #2b221d !important;
+          color: var(--sonpin-ink) !important;
         }
         .ym-homepage header nav > div > div:last-child > button:last-child {
           position: fixed;
@@ -933,7 +934,7 @@ export default function Homepage() {
             min-height: 32vh;
             justify-content: flex-end;
             padding-bottom: calc(116px + env(safe-area-inset-bottom));
-            color: #fffaf2;
+            color: var(--sonpin-surface);
             text-shadow: 0 2px 16px rgba(36, 27, 21, 0.48);
           }
           .ym-stage {
@@ -965,7 +966,7 @@ export default function Homepage() {
             max-width: min(76vw, 328px) !important;
           }
           .ym-stage-title {
-            color: #fffaf2 !important;
+            color: var(--sonpin-surface) !important;
             font-family: "Noto Serif TC", "Songti TC", "Noto Serif CJK TC", Georgia, serif;
             font-size: clamp(0.88rem, 3.65vw, 1.14rem) !important;
             font-weight: 520 !important;
@@ -1014,8 +1015,15 @@ export default function Homepage() {
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
-          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? 'View products' : 'Learn more');
-          const localizedCtaLabel = ctaLabel;
+          const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多');
+          const localizedCtaLabel = pickByLang(
+            currentLanguage,
+            ctaLabel,
+            section.section_type === 'hero_product' ? '瀏覽商品' : '了解更多',
+            section.section_type === 'hero_product' ? 'View products' : 'Learn more',
+            section.section_type === 'hero_product' ? '商品を見る' : '詳しく見る',
+            section.section_type === 'hero_product' ? '상품 보기' : '자세히 보기',
+          );
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
           const sectionStyle = {
@@ -1053,7 +1061,7 @@ export default function Homepage() {
                 <div className={`ym-stage-copy ym-reveal is-visible mx-auto flex max-w-4xl flex-col items-center ${isVisible ? 'is-active-copy' : ''}`}>
                   <Link to={href} className="ym-stage-title-link group block max-w-[22rem] sm:max-w-2xl md:max-w-4xl">
                     <h1
-                      className={`ym-stage-title font-serif text-xl font-semibold leading-relaxed text-[#211d1c] transition-transform duration-300 group-hover:-translate-y-0.5 sm:text-2xl md:text-4xl ${
+                      className={`ym-stage-title font-serif text-xl font-semibold leading-relaxed text-[var(--sonpin-ink)] transition-transform duration-300 group-hover:-translate-y-0.5 sm:text-2xl md:text-4xl ${
                         index === 0 ? '' : 'md:text-3xl'
                       }`}
                     >
@@ -1065,7 +1073,7 @@ export default function Homepage() {
                     <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || 'Songpin'}</span>
                     <Link
                       to={href}
-                      className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[#211d1c] bg-transparent px-5 text-sm font-medium text-[#211d1c] transition-colors duration-300 hover:bg-[#211d1c] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#211d1c]/30"
+                      className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[var(--sonpin-ink)] bg-transparent px-5 text-sm font-medium text-[var(--sonpin-ink)] transition-colors duration-300 hover:bg-[var(--sonpin-ink)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-ink)]/30"
                     >
                       {localizedCtaLabel}
                     </Link>

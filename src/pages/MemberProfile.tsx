@@ -114,7 +114,7 @@ export default function MemberProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fbf6ee]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--sonpin-background)]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700" />
       </div>
     );
@@ -127,7 +127,7 @@ export default function MemberProfile() {
   const displayedPhone = profile?.phone || t('member.profile.placeholder.phone', '未設定');
 
   return (
-    <div className="min-h-screen bg-[#fbf6ee]">
+    <div className="min-h-screen bg-[var(--sonpin-background)]">
       <SiteHeader />
 
       <main className="pb-20 pt-20">
@@ -139,10 +139,10 @@ export default function MemberProfile() {
             </Link>
           </div>
 
-          <div className="mb-5 overflow-hidden rounded-2xl border border-[#eadfd1] bg-[#fffaf2] shadow-[0_18px_50px_rgba(61,43,31,0.08)]">
-            <div className="flex items-center gap-5 bg-[linear-gradient(135deg,#c7a08d_0%,#a97a4f_100%)] px-6 py-8">
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#2b221d] shadow-lg">
-                <span className="text-2xl font-semibold text-[#fffaf2]">{initials}</span>
+          <div className="mb-5 overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_18px_50px_rgba(61,43,31,0.08)]">
+            <div className="flex items-center gap-5 bg-[linear-gradient(135deg,var(--sonpin-primary-warm)_0%,var(--sonpin-primary)_100%)] px-6 py-8">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[var(--sonpin-ink)] shadow-lg">
+                <span className="text-2xl font-semibold text-[var(--sonpin-surface)]">{initials}</span>
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="truncate text-lg font-semibold text-white">

@@ -21,7 +21,7 @@ const escapeHtml = (value: string) =>
 const buildVideoEmbed = (article: MediaArticle) => {
   if (article.kind !== 'video' || !article.iframeUrl) return '';
   return `
-    <div class="my-6 overflow-hidden rounded-2xl border border-[#eadfd1] bg-black">
+    <div class="my-6 overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-black">
       <iframe
         src="${escapeHtml(article.iframeUrl)}"
         title="${escapeHtml(article.title)}"
