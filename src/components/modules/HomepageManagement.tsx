@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   Database,
+  GripVertical,
   Info,
   LayoutGrid as Layout,
   Menu as MenuIcon,
@@ -12,6 +14,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import ImageUpload from '../ImageUpload';
 import { isSupabaseContentEnabled, supabase } from '../../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS, toHomepageManagementSections } from '../../data/homepageContent';
 import {
@@ -74,6 +77,24 @@ const EMPTY_FORM: HeroBlockFormState = {
   sort_order: 1,
 };
 
+function reorderBlocks(blocks: HomepageHeroBlock[], draggedId: string, targetId: string) {
+  const fromIndex = blocks.findIndex((block) => block.id === draggedId);
+  const toIndex = blocks.findIndex((block) => block.id === targetId);
+
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+    return blocks;
+  }
+
+  const next = [...blocks];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+
+  return next.map((block, index) => ({
+    ...block,
+    sort_order: index + 1,
+  }));
+}
+
 export default function HomepageManagement() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'heroBlocks' | 'sections' | 'header' | 'footer'>('heroBlocks');
@@ -88,6 +109,8 @@ export default function HomepageManagement() {
   const [editingBlock, setEditingBlock] = useState<HomepageHeroBlock | null>(null);
   const [form, setForm] = useState<HeroBlockFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadData();
@@ -179,6 +202,39 @@ export default function HomepageManagement() {
     [t],
   );
 
+  const persistHeroBlocks = async (nextBlocks: HomepageHeroBlock[], message?: string) => {
+    const normalized = normalizeHomepageHeroBlocks(nextBlocks);
+
+    if (isSupabaseContentEnabled) {
+      const { data: existingRow, error: existingError } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', HOMEPAGE_HERO_BLOCKS_SETTING_KEY)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existingRow?.id) {
+        const { error } = await supabase.from('site_settings').update({ setting_value: normalized }).eq('id', existingRow.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('site_settings').insert([
+          {
+            setting_key: HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
+            setting_value: normalized,
+          },
+        ]);
+        if (error) throw error;
+      }
+    } else {
+      localStorage.setItem(HERO_BLOCKS_CACHE_KEY, JSON.stringify(normalized));
+    }
+
+    setHeroBlocks(normalized);
+    if (message) alert(message);
+    return normalized;
+  };
+
   const openCreateForm = () => {
     const nextOrder = heroBlocks.length ? Math.max(...heroBlocks.map((block) => Number(block.sort_order || 0))) + 1 : 1;
     setEditingBlock(null);
@@ -238,7 +294,7 @@ export default function HomepageManagement() {
       return;
     }
     if (!form.image.trim()) {
-      alert('請輸入圖片網址。');
+      alert('請上傳或輸入圖片網址。');
       return;
     }
     if (!form.href.trim()) {
@@ -266,41 +322,10 @@ export default function HomepageManagement() {
       nextBlocks.push(nextBlock);
     }
 
-    const normalized = normalizeHomepageHeroBlocks(nextBlocks);
-
     setSaving(true);
     try {
-      if (isSupabaseContentEnabled) {
-        const { data: existingRow, error: existingError } = await supabase
-          .from('site_settings')
-          .select('id')
-          .eq('setting_key', HOMEPAGE_HERO_BLOCKS_SETTING_KEY)
-          .maybeSingle();
-
-        if (existingError) throw existingError;
-
-        if (existingRow?.id) {
-          const { error } = await supabase
-            .from('site_settings')
-            .update({ setting_value: normalized })
-            .eq('id', existingRow.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('site_settings').insert([
-            {
-              setting_key: HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
-              setting_value: normalized,
-            },
-          ]);
-          if (error) throw error;
-        }
-      } else {
-        localStorage.setItem(HERO_BLOCKS_CACHE_KEY, JSON.stringify(normalized));
-      }
-
-      setHeroBlocks(normalized);
+      await persistHeroBlocks(nextBlocks, '首頁商品已儲存。');
       closeEditor();
-      alert('首頁商品已儲存。');
     } catch (error) {
       console.error('Failed to save homepage hero block:', error);
       alert(`儲存首頁商品失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
@@ -312,46 +337,62 @@ export default function HomepageManagement() {
   const deleteHeroBlock = async (id: string) => {
     if (!confirm('確定要刪除這個首頁商品嗎？')) return;
 
-    const normalized = normalizeHomepageHeroBlocks(heroBlocks.filter((block) => block.id !== id));
-
     setSaving(true);
     try {
-      if (isSupabaseContentEnabled) {
-        const { data: existingRow, error: existingError } = await supabase
-          .from('site_settings')
-          .select('id')
-          .eq('setting_key', HOMEPAGE_HERO_BLOCKS_SETTING_KEY)
-          .maybeSingle();
-
-        if (existingError) throw existingError;
-
-        if (existingRow?.id) {
-          const { error } = await supabase
-            .from('site_settings')
-            .update({ setting_value: normalized })
-            .eq('id', existingRow.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('site_settings').insert([
-            {
-              setting_key: HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
-              setting_value: normalized,
-            },
-          ]);
-          if (error) throw error;
-        }
-      } else {
-        localStorage.setItem(HERO_BLOCKS_CACHE_KEY, JSON.stringify(normalized));
-      }
-
-      setHeroBlocks(normalized);
-      alert('首頁商品已刪除。');
+      await persistHeroBlocks(
+        heroBlocks.filter((block) => block.id !== id),
+        '首頁商品已刪除。',
+      );
     } catch (error) {
       console.error('Failed to delete homepage hero block:', error);
       alert(`刪除首頁商品失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const moveHeroBlock = async (draggedId: string, targetId: string) => {
+    if (!draggedId || !targetId || draggedId === targetId) return;
+
+    const nextBlocks = reorderBlocks(heroBlocks, draggedId, targetId);
+    if (nextBlocks === heroBlocks) return;
+
+    try {
+      await persistHeroBlocks(nextBlocks);
+    } catch (error) {
+      console.error('Failed to reorder homepage hero blocks:', error);
+      alert(`排序更新失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    }
+  };
+
+  const handleDropToBlankArea = async () => {
+    if (!draggedBlockId) return;
+
+    const draggedIndex = heroBlocks.findIndex((block) => block.id === draggedBlockId);
+    if (draggedIndex < 0) return;
+
+    const nextBlocks = [...heroBlocks];
+    const [moved] = nextBlocks.splice(draggedIndex, 1);
+    nextBlocks.push(moved);
+
+    try {
+      await persistHeroBlocks(
+        nextBlocks.map((block, index) => ({ ...block, sort_order: index + 1 })),
+        '首頁商品排序已更新。',
+      );
+    } catch (error) {
+      console.error('Failed to move homepage hero block to end:', error);
+      alert(`排序更新失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    }
+  };
+
+  const startDrag = (blockId: string) => {
+    setDraggedBlockId(blockId);
+  };
+
+  const endDrag = () => {
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
   };
 
   if (loading) {
@@ -388,7 +429,7 @@ export default function HomepageManagement() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-slate-500">
-              共 {resolvedHeroBlocks.length} 個首頁商品，啟用中 {resolvedHeroBlocks.filter((item) => item.sort_order >= 0).length} 個
+              共 {heroBlocks.length} 個首頁商品，啟用中 {heroBlocks.filter((item) => item.is_active !== false).length} 個
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -413,28 +454,65 @@ export default function HomepageManagement() {
           {heroBlocks.length === 0 ? (
             <EmptyState text={t('homepage_management.empty_hero_blocks', '尚未建立首頁商品。')} />
           ) : (
-            <div className="space-y-4">
+            <div
+              className="space-y-4"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={async () => {
+                await handleDropToBlankArea();
+              }}
+            >
               {heroBlocks
                 .slice()
                 .sort((a, b) => a.sort_order - b.sort_order)
                 .map((block, index) => {
                   const resolved = resolveHomepageHeroBlock(block, heroSourceProducts);
+                  const isDropTarget = dragOverBlockId === block.id;
+
                   return (
-                    <div key={block.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div
+                      key={block.id}
+                      draggable
+                      onDragStart={() => startDrag(block.id)}
+                      onDragEnd={endDrag}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        if (draggedBlockId && draggedBlockId !== block.id) {
+                          setDragOverBlockId(block.id);
+                        }
+                      }}
+                      onDrop={async (event) => {
+                        event.preventDefault();
+                        if (draggedBlockId) {
+                          await moveHeroBlock(draggedBlockId, block.id);
+                        }
+                        endDrag();
+                      }}
+                      className={`rounded-xl border bg-white p-4 shadow-sm transition-all ${
+                        isDropTarget ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'
+                      } ${draggedBlockId === block.id ? 'opacity-60' : ''}`}
+                    >
                       <div className="flex items-start gap-4">
-                        <div className="h-20 w-20 overflow-hidden rounded-lg bg-slate-100">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
                           {resolved?.image ? (
-                            <img src={resolved.image} alt={resolved.title} className="h-full w-full object-cover" />
+                            <img src={resolved.image} alt={resolved.title} className="h-full w-full rounded-lg object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">無圖片</div>
+                            <span className="text-xs">無圖片</span>
                           )}
                         </div>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
-                              <div className="text-xs text-slate-500">
-                                區塊 {index + 1} ｜ 排序 {block.sort_order}
+                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <button
+                                  type="button"
+                                  className="cursor-grab rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+                                  onMouseDown={() => startDrag(block.id)}
+                                  aria-label="拖曳排序"
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </button>
+                                <span>區塊 {index + 1} ｜ 排序 {block.sort_order}</span>
                               </div>
                               <div className="mt-1 truncate text-lg font-semibold text-slate-900">
                                 {resolved?.title || block.title || '未命名首頁商品'}
@@ -579,24 +657,22 @@ export default function HomepageManagement() {
                 />
               </Field>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="圖片網址">
-                  <input
-                    type="text"
-                    value={form.image}
-                    onChange={(event) => setForm((current) => ({ ...current, image: event.target.value }))}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                  />
-                </Field>
-                <Field label="連結網址">
-                  <input
-                    type="text"
-                    value={form.href}
-                    onChange={(event) => setForm((current) => ({ ...current, href: event.target.value }))}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                  />
-                </Field>
-              </div>
+              <Field label="圖片">
+                <ImageUpload
+                  value={form.image}
+                  onChange={(url) => setForm((current) => ({ ...current, image: url }))}
+                  label="上傳或更換圖片"
+                />
+              </Field>
+
+              <Field label="連結網址">
+                <input
+                  type="text"
+                  value={form.href}
+                  onChange={(event) => setForm((current) => ({ ...current, href: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                />
+              </Field>
 
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
@@ -640,7 +716,7 @@ export default function HomepageManagement() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
