@@ -422,8 +422,8 @@ export default function Homepage() {
             background_image: block.image,
             image: block.image,
             href: block.href,
-            cta_label: '????',
-            submenu: [{ label: '????', title: '????', href: block.href }],
+            cta_label: '查看商品',
+            submenu: [{ label: '查看商品', title: '查看商品', href: block.href }],
           },
           background_image: block.image,
           description: block.description,
@@ -467,7 +467,7 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '?汗??' : '鈭圾?游?'),
+          section.content?.cta_label || (section.section_type === 'hero_product' ? '查看商品' : '了解更多'),
         );
 
         return {
