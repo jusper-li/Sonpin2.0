@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import StaticContent from '../components/StaticContent';
 import { getStaticPageFallback, StaticPageSection } from '../data/staticPages';
 import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -108,14 +109,6 @@ export default function StaticPage() {
     void run();
   }, [currentLanguage, sourcePage]);
 
-  const formatContent = (content: string) =>
-    localizeStaticText(content, currentLanguage).split('\n').map((line, index, arr) => (
-      <span key={index}>
-        {line}
-        {index < arr.length - 1 && <br />}
-      </span>
-    ));
-
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString(pickByLang(currentLanguage, 'zh-TW', 'en-US', 'ja-JP', 'ko-KR'), {
       year: 'numeric',
@@ -197,9 +190,10 @@ export default function StaticPage() {
                   {section.type === 'intro' ? (
                     <div className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)] p-8">
                       <h2 className="mb-4 text-2xl font-light text-[var(--sonpin-ink)]">{localizeStaticText(section.title, currentLanguage)}</h2>
-                      <p className="whitespace-pre-line text-lg font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
-                        {localizeStaticText(section.content, currentLanguage)}
-                      </p>
+                      <StaticContent
+                        value={localizeStaticText(section.content, currentLanguage)}
+                        className="text-lg font-light leading-relaxed text-[var(--sonpin-primary-soft)]"
+                      />
                     </div>
                   ) : (
                     <div>
@@ -207,9 +201,10 @@ export default function StaticPage() {
                         <div className="mt-1 h-6 w-1 flex-shrink-0 rounded-full bg-[var(--sonpin-primary-warm)]" />
                         <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{localizeStaticText(section.title, currentLanguage)}</h2>
                       </div>
-                      <div className="ml-5 whitespace-pre-line font-light leading-relaxed text-[var(--sonpin-primary-soft)]">
-                        {formatContent(section.content)}
-                      </div>
+                      <StaticContent
+                        value={localizeStaticText(section.content, currentLanguage)}
+                        className="ml-5 font-light leading-relaxed text-[var(--sonpin-primary-soft)]"
+                      />
                     </div>
                   )}
                 </div>

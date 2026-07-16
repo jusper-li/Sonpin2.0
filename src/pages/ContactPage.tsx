@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, Clock, Mail, Phone, ReceiptText, Search, Chevr
 import { isSupabaseContentEnabled, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import StaticContent from '../components/StaticContent';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -388,9 +389,10 @@ export default function ContactPage() {
             </div>
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[var(--sonpin-primary-warm)]">Contact Us</p>
             <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title || t.contactCenter}</h1>
-            <p className="max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-primary-border)]">
-              {intro?.content || t.lead}
-            </p>
+            <StaticContent
+              value={intro?.content || t.lead}
+              className="max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-primary-border)]"
+            />
           </div>
         </section>
 
@@ -443,7 +445,10 @@ export default function ContactPage() {
                   {infoSections.map((section) => (
                     <div key={section.title}>
                       <h3 className="mb-2 text-sm font-medium text-[var(--sonpin-primary-soft)]">{section.title}</h3>
-                      <p className="whitespace-pre-line text-sm leading-relaxed font-light text-[var(--sonpin-primary-muted)]">{section.content}</p>
+                      <StaticContent
+                        value={section.content}
+                        className="text-sm leading-relaxed font-light text-[var(--sonpin-primary-muted)]"
+                      />
                     </div>
                   ))}
                 </div>

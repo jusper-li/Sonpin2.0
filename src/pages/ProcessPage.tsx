@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -16,8 +16,8 @@ const PROCESS_VIDEOS = ['https://www.youtube.com/embed/27K4gLy_eDg', 'https://ww
 
 const PROCESS_FALLBACK: StaticPageData = {
   slug: 'process',
-  title: '生產製程',
-  meta_description: '了解淞品土雞從飼養、加工到配送的一條龍生產流程。',
+  title: '製程介紹',
+  meta_description: '了解松品土雞從飼養、加工到配送的一條龍製程。',
   sections: [],
   updated_at: '2026-07-03T00:00:00+00:00',
 };
@@ -29,12 +29,17 @@ export default function ProcessPage() {
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
-  const translatedTitle = page.title || t('process.title', '生產製程');
+  const translatedTitle = page.title || t('process.title', '製程介紹');
+  const galleryImages = (page?.images || []).filter((image) => image.slot.startsWith('gallery'));
+  const processImages =
+    galleryImages.length > 0
+      ? galleryImages
+      : PROCESS_IMAGES.map((url, index) => ({ slot: `gallery-${index + 1}`, url, alt: `製程照片 ${index + 1}` }));
 
   useSEO({
     title: translatedTitle,
     description: page.meta_description,
-    keywords: t('process.seo.keywords', '生產製程,品牌故事,產地,加工,配送'),
+    keywords: t('process.seo.keywords', '製程介紹,食材,飼養,加工,配送'),
     schema: breadcrumbSchema([
       { name: t('common.home', '首頁'), url: window.location.origin },
       { name: translatedTitle, url: `${window.location.origin}/process` },
@@ -101,7 +106,7 @@ export default function ProcessPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                {t('common.home', '首頁')}
+                首頁
               </Link>
               <ChevronRight className="h-3 w-3" />
               <span className="text-stone-700">{translatedTitle}</span>
@@ -117,11 +122,14 @@ export default function ProcessPage() {
         <section className="container mx-auto px-6 py-12">
           <div className="space-y-6">
             <div className="grid gap-4 lg:grid-cols-2">
-              {PROCESS_IMAGES.map((src, index) => (
-                <figure key={src} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
+              {processImages.map((image, index) => (
+                <figure
+                  key={`${image.url}-${index}`}
+                  className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm"
+                >
                   <img
-                    src={src}
-                    alt={t('process.imageAlt', `生產製程圖片 ${index + 1}`)}
+                    src={image.url}
+                    alt={t('process.imageAlt', `製程照片 ${index + 1}`)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
@@ -136,7 +144,7 @@ export default function ProcessPage() {
                     <iframe
                       className="h-full w-full"
                       src={src}
-                      title={t('process.videoTitle', '生產製程影片')}
+                      title={t('process.videoTitle', '製程影片')}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
@@ -151,7 +159,7 @@ export default function ProcessPage() {
         {(loading || translating) && (
           <section className="container mx-auto px-6 py-10">
             <div className="inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
-              {loading ? t('common.loading', '載入中...') : t('common.translating', '翻譯中...')}
+              {loading ? t('common.loading', '載入中…') : t('common.translating', '翻譯中…')}
             </div>
           </section>
         )}

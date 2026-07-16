@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, ExternalLink, FileText, Plus, Save, Trash2, X } from 'lucide-react';
+import ImageUpload from '../ImageUpload';
+import RichTextEditor from '../RichTextEditor';
+import StaticContent from '../StaticContent';
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { normalizeStaticPageImages, type StaticPageImage } from '../../lib/staticPageMedia';
 
 interface PageSection {
   type: 'intro' | 'section';
@@ -9,12 +13,15 @@ interface PageSection {
   content: string;
 }
 
+interface PageImage extends StaticPageImage {}
+
 interface StaticPageData {
   id: string;
   slug: string;
   title: string;
   meta_description: string;
   sections: PageSection[];
+  images: PageImage[];
   is_published: boolean;
   updated_at: string;
 }
@@ -36,6 +43,8 @@ export default function StaticPageManagement() {
   const [editingPage, setEditingPage] = useState<StaticPageData | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const createImageRow = (slot = '', url = '', alt = ''): PageImage => ({ slot, url, alt });
+
   useEffect(() => {
     void loadPages();
   }, []);
@@ -54,7 +63,11 @@ export default function StaticPageManagement() {
   };
 
   const startEdit = (page: StaticPageData) => {
-    setEditingPage({ ...page, sections: [...page.sections] });
+    setEditingPage({
+      ...page,
+      sections: [...page.sections],
+      images: normalizeStaticPageImages(page.images),
+    });
   };
 
   const saveEdit = async () => {
@@ -67,6 +80,7 @@ export default function StaticPageManagement() {
           title: editingPage.title,
           meta_description: editingPage.meta_description,
           sections: editingPage.sections,
+          images: editingPage.images,
           is_published: editingPage.is_published,
           updated_at: new Date().toISOString(),
         })
@@ -89,6 +103,13 @@ export default function StaticPageManagement() {
     setEditingPage({ ...editingPage, sections });
   };
 
+  const updateImage = (index: number, field: keyof PageImage, value: string) => {
+    if (!editingPage) return;
+    const images = [...editingPage.images];
+    images[index] = { ...images[index], [field]: value };
+    setEditingPage({ ...editingPage, images });
+  };
+
   const addSection = () => {
     if (!editingPage) return;
     setEditingPage({
@@ -100,8 +121,23 @@ export default function StaticPageManagement() {
   const removeSection = (index: number) => {
     if (!editingPage) return;
     const sections = [...editingPage.sections];
-    sections.splice(index, 1);
+      sections.splice(index, 1);
     setEditingPage({ ...editingPage, sections });
+  };
+
+  const addImage = () => {
+    if (!editingPage) return;
+    setEditingPage({
+      ...editingPage,
+      images: [...editingPage.images, createImageRow(`image-${editingPage.images.length + 1}`)],
+    });
+  };
+
+  const removeImage = (index: number) => {
+    if (!editingPage) return;
+    const images = [...editingPage.images];
+    images.splice(index, 1);
+    setEditingPage({ ...editingPage, images });
   };
 
   const moveSection = (index: number, dir: 'up' | 'down') => {
@@ -179,6 +215,80 @@ export default function StaticPageManagement() {
               />
             </div>
 
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">{t('static_pages.images', '圖片管理')}</h3>
+                  <p className="mt-1 text-xs text-slate-500">{t('static_pages.images_hint', '可管理頁首、圖庫與固定區塊圖片。')}</p>
+                </div>
+                <button onClick={addImage} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-slate-800">
+                  <Plus className="h-4 w-4" />
+                  {t('static_pages.add_image', '新增圖片')}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {editingPage.images.map((image, index) => (
+                  <div key={`${image.slot}-${index}`} className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">{t('static_pages.image_slot', '圖片位置')}</span>
+                        <input
+                          type="text"
+                          value={image.slot}
+                          onChange={(e) => updateImage(index, 'slot', e.target.value)}
+                          className="w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                          placeholder={t('static_pages.image_slot_placeholder', 'hero / gallery-1')}
+                        />
+                      </div>
+                      <button onClick={() => removeImage(index)} className="rounded p-1 text-red-400 transition-colors hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
+                      <div className="space-y-3">
+                        <ImageUpload
+                          value={image.url}
+                          onChange={(url) => updateImage(index, 'url', url)}
+                          label={t('static_pages.image_url', '圖片網址')}
+                        />
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-slate-700">{t('static_pages.image_alt', '替代文字')}</label>
+                          <input
+                            type="text"
+                            value={image.alt}
+                            onChange={(e) => updateImage(index, 'alt', e.target.value)}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                            placeholder={t('static_pages.image_alt_placeholder', '例如：關於頁第一張照片')}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+                        <p className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                          {t('static_pages.image_preview', '圖片預覽')}
+                        </p>
+                        {image.url ? (
+                          <img src={image.url} alt={image.alt || image.slot} className="max-h-48 w-full rounded-lg object-cover" />
+                        ) : (
+                          <div className="flex min-h-48 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm text-slate-400">
+                            {t('static_pages.image_preview_empty', '尚未設定圖片')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {editingPage.images.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                    {t('static_pages.no_images', '目前尚未設定圖片，請新增圖片區塊。')}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <label className="block text-sm font-medium text-slate-700">{t('static_pages.sections', '頁面內容區塊')}</label>
@@ -231,13 +341,24 @@ export default function StaticPageManagement() {
                         placeholder={t('static_pages.section_title_placeholder', '區塊標題')}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                       />
-                      <textarea
+                      <RichTextEditor
                         value={section.content}
-                        onChange={(e) => updateSection(index, 'content', e.target.value)}
+                        onChange={(nextValue) => updateSection(index, 'content', nextValue)}
                         placeholder={t('static_pages.section_content_placeholder', '區塊內容（可換行）')}
-                        rows={4}
-                        className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                        minHeightClassName="min-h-[180px]"
                       />
+                      <p className="text-xs text-slate-400">
+                        {t('static_pages.html_hint', '可直接編輯 HTML，並透過工具列插入圖片與連結。')}
+                      </p>
+                      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-3">
+                        <p className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                          {t('static_pages.preview', '內容預覽')}
+                        </p>
+                        <StaticContent
+                          value={section.content || t('static_pages.preview_empty', '尚未輸入內容。')}
+                          className="prose prose-sm max-w-none text-slate-700 prose-headings:text-slate-900 prose-img:my-3 prose-img:rounded-lg prose-img:border prose-img:border-slate-200"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

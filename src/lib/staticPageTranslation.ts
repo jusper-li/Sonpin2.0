@@ -1,5 +1,6 @@
 import { normalizeLang, pickByLang, type SupportedLanguage } from './language';
 import { supabaseAnonKey, supabaseBaseUrl } from './supabase';
+import type { StaticPageImage } from './staticPageMedia';
 
 export interface TranslatableStaticPageSection {
   type: string;
@@ -12,6 +13,7 @@ export interface TranslatableStaticPage {
   title: string;
   meta_description: string;
   sections: TranslatableStaticPageSection[];
+  images?: StaticPageImage[];
   updated_at: string;
 }
 

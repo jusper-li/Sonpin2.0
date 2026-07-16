@@ -1,19 +1,51 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
+import StaticContent from '../components/StaticContent';
 import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
 interface StaticPageData extends TranslatableStaticPage {}
 
+const FALLBACK_HERO = 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1600';
+
+const STORY_FALLBACK: StaticPageData = {
+  slug: 'story',
+  title: '品牌故事',
+  meta_description: '了解松品土雞的起點、理念與成長歷程。',
+  sections: [
+    {
+      type: 'intro',
+      title: '品牌故事',
+      content: '松品土雞從在地食材與安心製程出發，一步一步累積成為值得信任的品牌。',
+    },
+    {
+      type: 'section',
+      title: '起點',
+      content: '我們從家族熟悉的農牧經驗開始，理解食材來源、飼養方式與消費者真正關心的安心感。',
+    },
+    {
+      type: 'section',
+      title: '理念',
+      content: '把每一份土雞商品都做得穩定、透明、好入口，讓日常料理與節慶送禮都能更有餘裕。',
+    },
+    {
+      type: 'section',
+      title: '成長',
+      content: '透過線上線下的持續累積，我們希望把更好的土雞品牌體驗帶給更多家庭。',
+    },
+  ],
+  updated_at: '2026-07-03T00:00:00+00:00',
+};
+
 export default function StoryPage() {
   const { currentLanguage, t } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
-  const [page, setPage] = useState<StaticPageData | null>(null);
+  const [page, setPage] = useState<StaticPageData | null>(STORY_FALLBACK);
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
@@ -33,11 +65,11 @@ export default function StoryPage() {
           .maybeSingle();
 
         if (data) {
-          setSourcePage(data);
-          setPage(data);
+          setSourcePage(data as StaticPageData);
+          setPage(data as StaticPageData);
         }
       } catch {
-        // Keep fallback state.
+        // Keep fallback.
       } finally {
         setLoading(false);
       }
@@ -56,8 +88,7 @@ export default function StoryPage() {
 
       setTranslating(true);
       try {
-        const translated = await translateStaticPage(sourcePage, currentLanguage);
-        setPage(translated);
+        setPage(await translateStaticPage(sourcePage, currentLanguage));
       } catch {
         setPage(sourcePage);
       } finally {
@@ -68,26 +99,17 @@ export default function StoryPage() {
     void run();
   }, [currentLanguage, sourcePage]);
 
-  const formatContent = (content: string) =>
-    content.split('\n').map((line, index, arr) => (
-      <span key={index}>
-        {line}
-        {index < arr.length - 1 && <br />}
-      </span>
-    ));
-
   const sections = page?.sections || [];
   const intro = sections.find((section) => section.type === 'intro');
   const storyChapters = sections.filter((section) => section.type !== 'intro');
+  const heroImage = page?.images?.find((image) => image.slot === 'hero');
 
-  const seoTitle = page?.title
-    ? page.title.split('|')[0].trim()
-    : t('story.seo.title', '品牌故事');
+  const seoTitle = page?.title ? page.title.split('|')[0].trim() : '品牌故事';
 
   useSEO({
     title: seoTitle,
-    description: page?.meta_description || t('story.seo.description', '了解淞品土雞的品牌起點、理念與成長歷程。'),
-    keywords: t('story.seo.keywords', '品牌故事,淞品土雞,理念'),
+    description: page?.meta_description || '了解松品土雞的起點、理念與成長歷程。',
+    keywords: '品牌故事,松品土雞,品牌理念,成長歷程',
   });
 
   return (
@@ -95,26 +117,26 @@ export default function StoryPage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="relative h-[55vh] min-h-[420px] bg-[var(--sonpin-primary-warm)] overflow-hidden">
+        <section className="relative h-[55vh] min-h-[420px] overflow-hidden bg-[var(--sonpin-primary-warm)]">
           <img
-            src="https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1600"
-            alt={t('story.hero.alt', '品牌故事')}
-            className="absolute inset-0 w-full h-full object-cover opacity-35"
+            src={heroImage?.url || FALLBACK_HERO}
+            alt={heroImage?.alt || '品牌故事主視覺'}
+            className="absolute inset-0 h-full w-full object-cover opacity-35"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--sonpin-ink)]/50 via-transparent to-[var(--sonpin-primary)]/40" />
-          <div className="relative h-full flex flex-col justify-end pb-16 px-6 container mx-auto">
-            <div className="flex items-center gap-2 text-xs text-[var(--sonpin-primary-border)] tracking-[0.1em] mb-4">
-              <Link to="/" className="hover:text-[var(--sonpin-surface)] transition-colors">
-                {t('common.home', '首頁')}
+          <div className="relative container mx-auto flex h-full flex-col justify-end px-6 pb-16">
+            <div className="mb-4 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
+              <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
+                首頁
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[var(--sonpin-primary-border)]">{t('story.breadcrumb', '品牌故事')}</span>
+              <span className="text-[var(--sonpin-primary-border)]">品牌故事</span>
             </div>
-            <p className="text-[var(--sonpin-background)] text-xs tracking-[0.3em] uppercase mb-3 font-medium">
-              {t('story.eyebrow', 'Brand Story')}
+            <p className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[var(--sonpin-background)]">
+              Brand Story
             </p>
-            <h1 className="text-5xl md:text-7xl font-light text-[var(--sonpin-surface)] tracking-wide">
-              {loading ? t('story.loading', '品牌故事') : (page?.title || t('story.title', '品牌故事'))}
+            <h1 className="text-5xl font-light tracking-wide text-[var(--sonpin-surface)] md:text-7xl">
+              {loading ? '品牌故事' : (page?.title || '品牌故事')}
             </h1>
           </div>
         </section>
@@ -122,55 +144,48 @@ export default function StoryPage() {
         {intro && (
           <section className="relative overflow-hidden">
             <div className="absolute inset-0 bg-[var(--sonpin-primary)]" />
-            <div className="relative container mx-auto px-6 py-20 max-w-3xl text-center">
+            <div className="relative container mx-auto max-w-3xl px-6 py-20 text-center">
               {translating && (
                 <div className="mb-4 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)]/60 bg-[var(--sonpin-surface)]/15 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-surface)]">
-                  {t('common.translating', '翻譯中...')}
+                  翻譯中…
                 </div>
               )}
-              <div className="w-16 h-px bg-[var(--sonpin-primary-border)] mx-auto mb-8" />
-              <h2 className="text-2xl md:text-3xl font-light text-[var(--sonpin-surface)] leading-relaxed mb-6">
+              <div className="mx-auto mb-8 h-px w-16 bg-[var(--sonpin-primary-border)]" />
+              <h2 className="mb-6 text-2xl font-light leading-relaxed text-[var(--sonpin-surface)] md:text-3xl">
                 {intro.title}
               </h2>
-              <p className="text-[var(--sonpin-surface)] font-light leading-relaxed text-base whitespace-pre-line">
-                {intro.content}
-              </p>
-              <div className="w-16 h-px bg-[var(--sonpin-primary-border)] mx-auto mt-8" />
+              <StaticContent value={intro.content} className="text-base font-light leading-relaxed text-[var(--sonpin-surface)] md:text-lg" />
+              <div className="mx-auto mt-8 h-px w-16 bg-[var(--sonpin-primary-border)]" />
             </div>
           </section>
         )}
 
-        <section className="container mx-auto px-6 py-24 max-w-4xl">
+        <section className="container mx-auto max-w-4xl px-6 py-24">
           <div className="relative">
-            <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-[var(--sonpin-background)] transform md:-translate-x-1/2" />
+            <div className="absolute bottom-0 top-0 left-4 w-px bg-[var(--sonpin-background)] md:left-1/2 md:-translate-x-1/2" />
 
             {storyChapters.map((section, index) => (
               <div
-                key={index}
-                className={`relative flex flex-col md:flex-row gap-8 mb-20 ${
-                  index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                }`}
+                key={`${section.title}-${index}`}
+                className={`relative mb-20 flex flex-col gap-8 md:flex-row ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}
               >
                 <div className={`md:w-1/2 ${index % 2 === 0 ? 'md:pr-16 md:text-right' : 'md:pl-16'}`}>
                   <div className="pl-12 md:pl-0">
-                    <div className="inline-block text-xs tracking-[0.3em] uppercase text-[var(--sonpin-primary)] font-medium mb-3 bg-[var(--sonpin-background)] px-3 py-1 rounded-full">
-                      {t('story.chapter', `第 ${index + 1} 章`)}
+                    <div className="mb-3 inline-block rounded-full bg-[var(--sonpin-background)] px-3 py-1 text-xs font-medium tracking-[0.3em] text-[var(--sonpin-primary)]">
+                      章節 {index + 1}
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-light text-[var(--sonpin-ink)] mb-5 leading-snug">
+                    <h2 className="mb-5 text-2xl font-light leading-snug text-[var(--sonpin-ink)] md:text-3xl">
                       {section.title}
                     </h2>
-                    <p className="text-[var(--sonpin-primary-soft)] font-light leading-relaxed whitespace-pre-line">
-                      {formatContent(section.content)}
-                    </p>
+                    <StaticContent value={section.content} className="font-light leading-relaxed text-[var(--sonpin-primary-soft)]" />
                   </div>
                 </div>
 
-                <div className="hidden md:flex md:w-0 items-start justify-center relative">
-                  <div className="absolute left-1/2 top-2 -translate-x-1/2 w-4 h-4 rounded-full bg-[var(--sonpin-primary-warm)] border-4 border-[var(--sonpin-surface)] shadow-md" />
-                </div>
-
                 <div className="absolute left-0 top-2 md:hidden">
-                  <div className="w-4 h-4 rounded-full bg-[var(--sonpin-primary-warm)] border-4 border-[var(--sonpin-surface)] shadow-md ml-2" />
+                  <div className="ml-2 h-4 w-4 rounded-full border-4 border-[var(--sonpin-surface)] bg-[var(--sonpin-primary-warm)] shadow-md" />
+                </div>
+                <div className="hidden md:flex md:w-0 items-start justify-center relative">
+                  <div className="absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 rounded-full border-4 border-[var(--sonpin-surface)] bg-[var(--sonpin-primary-warm)] shadow-md" />
                 </div>
 
                 <div className="md:w-1/2" />
@@ -179,46 +194,44 @@ export default function StoryPage() {
           </div>
         </section>
 
-        <section className="bg-[var(--sonpin-background)] border-t border-[var(--sonpin-primary-border)]">
-          <div className="container mx-auto px-6 py-20 max-w-5xl">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
+        <section className="border-t border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]">
+          <div className="container mx-auto max-w-5xl px-6 py-20">
+            <div className="grid gap-8 text-center md:grid-cols-3">
               <div className="group">
-                <div className="text-5xl font-light text-[var(--sonpin-primary)] mb-2 group-hover:scale-110 transition-transform duration-300">2018</div>
-                <div className="text-sm text-[var(--sonpin-primary-muted)] font-light">{t('story.stats.started', '創立')}</div>
+                <div className="mb-2 text-5xl font-light text-[var(--sonpin-primary)] transition-transform duration-300 group-hover:scale-110">2018</div>
+                <div className="text-sm font-light text-[var(--sonpin-primary-muted)]">創立</div>
               </div>
               <div className="group">
-                <div className="text-5xl font-light text-[var(--sonpin-primary)] mb-2 group-hover:scale-110 transition-transform duration-300">8+</div>
-                <div className="text-sm text-[var(--sonpin-primary-muted)] font-light">{t('story.stats.partners', '合作夥伴')}</div>
+                <div className="mb-2 text-5xl font-light text-[var(--sonpin-primary)] transition-transform duration-300 group-hover:scale-110">8+</div>
+                <div className="text-sm font-light text-[var(--sonpin-primary-muted)]">合作夥伴</div>
               </div>
               <div className="group">
-                <div className="text-5xl font-light text-[var(--sonpin-primary)] mb-2 group-hover:scale-110 transition-transform duration-300">100K+</div>
-                <div className="text-sm text-[var(--sonpin-primary-muted)] font-light">{t('story.stats.customers', '顧客')}</div>
+                <div className="mb-2 text-5xl font-light text-[var(--sonpin-primary)] transition-transform duration-300 group-hover:scale-110">100K+</div>
+                <div className="text-sm font-light text-[var(--sonpin-primary-muted)]">顧客支持</div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="py-20 bg-[var(--sonpin-background)]">
-          <div className="container mx-auto px-6 text-center max-w-2xl">
-            <h2 className="text-3xl font-light text-[var(--sonpin-ink)] mb-6">
-              {t('story.cta.title', '一起了解淞品土雞')}
-            </h2>
-            <p className="text-[var(--sonpin-primary-muted)] font-light mb-10 leading-relaxed">
-              {t('story.cta.description', '從產地、養殖到餐桌，我們把每一個細節做好，讓您安心選擇。')}
+        <section className="bg-[var(--sonpin-background)] py-20">
+          <div className="container mx-auto max-w-2xl px-6 text-center">
+            <h2 className="mb-6 text-3xl font-light text-[var(--sonpin-ink)]">想更了解我們嗎？</h2>
+            <p className="mb-10 font-light leading-relaxed text-[var(--sonpin-primary-muted)]">
+              歡迎到商品頁看看我們的土雞禮盒與常溫滴雞精，也可以前往客服中心與我們聯絡。
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link
                 to="/shop"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] rounded-full hover:bg-[var(--sonpin-primary)] transition-colors text-sm font-medium"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sonpin-ink)] px-8 py-4 text-sm font-medium text-[var(--sonpin-surface)] transition-colors hover:bg-[var(--sonpin-primary)]"
               >
-                {t('story.cta.shop', '前往購物')}
+                前往選購
                 <ChevronRight size={16} />
               </Link>
               <Link
                 to="/about"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-[var(--sonpin-primary-border)] text-[var(--sonpin-primary-soft)] rounded-full hover:border-[var(--sonpin-primary-warm)] transition-colors text-sm font-light"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-8 py-4 text-sm font-light text-[var(--sonpin-primary-soft)] transition-colors hover:border-[var(--sonpin-primary-warm)]"
               >
-                {t('story.cta.about', '認識我們')}
+                關於淞品
               </Link>
             </div>
           </div>

@@ -81,6 +81,15 @@ const sortCategories = (categories: BlogCategory[]) =>
     .filter((category) => category.is_active !== false)
     .sort((a, b) => a.sort_order - b.sort_order);
 
+const uniqueCategories = (categories: BlogCategory[]) => {
+  const seen = new Set<string>();
+  return categories.filter((category) => {
+    if (!category.slug || seen.has(category.slug)) return false;
+    seen.add(category.slug);
+    return true;
+  });
+};
+
 const localCategoryMap = BLOG_ARTICLES.reduce<BlogArticleCategoryMap>((acc, article) => {
   acc[article.slug] = article.category_slug;
   return acc;
@@ -173,11 +182,24 @@ export const loadBlogData = async (options: { publishedOnly?: boolean } = {}) =>
     if (articlesError && !isMissingSupabaseTableError(articlesError)) throw articlesError;
 
     const settings = new Map((settingsData || []).map((row) => [row.setting_key, row.setting_value]));
-    const categories = sortCategories(parseCategories(settings.get(BLOG_CATEGORY_SETTING_KEY)));
+    const settingsCategories = parseCategories(settings.get(BLOG_CATEGORY_SETTING_KEY));
     const categoryMap = {
       ...localCategoryMap,
       ...parseCategoryMap(settings.get(BLOG_ARTICLE_CATEGORY_SETTING_KEY)),
     };
+
+    const articles = mergeDbArticles((articlesData || []) as DbArticle[], settingsCategories, categoryMap, publishedOnly);
+    const derivedCategories = uniqueCategories(
+      articles.map((article, index) => ({
+        name: article.category_name || article.category_slug,
+        slug: article.category_slug,
+        description: '',
+        sort_order: 1000 + index,
+        is_active: true,
+      })),
+    ).filter((category) => category.slug);
+
+    const categories = sortCategories(uniqueCategories([...settingsCategories, ...derivedCategories]));
 
     return {
       categories,
