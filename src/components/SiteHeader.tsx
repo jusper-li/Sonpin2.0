@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS } from '../data/homepageContent';
 import { normalizeLang } from '../lib/language';
+import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
 
 interface NavItem {
   label: string;
@@ -162,6 +163,7 @@ export default function SiteHeader() {
     link_groups: DEFAULT_FOOTER_SETTINGS.link_groups,
   });
   const [socials, setSocials] = useState<Social[]>([]);
+  const [staticPages, setStaticPages] = useState(DEFAULT_STATIC_PAGE_NAV_ITEMS);
   const { itemCount } = useCart();
   const { currentLanguage, languages, setLanguage, t } = useLanguage();
   const { user, profile } = useMemberAuth();
@@ -178,6 +180,10 @@ export default function SiteHeader() {
   const normalizedLanguage = normalizeLang(currentLanguage);
   const isHomepage = location.pathname === '/';
   const isSolidHeader = scrolled || isMenuOpen || !isHomepage;
+  const staticPageHrefSet = useMemo(
+    () => new Set(staticPages.map((item) => normalizeMenuHref(item.href))),
+    [staticPages],
+  );
   const primaryNavigation = useMemo(() => {
     const links = dedupeMenuLinks(settings.navigation).filter((item) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(item.href)));
     if (!links.some((item) => normalizeMenuHref(item.href) === '/blog')) {
@@ -209,7 +215,10 @@ export default function SiteHeader() {
               ...link,
               label: getFooterLinkLabel(link.href, t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label)),
             }))
-            .filter((link) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(link.href))),
+            .filter((link) => {
+              const href = normalizeMenuHref(link.href);
+              return !HIDDEN_MENU_HREFS.has(href) && !staticPageHrefSet.has(href);
+            }),
           seen,
         ),
       }))
@@ -243,10 +252,19 @@ export default function SiteHeader() {
         { label: getNavLabel('/terms', t('header.terms', '服務條款')), href: '/terms' },
       ],
       seen,
-    );
+    ).filter((link) => !staticPageHrefSet.has(normalizeMenuHref(link.href)));
+
+    const staticPageGroup = {
+      title: t('header.static_pages', '靜態頁面'),
+      links: staticPages.filter((item) => !seen.has(normalizeMenuHref(item.href))),
+    };
+
+    if (staticPageGroup.links.length > 0) {
+      footerGroups = [...footerGroups, staticPageGroup];
+    }
 
     return { footerGroups, shoppingLinks, legalLinks };
-  }, [footerSettings.link_groups, itemCount, primaryNavigation, settings.show_cart, t]);
+  }, [footerSettings.link_groups, itemCount, primaryNavigation, settings.show_cart, staticPageHrefSet, staticPages, t]);
 
   const isActiveMenuItem = (href: string) => {
     const target = normalizeMenuHref(href);
@@ -258,7 +276,13 @@ export default function SiteHeader() {
     loadSettings();
     loadFooterSettings();
     loadSocials();
+    void loadStaticPages();
   }, []);
+
+  const loadStaticPages = async () => {
+    const items = await loadStaticPageNavItems();
+    setStaticPages(items);
+  };
 
   useEffect(() => {
     if (isMenuOpen) {

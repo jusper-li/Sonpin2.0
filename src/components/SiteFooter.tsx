@@ -1,10 +1,12 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS } from '../data/homepageContent';
 import { openCookieConsentSettings } from '../lib/cookieConsent';
 import { useLanguage } from '../contexts/LanguageContext';
+import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
 
 interface FooterLink {
   label: string;
@@ -104,13 +106,20 @@ const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings =>
 export default function SiteFooter() {
   const [settings, setSettings] = useState<FooterSettings>(DEFAULT_FOOTER_SETTINGS);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
+  const [staticPages, setStaticPages] = useState(DEFAULT_STATIC_PAGE_NAV_ITEMS);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
     loadSettings();
     loadSocialAccounts();
+    void loadStaticPages();
   }, []);
+
+  const loadStaticPages = async () => {
+    const items = await loadStaticPageNavItems();
+    setStaticPages(items);
+  };
 
   const loadSettings = async () => {
     if (!isSupabaseContentEnabled) return;
@@ -189,6 +198,28 @@ export default function SiteFooter() {
         },
       ].filter(Boolean) as Array<{ platform: string; url: string }>);
 
+  const staticPageHrefSet = useMemo(
+    () => new Set(staticPages.map((item) => normalizeMenuHref(item.href))),
+    [staticPages],
+  );
+
+  const renderedLinkGroups = useMemo(() => {
+    const filteredGroups = settings.link_groups
+      .map((group) => ({
+        title: group.title,
+        links: group.links.filter((link) => !staticPageHrefSet.has(normalizeMenuHref(link.href))),
+      }))
+      .filter((group) => group.links.length > 0);
+
+    return [
+      ...filteredGroups,
+      {
+        title: t('footer.static_pages', '靜態頁面'),
+        links: staticPages,
+      },
+    ];
+  }, [settings.link_groups, staticPageHrefSet, staticPages, t]);
+
   return (
     <footer className="bg-[var(--sonpin-background)] text-stone-700 w-full">
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--sonpin-primary)]/50 to-transparent" />
@@ -235,7 +266,7 @@ export default function SiteFooter() {
             </div>
           </div>
 
-          {settings.link_groups.map((group, index) => (
+          {renderedLinkGroups.map((group, index) => (
             <div key={index}>
               <h3 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[var(--sonpin-primary)]/90 mb-6">
                 {t(`footer.group_title.${index}`, group.title)}

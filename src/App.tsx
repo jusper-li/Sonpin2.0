@@ -103,6 +103,7 @@ function App() {
                 <Route path="/story" element={<StoryPage />} />
                 <Route path="/process" element={<ProcessPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/:staticSlug" element={<StaticPage />} />
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/categories/:categorySlug" element={<BlogList />} />
                 <Route path="/blog/posts/:slug" element={<BlogDetail />} />
