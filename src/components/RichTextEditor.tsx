@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   AlignCenter,
   AlignJustify,
@@ -12,7 +12,9 @@ import {
   ListOrdered,
   Type,
   Underline,
+  Upload,
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface RichTextEditorProps {
@@ -22,7 +24,16 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-type Command = 'bold' | 'italic' | 'underline' | 'insertUnorderedList' | 'insertOrderedList' | 'justifyLeft' | 'justifyCenter' | 'justifyRight' | 'justifyFull';
+type Command =
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'insertUnorderedList'
+  | 'insertOrderedList'
+  | 'justifyLeft'
+  | 'justifyCenter'
+  | 'justifyRight'
+  | 'justifyFull';
 
 const FONT_SIZE_OPTIONS = [
   { label: '12px', value: '2' },
@@ -40,10 +51,12 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const { t } = useLanguage();
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [htmlMode, setHtmlMode] = useState(false);
   const [assetMode, setAssetMode] = useState<'link' | 'image' | null>(null);
   const [assetUrl, setAssetUrl] = useState('');
   const [fontSize, setFontSize] = useState('4');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const resolvedPlaceholder = placeholder || t('rich_text_editor.placeholder', '請輸入內容...');
 
@@ -57,10 +70,14 @@ export default function RichTextEditor({
     editorRef.current?.focus();
   };
 
+  const syncEditor = () => {
+    onChange(editorRef.current?.innerHTML || '');
+  };
+
   const runCommand = (command: Command) => {
     focusEditor();
     document.execCommand(command);
-    onChange(editorRef.current?.innerHTML || '');
+    syncEditor();
   };
 
   const insertAsset = (mode: 'link' | 'image') => {
@@ -75,23 +92,64 @@ export default function RichTextEditor({
 
     focusEditor();
     document.execCommand(assetMode === 'link' ? 'createLink' : 'insertImage', false, url);
-    onChange(editorRef.current?.innerHTML || '');
+    syncEditor();
 
     setAssetMode(null);
     setAssetUrl('');
   };
 
+  const uploadAndInsertImage = () => {
+    setAssetMode(null);
+    setAssetUrl('');
+    imageInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert(t('image_upload.invalid_file', '請選擇圖片檔案。'));
+      event.target.value = '';
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('homepage-images').upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('homepage-images').getPublicUrl(fileName);
+      if (!data?.publicUrl) throw new Error('無法取得圖片網址');
+
+      focusEditor();
+      document.execCommand('insertImage', false, data.publicUrl);
+      syncEditor();
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      alert(t('image_upload.upload_failed', '圖片上傳失敗，請稍後再試。'));
+    } finally {
+      setUploadingImage(false);
+      event.target.value = '';
+    }
+  };
+
   const clearFormat = () => {
     focusEditor();
     document.execCommand('removeFormat');
-    onChange(editorRef.current?.innerHTML || '');
+    syncEditor();
   };
 
   const applyFontSize = (nextSize: string) => {
     setFontSize(nextSize);
     focusEditor();
     document.execCommand('fontSize', false, nextSize);
-    onChange(editorRef.current?.innerHTML || '');
+    syncEditor();
   };
 
   return (
@@ -114,7 +172,7 @@ export default function RichTextEditor({
           value={fontSize}
           onChange={(event) => applyFontSize(event.target.value)}
           className="rounded-md border border-slate-300 bg-white px-2 py-2 text-xs"
-          title={t('rich_text_editor.font_size', '字體大小')}
+          title={t('rich_text_editor.font_size', '字級')}
         >
           {FONT_SIZE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -123,7 +181,7 @@ export default function RichTextEditor({
           ))}
         </select>
 
-        <button type="button" onClick={() => runCommand('insertUnorderedList')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.bullet_list', '項目清單')}>
+        <button type="button" onClick={() => runCommand('insertUnorderedList')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.bullet_list', '項目符號清單')}>
           <List className="h-4 w-4" />
         </button>
         <button type="button" onClick={() => runCommand('insertOrderedList')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.number_list', '編號清單')}>
@@ -144,15 +202,24 @@ export default function RichTextEditor({
         <button type="button" onClick={() => insertAsset('link')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.insert_link', '插入連結')}>
           <LinkIcon className="h-4 w-4" />
         </button>
-        <button type="button" onClick={() => insertAsset('image')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.insert_image', '插入圖片')}>
+        <button type="button" onClick={() => insertAsset('image')} className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100" title={t('rich_text_editor.insert_image', '插入圖片網址')}>
           <ImageIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={uploadAndInsertImage}
+          className="rounded-md border border-slate-300 bg-white p-2 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          title={t('rich_text_editor.upload_image', '上傳並插入圖片')}
+          disabled={uploadingImage}
+        >
+          <Upload className="h-4 w-4" />
         </button>
         <button
           type="button"
           onClick={() => setHtmlMode((prev) => !prev)}
           className="ml-auto rounded-md border border-slate-300 bg-white px-3 py-2 text-xs hover:bg-slate-100"
         >
-          {htmlMode ? t('rich_text_editor.visual_mode', '回到視覺模式') : t('rich_text_editor.html_mode', 'HTML 模式')}
+          {htmlMode ? t('rich_text_editor.visual_mode', '視覺模式') : t('rich_text_editor.html_mode', 'HTML 模式')}
         </button>
       </div>
 
@@ -181,6 +248,8 @@ export default function RichTextEditor({
         </div>
       )}
 
+      <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+
       {htmlMode ? (
         <textarea
           value={value}
@@ -193,7 +262,7 @@ export default function RichTextEditor({
           ref={editorRef}
           contentEditable
           suppressContentEditableWarning
-          onInput={() => onChange(editorRef.current?.innerHTML || '')}
+          onInput={syncEditor}
           className={`w-full p-3 text-sm leading-7 outline-none ${minHeightClassName}`}
           data-placeholder={resolvedPlaceholder}
         />

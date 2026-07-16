@@ -3,6 +3,7 @@ import { Plus, Search, CreditCard as Edit, Trash2, Package, X, Save, FolderTree,
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../../lib/supabase';
 import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from '../../data/fallbackProducts';
 import ImageUpload from '../ImageUpload';
+import RichTextEditor from '../RichTextEditor';
 import ProductPageBuilderEditor from './ProductPageBuilderEditor';
 import {
   extractProductPageDocument,
@@ -1727,11 +1728,10 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-2">詳細內容 (HTML)</label>
-                    <textarea
+                    <RichTextEditor
                       value={productForm.content}
-                      onChange={(e) => handleProductFormChange('content', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-sm"
-                      rows={6}
+                      onChange={(nextValue) => handleProductFormChange('content', nextValue)}
+                      minHeightClassName="min-h-[220px]"
                       placeholder="可輸入 HTML 格式內容"
                     />
                   </div>
