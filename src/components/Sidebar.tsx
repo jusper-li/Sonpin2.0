@@ -24,6 +24,7 @@
   Users,
   MessageSquare,
   Palette,
+  PanelTop,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -78,6 +79,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
       title: t('admin.sidebar.group.content', '內容管理'),
       items: [
         { id: 'homepage', label: t('admin.sidebar.homepage', '首頁管理'), icon: Home },
+        { id: 'common-layout', label: '共同頁首頁尾', icon: PanelTop },
         { id: 'product-detail-service', label: '商品頁配送與服務', icon: Truck },
         { id: 'contact-center', label: '客服中心管理', icon: Mail },
         { id: 'service', label: t('admin.sidebar.service', '老饕分享'), icon: Share2 },

@@ -15,6 +15,7 @@ const ArticleManagement = lazy(() => import('../components/modules/ArticleManage
 const StoreManagement = lazy(() => import('../components/modules/StoreManagement'));
 const FAQManagement = lazy(() => import('../components/modules/FAQManagement'));
 const HomepageManagement = lazy(() => import('../components/modules/HomepageManagement'));
+const CommonLayoutManagement = lazy(() => import('../components/modules/CommonLayoutManagement'));
 const ServiceManagement = lazy(() => import('../components/modules/ServiceManagement'));
 const PaymentManagement = lazy(() => import('../components/modules/PaymentManagement'));
 const SocialManagement = lazy(() => import('../components/modules/SocialManagement'));
@@ -103,6 +104,8 @@ function AdminPanel() {
         return <FAQManagement />;
       case 'homepage':
         return <HomepageManagement />;
+      case 'common-layout':
+        return <CommonLayoutManagement />;
       case 'service':
         return <ServiceManagement />;
       case 'payments':
