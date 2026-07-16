@@ -24,9 +24,9 @@ export interface BlogArticle {
 
 export const BLOG_CATEGORIES: BlogCategory[] = [
   {
-    name: '公告',
+    name: '文章專欄',
     slug: 'bulletin',
-    description: '本站最新通知與重要公告。',
+    description: '本站最新文章與專欄內容。',
     sort_order: 1,
     is_active: true,
   },

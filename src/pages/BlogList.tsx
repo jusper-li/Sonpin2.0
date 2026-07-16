@@ -38,8 +38,8 @@ export default function BlogList() {
 
   useSEO({
     title: activeCategory?.name || t('blog.title', '文章專欄'),
-    description: activeCategory?.description || t('blog.description', '瀏覽最新文章與分類內容。'),
-    keywords: t('blog.keywords', '文章,分類,專欄,最新消息'),
+    description: activeCategory?.description || t('blog.description', '瀏覽最新文章、分類內容與延伸閱讀。'),
+    keywords: t('blog.keywords', '文章專欄,文章分類,最新消息'),
   });
 
   useEffect(() => {
@@ -120,14 +120,14 @@ export default function BlogList() {
       label: t('blog.all', '全部文章'),
       slug: '',
       count: totalArticles,
-      description: '查看所有已發佈文章。',
+      description: '瀏覽所有已發佈文章。',
     },
     ...categories.map((category) => ({
       key: category.slug,
       label: stripBrandPrefix(category.name),
       slug: category.slug,
       count: countForCategory(category.slug),
-      description: category.description || '依分類瀏覽文章。',
+      description: category.description || '查看此分類的最新內容。',
     })),
   ];
 
@@ -156,7 +156,7 @@ export default function BlogList() {
                 </h1>
                 <div className="mt-7 h-px w-14 bg-[var(--sonpin-primary-warm)]/70" />
                 <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">
-                  {activeCategory?.description || t('blog.subheading', '瀏覽最新文章、分類內容與延伸閱讀。')}
+                  {activeCategory?.description || t('blog.subheading', '瀏覽最新文章，分類閱讀更方便。')}
                 </p>
               </div>
 
@@ -174,7 +174,7 @@ export default function BlogList() {
 
             {translating && (
               <div className="mt-6 inline-flex items-center rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)]/80 px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
-                {t('common.translating', '翻譯中…')}
+                {t('common.translating', '翻譯中')}
               </div>
             )}
           </div>
@@ -182,25 +182,25 @@ export default function BlogList() {
 
         <section className="container mx-auto px-6 py-10 md:py-14">
           <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
-            <aside className="rounded-[1.75rem] border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)]/95 p-6 shadow-[0_18px_48px_-30px_rgba(53,30,13,0.28)] lg:sticky lg:top-28">
-              <div className="mb-5">
+            <aside className="rounded-[2rem] border border-[var(--sonpin-primary-border)] bg-gradient-to-b from-white/90 to-[var(--sonpin-surface)]/90 p-5 shadow-[0_22px_60px_-34px_rgba(53,30,13,0.28)] backdrop-blur-sm lg:sticky lg:top-28">
+              <div className="mb-5 rounded-[1.5rem] border border-[var(--sonpin-primary-border)] bg-white/70 p-5">
                 <p className="text-[11px] font-medium uppercase tracking-[0.35em] text-[var(--sonpin-primary)]/75">
                   Category Guide
                 </p>
-                <h2 className="mt-3 text-2xl font-light tracking-[0.12em] text-stone-900">
+                <h2 className="mt-3 text-[1.65rem] font-light tracking-[0.12em] text-stone-900">
                   文章分類導覽
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-stone-500">
-                  快速切換分類，查看目前主題下的最新文章。
+                  快速切換分類，查看目前主題下的最新內容。
                 </p>
-              </div>
 
-              <div className="mb-5 rounded-2xl border border-[var(--sonpin-primary-border)] bg-white/70 p-4">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Current Filter</p>
-                <p className="mt-2 text-lg font-medium tracking-[0.08em] text-stone-900">{activeCategoryName}</p>
-                <p className="mt-1 text-sm text-stone-500">
-                  目前顯示 <span className="font-medium text-stone-800">{visibleArticles.length}</span> / {totalArticles} 篇文章
-                </p>
+                <div className="mt-5 rounded-2xl border border-[var(--sonpin-primary-border)]/80 bg-[var(--sonpin-background)]/60 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Current Filter</p>
+                  <p className="mt-2 text-lg font-medium tracking-[0.08em] text-stone-900">{activeCategoryName}</p>
+                  <p className="mt-1 text-sm text-stone-500">
+                    目前顯示 <span className="font-medium text-stone-800">{visibleArticles.length}</span> / {totalArticles} 篇文章
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -212,18 +212,25 @@ export default function BlogList() {
                       key={category.key}
                       to={category.slug ? `/blog/categories/${encodeURIComponent(category.slug)}` : '/blog'}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`group flex items-start justify-between gap-4 rounded-2xl border px-4 py-4 transition-all duration-300 ${
+                      className={`group relative flex items-start justify-between gap-4 overflow-hidden rounded-2xl border px-4 py-4 transition-all duration-300 ${
                         isActive
-                          ? 'border-[var(--sonpin-primary)] bg-[var(--sonpin-primary)] text-white shadow-[0_18px_35px_-18px_rgba(53,30,13,0.45)]'
-                          : 'border-[var(--sonpin-primary-border)] bg-white/70 text-stone-700 hover:-translate-y-0.5 hover:border-[var(--sonpin-primary)] hover:bg-white hover:shadow-[0_14px_30px_-22px_rgba(53,30,13,0.25)]'
+                          ? 'border-[var(--sonpin-primary)] bg-[linear-gradient(135deg,var(--sonpin-primary)_0%,#4b2a10_100%)] text-white shadow-[0_18px_35px_-18px_rgba(53,30,13,0.45)]'
+                          : 'border-[var(--sonpin-primary-border)] bg-white/75 text-stone-700 hover:-translate-y-0.5 hover:border-[var(--sonpin-primary)] hover:bg-white hover:shadow-[0_14px_30px_-22px_rgba(53,30,13,0.25)]'
                       }`}
                     >
+                      <span
+                        className={`absolute inset-y-0 left-0 w-1 transition-colors duration-300 ${
+                          isActive ? 'bg-white/35' : 'bg-transparent group-hover:bg-[var(--sonpin-primary)]/20'
+                        }`}
+                      />
+
                       <div>
                         <div className="text-sm font-medium tracking-[0.12em]">{category.label}</div>
                         <div className={`mt-1 text-xs leading-6 ${isActive ? 'text-white/75' : 'text-stone-400'}`}>
                           {category.description}
                         </div>
                       </div>
+
                       <span
                         className={`mt-0.5 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.12em] ${
                           isActive ? 'bg-white/20 text-white' : 'bg-[var(--sonpin-primary-border)]/40 text-stone-700'

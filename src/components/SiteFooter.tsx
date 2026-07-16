@@ -42,7 +42,7 @@ interface FooterSettings {
 const DEFAULT_FOOTER_LINK_LABELS: Record<string, string> = {
   '/about': '關於淞品',
   '/story': '品牌故事',
-  '/blog': '公告',
+  '/blog': '文章專欄',
   '/contact': '客服中心',
   '/shop': '商品介紹',
   '/faq': '常見問題',

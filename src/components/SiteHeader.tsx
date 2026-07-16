@@ -66,7 +66,43 @@ const normalizeMenuHref = (href: string) => {
   return value.replace(/\/+$/, '').toLowerCase();
 };
 
-const HIDDEN_MENU_HREFS = new Set(['/order-query', '/remittance-notice']);
+const HIDDEN_MENU_HREFS = new Set(['/order-query', '/remittance-notice', '/media']);
+const NAV_LABEL_FALLBACKS: Record<string, string> = {
+  '/': '首頁',
+  '/about': '關於我們',
+  '/products': '商品介紹',
+  '/shipping': '配送資訊',
+  '/service': '客製服務',
+  '/store': '門市資訊',
+  '/process': '生產製程',
+  '/blog': '文章專欄',
+  '/member': '會員專區',
+  '/contact': '客服中心',
+  '/faq': '常見問題',
+  '/cart': '購物車',
+  '/order-query': '訂單查詢',
+  '/remittance-notice': '匯款通知',
+  '/privacy': '隱私權政策',
+  '/terms': '服務條款',
+};
+
+const NAV_LABEL_OVERRIDES: Record<string, string> = {
+  '/blog': '文章專欄',
+};
+
+const FOOTER_GROUP_FALLBACKS = ['關於淞品', '商品與門市'];
+
+const FOOTER_LINK_FALLBACKS: Record<string, string> = {
+  '/about': '關於我們',
+  '/products': '商品介紹',
+  '/service': '客製服務',
+  '/shipping': '配送資訊',
+  '/store': '門市資訊',
+  '/contact': '客服中心',
+  '/order-query': '訂單查詢',
+  '/faq': '常見問題',
+};
+
 const dedupeMenuLinks = <T extends { label: string; href: string }>(
   links: T[] = [],
   seen = new Set<string>(),
@@ -93,7 +129,28 @@ const hasRenderableName = (value: string) => {
 
 const getDisplayNameFallback = (email?: string | null) => {
   const localPart = (email || '').split('@')[0].trim();
-  return localPart || '?';
+  return localPart || '訪客';
+};
+
+const getNavLabel = (href: string, label?: string | null) => {
+  const normalizedHref = normalizeMenuHref(href);
+  const override = NAV_LABEL_OVERRIDES[normalizedHref];
+  if (override) return override;
+  const fallback = NAV_LABEL_FALLBACKS[normalizedHref] || '';
+  const candidate = label?.trim() || '';
+  return hasRenderableName(candidate) ? candidate : fallback;
+};
+
+const getFooterGroupTitle = (index: number, title?: string | null) => {
+  const fallback = FOOTER_GROUP_FALLBACKS[index] || '';
+  const candidate = title?.trim() || '';
+  return hasRenderableName(candidate) ? candidate : fallback;
+};
+
+const getFooterLinkLabel = (href: string, label?: string | null) => {
+  const fallback = FOOTER_LINK_FALLBACKS[normalizeMenuHref(href)] || '';
+  const candidate = label?.trim() || '';
+  return hasRenderableName(candidate) ? candidate : fallback;
 };
 
 export default function SiteHeader() {
@@ -124,7 +181,7 @@ export default function SiteHeader() {
   const primaryNavigation = useMemo(() => {
     const links = dedupeMenuLinks(settings.navigation).filter((item) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(item.href)));
     if (!links.some((item) => normalizeMenuHref(item.href) === '/blog')) {
-      const blogLink = { label: t('header.blog', '公告'), href: '/blog' };
+      const blogLink = { label: getNavLabel('/blog', t('header.blog', '文章專欄')), href: '/blog' };
       const mediaIndex = links.findIndex((item) => normalizeMenuHref(item.href) === '/media');
       if (mediaIndex >= 0) {
         links.splice(mediaIndex + 1, 0, blogLink);
@@ -137,7 +194,7 @@ export default function SiteHeader() {
   const translatedPrimaryNavigation = useMemo(
     () => primaryNavigation.map((item) => ({
       ...item,
-      label: t(`header.nav.${normalizeMenuHref(item.href)}`, item.label),
+      label: getNavLabel(item.href, t(`header.nav.${normalizeMenuHref(item.href)}`, item.label)),
     })),
     [primaryNavigation, t],
   );
@@ -145,12 +202,12 @@ export default function SiteHeader() {
     const seen = new Set(primaryNavigation.map((item) => normalizeMenuHref(item.href)));
     let footerGroups = (footerSettings.link_groups || [])
       .map((group, index) => ({
-        title: t(`header.footer_group.${index}`, group.title?.trim() || '??'),
-                links: dedupeMenuLinks(
+        title: getFooterGroupTitle(index, t(`header.footer_group.${index}`, group.title)),
+        links: dedupeMenuLinks(
           (group.links || [])
             .map((link) => ({
               ...link,
-              label: t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label),
+              label: getFooterLinkLabel(link.href, t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label)),
             }))
             .filter((link) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(link.href))),
           seen,
@@ -159,7 +216,7 @@ export default function SiteHeader() {
       .filter((group) => group.links.length > 0);
     const shoppingLinks = dedupeMenuLinks(
       [
-        { label: t('header.shop', '??隞晶'), href: '/shop' },
+        { label: getNavLabel('/shop', t('header.shop', '商品專區')), href: '/shop' },
         ...(settings.show_cart ? [{ label: t('header.cart', `購物車${itemCount > 0 ? ` (${itemCount})` : ''}`), href: '/cart' }] : []),
       ],
       seen,
@@ -170,7 +227,7 @@ export default function SiteHeader() {
       normalizeMenuHref(shoppingLinks[0].href) === '/cart' &&
       footerGroups.length > 0
     ) {
-      const serviceIndex = footerGroups.findIndex((group) => group.title.includes('??'));
+      const serviceIndex = footerGroups.findIndex((group) => group.title.includes('商品') || group.title.includes('服務'));
       const targetIndex = serviceIndex >= 0 ? serviceIndex : footerGroups.length - 1;
       footerGroups = footerGroups.map((group, index) => (
         index === targetIndex
@@ -182,8 +239,8 @@ export default function SiteHeader() {
 
     const legalLinks = dedupeMenuLinks(
       [
-        { label: t('header.privacy', '隱私權政策'), href: '/privacy' },
-        { label: t('header.terms', '服務條款'), href: '/terms' },
+        { label: getNavLabel('/privacy', t('header.privacy', '隱私權政策')), href: '/privacy' },
+        { label: getNavLabel('/terms', t('header.terms', '服務條款')), href: '/terms' },
       ],
       seen,
     );
@@ -326,7 +383,7 @@ export default function SiteHeader() {
               ) : (
                 <span className="flex flex-col">
                   <span className={`text-xl md:text-3xl font-semibold tracking-wider transition-all duration-300 ${isSolidHeader ? 'text-[var(--sonpin-ink)] group-hover:text-[var(--sonpin-primary)]' : 'text-white group-hover:text-white/90'}`}>
-                    {settings.logo_text.split(' ')[0] || '瘛?'}
+                    {settings.logo_text.split(' ')[0] || '淞品'}
                   </span>
                   <span className={`text-[9px] md:text-xs tracking-[0.3em] uppercase transition-colors duration-300 ${isSolidHeader ? 'text-[var(--sonpin-primary)] group-hover:text-[var(--sonpin-primary)]' : 'text-white/70 group-hover:text-white/60'}`}>
                     {settings.logo_text.split(' ').slice(1).join(' ') || '淞品土雞專賣店'}
@@ -351,7 +408,7 @@ export default function SiteHeader() {
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
-                title={user ? '?銝剖?' : '?餃 / ??'}
+                title={user ? '會員專區' : '登入 / 註冊會員'}
               >
                 {memberInitial ? (
                   <span className="w-5 h-5 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
@@ -415,7 +472,7 @@ export default function SiteHeader() {
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
-                aria-label={user ? t('header.member_center', '?銝剖?') : t('header.login_join', '?餃 / ??')}
+                aria-label={user ? t('header.member_center', '會員專區') : t('header.login_join', '登入 / 註冊會員')}
               >
                 {memberInitial ? (
                   <span className="w-6 h-6 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
@@ -447,7 +504,7 @@ export default function SiteHeader() {
                     type="button"
                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
                     className={`relative inline-flex h-9 min-w-9 items-center justify-center rounded-full border px-2 transition-all duration-200 ${isSolidHeader ? 'border-white/30 bg-transparent text-[var(--sonpin-ink)] backdrop-blur-[1px] hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)]' : 'mix-blend-difference border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
-                    aria-label="??隤頂"
+                    aria-label="切換語言"
                     aria-expanded={showLanguageMenu}
                   >
                     <Globe className="w-4 h-4" />
@@ -479,7 +536,7 @@ export default function SiteHeader() {
               <button
                 className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? '???詨' : '???詨'}
+                aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
                 aria-expanded={isMenuOpen}
               >
                 <div className="relative w-5 h-5 flex items-center justify-center">
@@ -608,7 +665,7 @@ export default function SiteHeader() {
             {/* Shop pages */}
             {mobileMenu.shoppingLinks.length > 0 && (
             <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '??')}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '商品專區')}</p>
               <nav className="space-y-0.5">
                 {mobileMenu.shoppingLinks.map((link, index) => {
                   const isActive = isActiveMenuItem(link.href);
@@ -705,7 +762,7 @@ export default function SiteHeader() {
               </div>
             )}
 
-            <p className="text-[10px] text-[var(--sonpin-primary-border)] tracking-widest">蝛?Sonpin</p>
+            <p className="text-[10px] text-[var(--sonpin-primary-border)] tracking-widest">© Sonpin</p>
           </div>
         </div>
       </div>
