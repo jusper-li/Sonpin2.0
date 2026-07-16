@@ -83,7 +83,7 @@ const STORE_ONLY_PRODUCT_SLUGS = new Set([
 const isStoreOnlyProduct = (item: { slug: string; categories?: { slug: string } | null }) =>
   item.categories?.slug === 'other-products' || STORE_ONLY_PRODUCT_SLUGS.has(item.slug);
 
-const getProductCategoryPath = (slug?: string) => (slug === 'main-products' ? '6' : '7');
+const getProductCategoryPath = (slug?: string) => encodeURIComponent(slug || 'other-products');
 
 function ImageGallery({ images, name }: { images: string[]; name: string }) {
   const { t } = useLanguage();

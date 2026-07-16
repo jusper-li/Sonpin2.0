@@ -71,7 +71,7 @@ const STORE_ONLY_PRODUCT_SLUGS = new Set([
   'sonpin-chicken-intestine',
 ]);
 
-const getProductPath = (slug: string, categorySlug: string) => `/products/${categorySlug === 'main-products' ? '6' : '7'}/${slug}`;
+const getProductPath = (slug: string, categorySlug: string) => `/products/${encodeURIComponent(categorySlug || 'other-products')}/${slug}`;
 
 export default function Shop() {
   const { addToCart } = useCart();
