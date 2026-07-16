@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -40,13 +40,13 @@ interface FooterSettings {
 }
 
 const DEFAULT_FOOTER_LINK_LABELS: Record<string, string> = {
-  '/about': '關於我們',
+  '/about': '關於淞品',
   '/story': '品牌故事',
-  '/blog': '專欄文章',
-  '/contact': '聯絡我們',
-  '/shop': '禮盒商城',
+  '/blog': '公告',
+  '/contact': '客服中心',
+  '/shop': '商品介紹',
   '/faq': '常見問題',
-  '/shipping': '配送說明',
+  '/shipping': '購物須知',
   '/privacy': '隱私權政策',
   '/terms': '服務條款',
   '/backoffice': '後台管理',
@@ -63,6 +63,10 @@ const SOCIAL_ICON_MAP: Record<string, any> = {
 };
 
 const normalizePlatform = (value: string) => value.trim().toLowerCase();
+
+const HIDDEN_FOOTER_HREFS = new Set(['/order-query', '/remittance-notice']);
+
+const normalizeMenuHref = (href: string) => href.trim().replace(/\/+$/, '').toLowerCase();
 
 const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings => {
   const fallbackGroups = DEFAULT_FOOTER_SETTINGS.link_groups;
@@ -82,14 +86,16 @@ const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings =>
 
       return {
         title: groupTitle,
-        links: sourceLinks.map((link, linkIndex) => {
-          const fallbackLink = fallbackGroup.links[linkIndex];
-          const normalizedLabel = DEFAULT_FOOTER_LINK_LABELS[link.href] || fallbackLink?.label || link.label;
-          return {
-            href: link.href,
-            label: isGarbledText(link.label) ? normalizedLabel : link.label,
-          };
-        }),
+        links: sourceLinks
+          .map((link, linkIndex) => {
+            const fallbackLink = fallbackGroup.links[linkIndex];
+            const normalizedLabel = DEFAULT_FOOTER_LINK_LABELS[link.href] || fallbackLink?.label || link.label;
+            return {
+              href: link.href,
+              label: isGarbledText(link.label) ? normalizedLabel : link.label,
+            };
+          })
+          .filter((link) => !HIDDEN_FOOTER_HREFS.has(normalizeMenuHref(link.href))),
       };
     }),
   };
@@ -287,4 +293,6 @@ export default function SiteFooter() {
     </footer>
   );
 }
+
+
 

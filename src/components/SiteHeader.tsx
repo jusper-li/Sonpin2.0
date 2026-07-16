@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart, Globe, ChevronRight, CircleUser as UserCircle, Facebook, Instagram, Twitter, Youtube, MessageCircle, ExternalLink } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -66,6 +66,7 @@ const normalizeMenuHref = (href: string) => {
   return value.replace(/\/+$/, '').toLowerCase();
 };
 
+const HIDDEN_MENU_HREFS = new Set(['/order-query', '/remittance-notice']);
 const dedupeMenuLinks = <T extends { label: string; href: string }>(
   links: T[] = [],
   seen = new Set<string>(),
@@ -87,15 +88,12 @@ const dedupeMenuLinks = <T extends { label: string; href: string }>(
 const hasRenderableName = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return false;
-  if (trimmed.length <= 3 && /[?�]/.test(trimmed)) return false;
-  if (/[�]/.test(trimmed)) return false;
-  const meaningfulChars = trimmed.match(/[\p{Letter}\p{Number}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu);
-  return (meaningfulChars?.length || 0) >= 1;
+  return /[\p{Letter}\p{Number}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(trimmed);
 };
 
 const getDisplayNameFallback = (email?: string | null) => {
   const localPart = (email || '').split('@')[0].trim();
-  return localPart || '會員';
+  return localPart || '?';
 };
 
 export default function SiteHeader() {
@@ -123,10 +121,19 @@ export default function SiteHeader() {
   const normalizedLanguage = normalizeLang(currentLanguage);
   const isHomepage = location.pathname === '/';
   const isSolidHeader = scrolled || isMenuOpen || !isHomepage;
-  const primaryNavigation = useMemo(
-    () => dedupeMenuLinks(settings.navigation),
-    [settings.navigation],
-  );
+  const primaryNavigation = useMemo(() => {
+    const links = dedupeMenuLinks(settings.navigation).filter((item) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(item.href)));
+    if (!links.some((item) => normalizeMenuHref(item.href) === '/blog')) {
+      const blogLink = { label: t('header.blog', '公告'), href: '/blog' };
+      const mediaIndex = links.findIndex((item) => normalizeMenuHref(item.href) === '/media');
+      if (mediaIndex >= 0) {
+        links.splice(mediaIndex + 1, 0, blogLink);
+      } else {
+        links.push(blogLink);
+      }
+    }
+    return links;
+  }, [settings.navigation, t]);
   const translatedPrimaryNavigation = useMemo(
     () => primaryNavigation.map((item) => ({
       ...item,
@@ -138,19 +145,21 @@ export default function SiteHeader() {
     const seen = new Set(primaryNavigation.map((item) => normalizeMenuHref(item.href)));
     let footerGroups = (footerSettings.link_groups || [])
       .map((group, index) => ({
-        title: t(`header.footer_group.${index}`, group.title?.trim() || '分類'),
-        links: dedupeMenuLinks(
-          (group.links || []).map((link) => ({
-            ...link,
-            label: t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label),
-          })),
+        title: t(`header.footer_group.${index}`, group.title?.trim() || '??'),
+                links: dedupeMenuLinks(
+          (group.links || [])
+            .map((link) => ({
+              ...link,
+              label: t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label),
+            }))
+            .filter((link) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(link.href))),
           seen,
         ),
       }))
       .filter((group) => group.links.length > 0);
     const shoppingLinks = dedupeMenuLinks(
       [
-        { label: t('header.shop', '商品介紹'), href: '/shop' },
+        { label: t('header.shop', '??隞晶'), href: '/shop' },
         ...(settings.show_cart ? [{ label: t('header.cart', `購物車${itemCount > 0 ? ` (${itemCount})` : ''}`), href: '/cart' }] : []),
       ],
       seen,
@@ -161,7 +170,7 @@ export default function SiteHeader() {
       normalizeMenuHref(shoppingLinks[0].href) === '/cart' &&
       footerGroups.length > 0
     ) {
-      const serviceIndex = footerGroups.findIndex((group) => group.title.includes('服務'));
+      const serviceIndex = footerGroups.findIndex((group) => group.title.includes('??'));
       const targetIndex = serviceIndex >= 0 ? serviceIndex : footerGroups.length - 1;
       footerGroups = footerGroups.map((group, index) => (
         index === targetIndex
@@ -307,7 +316,7 @@ export default function SiteHeader() {
       <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500 ${isSolidHeader ? 'bg-[var(--sonpin-background)]/96 shadow-[0_1px_30px_rgba(61,43,31,0.08)] border-b border-[var(--sonpin-primary-border)]/90' : 'bg-transparent'}`}>
         <nav className="container mx-auto px-5 py-2 md:py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="group relative block flex-shrink-0" aria-label="回首頁 Sonpin 淞品土雞專賣店">
+            <Link to="/" className="group relative block flex-shrink-0" aria-label="前往 Sonpin 首頁">
               {settings.logo_image ? (
                 <img
                   src={settings.logo_image}
@@ -317,10 +326,10 @@ export default function SiteHeader() {
               ) : (
                 <span className="flex flex-col">
                   <span className={`text-xl md:text-3xl font-semibold tracking-wider transition-all duration-300 ${isSolidHeader ? 'text-[var(--sonpin-ink)] group-hover:text-[var(--sonpin-primary)]' : 'text-white group-hover:text-white/90'}`}>
-                    {settings.logo_text.split(' ')[0] || '淞品'}
+                    {settings.logo_text.split(' ')[0] || '瘛?'}
                   </span>
                   <span className={`text-[9px] md:text-xs tracking-[0.3em] uppercase transition-colors duration-300 ${isSolidHeader ? 'text-[var(--sonpin-primary)] group-hover:text-[var(--sonpin-primary)]' : 'text-white/70 group-hover:text-white/60'}`}>
-                    {settings.logo_text.split(' ').slice(1).join(' ') || '土雞專賣店'}
+                    {settings.logo_text.split(' ').slice(1).join(' ') || '淞品土雞專賣店'}
                   </span>
                 </span>
               )}
@@ -342,7 +351,7 @@ export default function SiteHeader() {
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
-                title={user ? '會員中心' : '登入 / 加入會員'}
+                title={user ? '?銝剖?' : '?餃 / ??'}
               >
                 {memberInitial ? (
                   <span className="w-5 h-5 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
@@ -406,7 +415,7 @@ export default function SiteHeader() {
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
-                aria-label={user ? t('header.member_center', '會員中心') : t('header.login_join', '登入 / 加入會員')}
+                aria-label={user ? t('header.member_center', '?銝剖?') : t('header.login_join', '?餃 / ??')}
               >
                 {memberInitial ? (
                   <span className="w-6 h-6 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
@@ -438,7 +447,7 @@ export default function SiteHeader() {
                     type="button"
                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
                     className={`relative inline-flex h-9 min-w-9 items-center justify-center rounded-full border px-2 transition-all duration-200 ${isSolidHeader ? 'border-white/30 bg-transparent text-[var(--sonpin-ink)] backdrop-blur-[1px] hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)]' : 'mix-blend-difference border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
-                    aria-label="切換語系"
+                    aria-label="??隤頂"
                     aria-expanded={showLanguageMenu}
                   >
                     <Globe className="w-4 h-4" />
@@ -470,7 +479,7 @@ export default function SiteHeader() {
               <button
                 className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
+                aria-label={isMenuOpen ? '???詨' : '???詨'}
                 aria-expanded={isMenuOpen}
               >
                 <div className="relative w-5 h-5 flex items-center justify-center">
@@ -539,8 +548,8 @@ export default function SiteHeader() {
               >
                   <UserCircle className="w-5 h-5 text-[var(--sonpin-primary)]" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('header.login_join', '登入 / 加入會員')}</p>
-                  <p className="text-xs text-[var(--sonpin-primary)]">{t('header.login_join_sub', '享受專屬優惠與服務')}</p>
+                    <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('header.login_join', '登入 / 註冊會員')}</p>
+                    <p className="text-xs text-[var(--sonpin-primary)]">{t('header.login_join_sub', '請先登入會員帳號，才能查看會員專區內容。')}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] transition-colors" />
               </Link>
@@ -550,7 +559,7 @@ export default function SiteHeader() {
           {/* Scrollable nav area */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
             <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
+                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
               <nav className="space-y-0.5">
                 {translatedPrimaryNavigation.map((item, index) => {
                   const isActive = isActiveMenuItem(item.href);
@@ -599,7 +608,7 @@ export default function SiteHeader() {
             {/* Shop pages */}
             {mobileMenu.shoppingLinks.length > 0 && (
             <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '商城')}</p>
+              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '??')}</p>
               <nav className="space-y-0.5">
                 {mobileMenu.shoppingLinks.map((link, index) => {
                   const isActive = isActiveMenuItem(link.href);
@@ -624,7 +633,7 @@ export default function SiteHeader() {
             {/* Legal */}
             {mobileMenu.legalLinks.length > 0 && (
             <div className="mb-2">
-              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.policy_menu', '政策與條款')}</p>
+                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.policy_menu', '政策選單')}</p>
               <nav className="space-y-0.5">
                 {mobileMenu.legalLinks.map((link, index) => {
                   const isActive = isActiveMenuItem(link.href);
@@ -653,7 +662,7 @@ export default function SiteHeader() {
             {/* Social links */}
             {socials.length > 0 && (
               <div>
-                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-3">{t('header.follow_us', '追蹤我們')}</p>
+                  <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-3">{t('header.follow_us', '追蹤我們')}</p>
                 <div className="flex items-center gap-3">
                   {socials.map((social) => {
                     const Icon = PLATFORM_ICONS[social.platform] || ExternalLink;
@@ -696,11 +705,13 @@ export default function SiteHeader() {
               </div>
             )}
 
-            <p className="text-[10px] text-[var(--sonpin-primary-border)] tracking-widest">穢 Sonpin</p>
+            <p className="text-[10px] text-[var(--sonpin-primary-border)] tracking-widest">蝛?Sonpin</p>
           </div>
         </div>
       </div>
     </>
   );
 }
+
+
 
