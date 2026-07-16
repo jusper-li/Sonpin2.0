@@ -64,7 +64,7 @@ export default function ServiceManagement() {
       setRows(items);
     } catch (error) {
       console.error('Failed to load service articles:', error);
-      setNotice('載入老饕分享失敗，請確認 Supabase 連線與 articles 表。');
+      setNotice('載入老饕分享失敗，請確認 Supabase 連線與 service_articles 表。');
     } finally {
       setLoading(false);
     }
@@ -110,11 +110,11 @@ export default function ServiceManagement() {
     setNotice(null);
     try {
       const count = await syncServiceArticlesToDb();
-      setNotice(`已同步 ${count} 篇老饕分享內容到 Supabase。`);
+      setNotice(`已同步 ${count} 篇老饕分享內容到 Supabase 的 service_articles 表。`);
       await load();
     } catch (error) {
       console.error('Failed to sync service articles:', error);
-      setNotice('同步老饕分享失敗，請確認 Supabase 權限與 articles 表。');
+      setNotice('同步老饕分享失敗，請確認 Supabase 權限與 service_articles 表。');
     } finally {
       setSaving(false);
     }
@@ -131,7 +131,7 @@ export default function ServiceManagement() {
     setSaving(true);
     setNotice(null);
     try {
-      const { error } = await supabase.from('articles').delete().eq('id', article.id);
+      const { error } = await supabase.from('service_articles').delete().eq('id', article.id);
       if (error) throw error;
       await load();
     } catch (error) {
@@ -162,8 +162,8 @@ export default function ServiceManagement() {
       };
 
       const { error } = editingArticle?.id
-        ? await supabase.from('articles').update(payload).eq('id', editingArticle.id)
-        : await supabase.from('articles').upsert(payload, { onConflict: 'slug' });
+        ? await supabase.from('service_articles').update(payload).eq('id', editingArticle.id)
+        : await supabase.from('service_articles').upsert(payload, { onConflict: 'slug' });
 
       if (error) throw error;
 
@@ -187,7 +187,7 @@ export default function ServiceManagement() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">老饕分享</h1>
-          <p className="mt-2 text-slate-600">比照文章管理功能，逐篇編輯、刪除，並直接寫回 `articles` 表。</p>
+          <p className="mt-2 text-slate-600">老饕分享已獨立使用 `service_articles` 表，不再與文章管理共用內容。</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -293,7 +293,7 @@ export default function ServiceManagement() {
           <h2 className="text-lg font-bold">說明</h2>
         </div>
         <p className="text-sm leading-7 text-slate-600">
-          這個頁面和文章管理採同一種資料維護邏輯，內容直接更新 Supabase 的 <code>articles</code> 表，前台 `/service` 與 `/service/:slug` 會立即同步。
+          這個頁面只維護老饕分享內容，資料直接更新 Supabase 的 <code>service_articles</code> 表，前台 `/service` 與 `/service/:slug` 會立即同步。
         </p>
       </div>
 

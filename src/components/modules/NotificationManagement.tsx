@@ -37,6 +37,22 @@ interface OrderNotificationTemplate {
   show_shipping: boolean;
 }
 
+interface CustomerOrderNotificationTemplate {
+  admin_subject: string;
+  admin_title: string;
+  admin_intro: string;
+  admin_note: string;
+  show_order_number: boolean;
+  show_customer_name: boolean;
+  show_customer_email: boolean;
+  show_address: boolean;
+  show_payment_method: boolean;
+  show_items: boolean;
+  show_totals: boolean;
+  show_shipping: boolean;
+  show_remittance_info: boolean;
+}
+
 interface RemittanceNotificationTemplate {
   admin_subject: string;
   admin_title: string;
@@ -59,6 +75,7 @@ interface NotificationSettings {
   customer_copy_enabled: boolean;
   contact_template: ContactNotificationTemplate;
   order_template: OrderNotificationTemplate;
+  customer_order_template: CustomerOrderNotificationTemplate;
   remittance_template: RemittanceNotificationTemplate;
 }
 
@@ -92,6 +109,22 @@ const DEFAULT_ORDER_TEMPLATE: OrderNotificationTemplate = {
   show_shipping: true,
 };
 
+const DEFAULT_CUSTOMER_ORDER_TEMPLATE: CustomerOrderNotificationTemplate = {
+  admin_subject: 'Sonpin 訂單已成立：{{orderNumber}}',
+  admin_title: '訂單已送出',
+  admin_intro: '感謝您的訂購，以下是您的訂單資訊與匯款說明。',
+  admin_note: '若有任何問題，歡迎與客服中心聯繫。',
+  show_order_number: true,
+  show_customer_name: true,
+  show_customer_email: true,
+  show_address: true,
+  show_payment_method: true,
+  show_items: true,
+  show_totals: true,
+  show_shipping: true,
+  show_remittance_info: true,
+};
+
 const DEFAULT_REMITTANCE_TEMPLATE: RemittanceNotificationTemplate = {
   admin_subject: 'Sonpin 匯款通知：{{orderNumber}}',
   admin_title: '匯款通知',
@@ -114,6 +147,7 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   customer_copy_enabled: true,
   contact_template: DEFAULT_CONTACT_TEMPLATE,
   order_template: DEFAULT_ORDER_TEMPLATE,
+  customer_order_template: DEFAULT_CUSTOMER_ORDER_TEMPLATE,
   remittance_template: DEFAULT_REMITTANCE_TEMPLATE,
 };
 
@@ -168,6 +202,7 @@ const templateTabs = [
   { id: 'general', label: '通知總覽' },
   { id: 'contact', label: '客服中心信件' },
   { id: 'order', label: '訂單通知信' },
+  { id: 'customer-order', label: '客戶訂單通知信' },
   { id: 'remittance', label: '匯款通知信' },
 ] as const;
 
@@ -190,6 +225,17 @@ const templateFieldOptions = {
     { key: 'show_items', label: '商品明細', description: '顯示商品清單' },
     { key: 'show_totals', label: '金額合計', description: '顯示商品小計與總額' },
     { key: 'show_shipping', label: '運費明細', description: '顯示運費與配送方式' },
+  ],
+  customerOrder: [
+    { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
+    { key: 'show_customer_name', label: '顧客姓名', description: '顯示顧客姓名' },
+    { key: 'show_customer_email', label: '顧客 Email', description: '顯示顧客 Email' },
+    { key: 'show_address', label: '收件地址', description: '顯示收件地址' },
+    { key: 'show_payment_method', label: '付款方式', description: '顯示付款方式' },
+    { key: 'show_items', label: '商品明細', description: '顯示商品清單' },
+    { key: 'show_totals', label: '金額合計', description: '顯示商品小計與總額' },
+    { key: 'show_shipping', label: '運費明細', description: '顯示運費與配送方式' },
+    { key: 'show_remittance_info', label: '匯款資訊', description: '顯示訂單完成後的匯款說明' },
   ],
   remittance: [
     { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
@@ -247,6 +293,7 @@ export default function NotificationManagement() {
         customer_copy_enabled: normalizeBoolean(notificationValue.customer_copy_enabled, DEFAULT_NOTIFICATION_SETTINGS.customer_copy_enabled),
         contact_template: normalizeTemplate(notificationValue.contact_template, DEFAULT_CONTACT_TEMPLATE),
         order_template: normalizeTemplate(notificationValue.order_template, DEFAULT_ORDER_TEMPLATE),
+        customer_order_template: normalizeTemplate(notificationValue.customer_order_template, DEFAULT_CUSTOMER_ORDER_TEMPLATE),
         remittance_template: normalizeTemplate(notificationValue.remittance_template, DEFAULT_REMITTANCE_TEMPLATE),
       });
 
@@ -320,6 +367,21 @@ export default function NotificationManagement() {
           show_items: Boolean(settings.order_template.show_items),
           show_totals: Boolean(settings.order_template.show_totals),
           show_shipping: Boolean(settings.order_template.show_shipping),
+        },
+        customer_order_template: {
+          admin_subject: settings.customer_order_template.admin_subject.trim(),
+          admin_title: settings.customer_order_template.admin_title.trim(),
+          admin_intro: settings.customer_order_template.admin_intro.trim(),
+          admin_note: settings.customer_order_template.admin_note.trim(),
+          show_order_number: Boolean(settings.customer_order_template.show_order_number),
+          show_customer_name: Boolean(settings.customer_order_template.show_customer_name),
+          show_customer_email: Boolean(settings.customer_order_template.show_customer_email),
+          show_address: Boolean(settings.customer_order_template.show_address),
+          show_payment_method: Boolean(settings.customer_order_template.show_payment_method),
+          show_items: Boolean(settings.customer_order_template.show_items),
+          show_totals: Boolean(settings.customer_order_template.show_totals),
+          show_shipping: Boolean(settings.customer_order_template.show_shipping),
+          show_remittance_info: Boolean(settings.customer_order_template.show_remittance_info),
         },
         remittance_template: {
           admin_subject: settings.remittance_template.admin_subject.trim(),
@@ -568,6 +630,16 @@ export default function NotificationManagement() {
         />
       )}
 
+      {activeTab === 'customer-order' && (
+        <TemplateEditor
+          title="?????????"
+          template={settings.customer_order_template}
+          onChange={(template) => setSettings((prev) => ({ ...prev, customer_order_template: template }))}
+          fieldOptions={templateFieldOptions.customerOrder}
+          preview={<CustomerOrderPreview template={settings.customer_order_template} />}
+        />
+      )}
+
       {activeTab === 'remittance' && (
         <TemplateEditor
           title="匯款通知信模板"
@@ -756,6 +828,32 @@ function OrderPreview({ template }: { template: OrderNotificationTemplate }) {
         {template.show_items && <div className="rounded-lg bg-white p-3 text-slate-600">商品 A ×1、商品 B ×2</div>}
         {template.show_totals && <div>金額合計：NT$950</div>}
         {template.show_shipping && <div>配送方式：黑貓宅急便 / 運費 NT$100</div>}
+      </div>
+      <p className="mt-4 text-xs leading-6 text-slate-500">{template.admin_note}</p>
+    </div>
+  );
+}
+
+function CustomerOrderPreview({ template }: { template: CustomerOrderNotificationTemplate }) {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+      <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">??????</div>
+      <div className="text-lg font-bold text-slate-900">{template.admin_title}</div>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{template.admin_intro}</p>
+      <div className="mt-4 space-y-2 text-sm text-slate-700">
+        {template.show_order_number && <div>?????ORD-123456</div>}
+        {template.show_customer_name && <div>????????</div>}
+        {template.show_customer_email && <div>Email?customer@example.com</div>}
+        {template.show_address && <div>??????????...</div>}
+        {template.show_payment_method && <div>?????????</div>}
+        {template.show_items && <div className="rounded-lg bg-white p-3 text-slate-600">?? A ?1??? B ?2</div>}
+        {template.show_totals && <div>?????NT$950</div>}
+        {template.show_shipping && <div>???NT$100</div>}
+        {template.show_remittance_info && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-slate-700">
+            ?????????????????????????
+          </div>
+        )}
       </div>
       <p className="mt-4 text-xs leading-6 text-slate-500">{template.admin_note}</p>
     </div>

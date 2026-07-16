@@ -45,7 +45,7 @@ export const loadServiceArticles = async (): Promise<ServiceArticleRow[]> => {
 
   try {
     const { data, error } = await supabase
-      .from('articles')
+      .from('service_articles')
       .select(selectColumns)
       .in('slug', SERVICE_ARTICLE_SLUGS);
 
@@ -70,7 +70,7 @@ export const loadServiceArticle = async (slug: string) => {
 
 export const syncServiceArticlesToDb = async () => {
   const rows = buildServiceArticleRows();
-  const { error } = await supabase.from('articles').upsert(rows, { onConflict: 'slug' });
+  const { error } = await supabase.from('service_articles').upsert(rows, { onConflict: 'slug' });
   if (error) throw error;
   return rows.length;
 };

@@ -72,6 +72,7 @@ type NotificationMailSettings = {
   customer_copy_enabled: boolean;
   contact_template: ContactNotificationTemplate;
   order_template: OrderNotificationTemplate;
+  customer_order_template: CustomerOrderNotificationTemplate;
   remittance_template: RemittanceNotificationTemplate;
 };
 
@@ -100,6 +101,22 @@ type OrderNotificationTemplate = {
   show_items: boolean;
   show_totals: boolean;
   show_shipping: boolean;
+};
+
+type CustomerOrderNotificationTemplate = {
+  admin_subject: string;
+  admin_title: string;
+  admin_intro: string;
+  admin_note: string;
+  show_order_number: boolean;
+  show_customer_name: boolean;
+  show_customer_email: boolean;
+  show_address: boolean;
+  show_payment_method: boolean;
+  show_items: boolean;
+  show_totals: boolean;
+  show_shipping: boolean;
+  show_remittance_info: boolean;
 };
 
 type RemittanceNotificationTemplate = {
@@ -146,6 +163,21 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
     show_items: true,
     show_totals: true,
     show_shipping: true,
+  },
+  customer_order_template: {
+    admin_subject: "Sonpin 訂單已送出：{{orderNumber}}",
+    admin_title: "訂單已送出",
+    admin_intro: "感謝您的訂購，以下是您的訂單資訊與匯款說明。",
+    admin_note: "若有任何問題，歡迎與客服中心聯繫。",
+    show_order_number: true,
+    show_customer_name: true,
+    show_customer_email: true,
+    show_address: true,
+    show_payment_method: true,
+    show_items: true,
+    show_totals: true,
+    show_shipping: true,
+    show_remittance_info: true,
   },
   remittance_template: {
     admin_subject: "Sonpin 匯款通知：{{orderNumber}}",
@@ -368,6 +400,7 @@ function parseNotificationSettings(value: unknown): NotificationMailSettings {
     customer_copy_enabled: settings.customer_copy_enabled === undefined ? true : Boolean(settings.customer_copy_enabled),
     contact_template: parseTemplateObject(settings.contact_template, DEFAULT_NOTIFICATION_SETTINGS.contact_template),
     order_template: parseTemplateObject(settings.order_template, DEFAULT_NOTIFICATION_SETTINGS.order_template),
+    customer_order_template: parseTemplateObject(settings.customer_order_template, DEFAULT_NOTIFICATION_SETTINGS.customer_order_template),
     remittance_template: parseTemplateObject(settings.remittance_template, DEFAULT_NOTIFICATION_SETTINGS.remittance_template),
   };
 }
@@ -599,7 +632,7 @@ function generateContactAdminNotify(data: ContactEmail, template: ContactNotific
   `);
 }
 
-function generateOrderConfirmation(data: OrderEmail) {
+function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerOrderNotificationTemplate) {
   const itemRows = data.items
     .map(
       (item) => `
@@ -616,40 +649,22 @@ function generateOrderConfirmation(data: OrderEmail) {
   const shippingMethod = data.shippingMethod || "銀行轉帳";
 
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">訂單已送出</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(data.customerName)}，感謝您的訂購。以下是您的訂單資訊與匯款方式。</p>
-    <div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
-      <p style="margin:0;color:#a16207;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">訂單編號</p>
-      <p style="margin:6px 0 0 0;color:#1c1917;font-size:20px;font-weight:700;font-family:monospace;">${escapeHtml(data.orderNumber)}</p>
-    </div>
+    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">客戶訂單通知</p>
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">${escapeHtml(template.admin_title)}</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(template.admin_intro)}</p>
 
-    <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-      <tr>
-        <th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th>
-        <th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th>
-        <th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th>
-      </tr>
-      ${itemRows}
-      <tr>
-        <td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td>
-        <td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td>
-      </tr>
-      <tr>
-        <td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td>
-        <td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td>
-      </tr>
-      <tr>
-        <td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td>
-        <td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td>
-      </tr>
-    </table>
+    ${template.show_order_number ? `<div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;"><p style="margin:0;color:#a16207;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">訂單編號</p><p style="margin:6px 0 0 0;color:#1c1917;font-size:20px;font-weight:700;font-family:monospace;">${escapeHtml(data.orderNumber)}</p></div>` : ""}
 
-    <p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>匯款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>
-    <p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p>
-    <p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>收件地址：</strong>${escapeHtml(data.address)}</p>
+    ${template.show_customer_name ? `<p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>顧客姓名：</strong>${escapeHtml(data.customerName)}</p>` : ""}
+    ${template.show_customer_email ? `<p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>Email：</strong><a href="mailto:${escapeHtml(data.customerEmail)}">${escapeHtml(data.customerEmail)}</a></p>` : ""}
+    ${template.show_address ? `<p style="color:#57534e;line-height:1.8;margin:0 0 8px 0;"><strong>收件地址：</strong>${escapeHtml(data.address)}</p>` : ""}
+    ${template.show_payment_method ? `<p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;"><strong>付款方式：</strong>${escapeHtml(paymentMethodLabel(data.paymentMethod))}</p>` : ""}
 
-    ${renderShippingBreakdown(data.shippingBreakdown || [])}
-    ${renderRemittanceSection()}
+    ${template.show_items ? `<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th><th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th><th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th></tr>${itemRows}<tr><td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td><td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td></tr><tr><td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td><td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td></tr><tr><td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td><td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td></tr></table>` : ""}
+
+    ${template.show_shipping ? `<p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p><p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>運費明細：</strong>${formatMoney(shipping)}</p>${renderShippingBreakdown(data.shippingBreakdown || [])}` : ""}
+    ${template.show_remittance_info ? renderRemittanceSection() : ""}
+    ${template.admin_note ? `<p style="color:#78716c;line-height:1.8;margin:16px 0 0 0;font-size:13px;">${escapeHtml(template.admin_note)}</p>` : ""}
   `);
 }
 
@@ -815,11 +830,21 @@ Deno.serve(async (req: Request) => {
           total: formatMoney(order.total),
         }).trim() || `Sonpin 新訂單通知 ${order.orderNumber}`;
         await Promise.allSettled([
-          sendEmail({
-            to: order.customerEmail,
-            subject: `Sonpin 訂單已送出 ${order.orderNumber}`,
-            html: generateOrderConfirmation(order),
-          }),
+          notificationSettings.customer_copy_enabled && order.customerEmail
+            ? sendEmail({
+                to: order.customerEmail,
+                subject:
+                  renderTemplate(notificationSettings.customer_order_template.admin_subject, {
+                    orderNumber: order.orderNumber,
+                    customerName: order.customerName,
+                    customerEmail: order.customerEmail,
+                    address: order.address,
+                    paymentMethod: paymentMethodLabel(order.paymentMethod),
+                    total: formatMoney(order.total),
+                  }).trim() || `Sonpin 訂單已送出 ${order.orderNumber}`,
+                html: generateCustomerOrderConfirmation(order, notificationSettings.customer_order_template),
+              })
+            : Promise.resolve(),
           notificationSettings.order_enabled
             ? sendEmailToRecipients(adminRecipients, {
                 subject: adminSubject,
