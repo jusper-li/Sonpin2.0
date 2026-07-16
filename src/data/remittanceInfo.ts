@@ -3,7 +3,7 @@ export interface RemittanceInfo {
   bankCode: string;
   accountNumber: string;
   accountName: string;
-  taxId?: string;
+  taxId: string;
   note: string;
 }
 
@@ -17,9 +17,10 @@ export const REMITTANCE_INFO: RemittanceInfo = {
 };
 
 export const remittanceLines = [
-  `轉帳銀行：${REMITTANCE_INFO.bankName}（${REMITTANCE_INFO.bankCode}）`,
-  `轉帳帳號：${REMITTANCE_INFO.accountNumber}`,
+  `銀行名稱：${REMITTANCE_INFO.bankName}`,
+  `銀行代碼：${REMITTANCE_INFO.bankCode}`,
+  `匯款帳號：${REMITTANCE_INFO.accountNumber}`,
   `戶名：${REMITTANCE_INFO.accountName}`,
-  REMITTANCE_INFO.taxId ? `統編：${REMITTANCE_INFO.taxId}` : '',
-  REMITTANCE_INFO.note,
-].filter(Boolean) as string[];
+  `統一編號：${REMITTANCE_INFO.taxId}`,
+  `備註：${REMITTANCE_INFO.note}`,
+];

@@ -20,6 +20,36 @@ interface OrderSummary {
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
+const stateConfig: Record<
+  PaymentState,
+  {
+    title: string;
+    description: string;
+    tone: string;
+  }
+> = {
+  paid: {
+    title: '付款完成',
+    description: '我們已收到您的付款，訂單會盡快安排處理與出貨。',
+    tone: 'text-emerald-700',
+  },
+  failed: {
+    title: '付款失敗',
+    description: '目前付款狀態顯示失敗，若您已完成匯款，請重新通知我們進行確認。',
+    tone: 'text-rose-700',
+  },
+  pending: {
+    title: '訂單已送出，等待付款',
+    description: '您的訂單已建立，若您選擇匯款付款，請完成匯款後再通知我們對帳。',
+    tone: 'text-amber-700',
+  },
+  unknown: {
+    title: '查無訂單資訊',
+    description: '我們目前無法取得這筆訂單的狀態，請確認連結是否正確，或直接聯繫客服中心。',
+    tone: 'text-slate-700',
+  },
+};
+
 export default function CheckoutResult() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order_id') || '';
@@ -31,31 +61,9 @@ export default function CheckoutResult() {
   const [loading, setLoading] = useState<boolean>(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
 
-  const stateConfig: Record<PaymentState, { title: string; description: string; tone: string }> = useMemo(
-    () => ({
-      paid: {
-        title: '訂單已完成',
-        description: '我們已收到您的付款資訊，後續會依訂單內容安排出貨與通知。',
-        tone: 'text-emerald-700',
-      },
-      failed: {
-        title: '付款失敗',
-        description: '目前付款未成功，請重新確認付款流程或聯繫客服協助。',
-        tone: 'text-rose-700',
-      },
-      pending: {
-        title: '訂單已送出',
-        description: '請先依下方匯款資訊完成轉帳，完成後我們會盡快確認入帳並安排出貨。',
-        tone: 'text-amber-700',
-      },
-      unknown: {
-        title: '查無付款資訊',
-        description: '目前找不到這筆訂單的付款狀態，請確認訂單編號是否正確。',
-        tone: 'text-slate-700',
-      },
-    }),
-    []
-  );
+  useEffect(() => {
+    document.title = '訂單完成｜淞品土雞專賣店';
+  }, []);
 
   useEffect(() => {
     if (!orderId) {
@@ -117,9 +125,9 @@ export default function CheckoutResult() {
   }, [loading, status]);
 
   const cfg = stateConfig[loading ? 'pending' : status];
-  const finalTotal = Number(orderSummary?.total ?? (Number(orderSummary?.subtotal || 0) + Number(orderSummary?.shipping || 0)));
   const subtotal = Number(orderSummary?.subtotal || 0);
   const shipping = Number(orderSummary?.shipping || 0);
+  const finalTotal = Number(orderSummary?.total ?? subtotal + shipping);
 
   const copyRemittance = async () => {
     const text = remittanceLines.join('\n');
@@ -143,6 +151,7 @@ export default function CheckoutResult() {
             </div>
             <h1 className={`text-2xl font-semibold ${cfg.tone}`}>{cfg.title}</h1>
             <p className="mt-3 text-sm leading-relaxed text-stone-600">{cfg.description}</p>
+
             {orderNumber && (
               <div className="mt-6 rounded-2xl bg-stone-50 px-4 py-4 text-left">
                 <p className="text-xs tracking-[0.16em] text-stone-400 uppercase">訂單編號</p>
@@ -166,7 +175,7 @@ export default function CheckoutResult() {
                   <p>銀行代碼：{REMITTANCE_INFO.bankCode}</p>
                   <p>匯款帳號：{REMITTANCE_INFO.accountNumber}</p>
                   <p>戶名：{REMITTANCE_INFO.accountName}</p>
-                  {REMITTANCE_INFO.taxId ? <p>統編：{REMITTANCE_INFO.taxId}</p> : null}
+                  {REMITTANCE_INFO.taxId ? <p>統一編號：{REMITTANCE_INFO.taxId}</p> : null}
                 </div>
               </div>
 
@@ -189,7 +198,7 @@ export default function CheckoutResult() {
             <h2 className="mb-4 text-lg font-semibold text-stone-900">訂單摘要</h2>
             <div className="space-y-3 text-sm text-stone-700">
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                <span>小計</span>
+                <span>商品小計</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -197,12 +206,8 @@ export default function CheckoutResult() {
                 <span>{formatCurrency(shipping)}</span>
               </div>
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                <span>配送摘要</span>
+                <span>配送方式</span>
                 <span className="text-right">{orderSummary?.shipping_method || '—'}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                <span>匯款方式</span>
-                <span>銀行轉帳</span>
               </div>
               <div className="flex items-center justify-between text-base font-semibold text-stone-900">
                 <span>訂單總額</span>
@@ -212,9 +217,9 @@ export default function CheckoutResult() {
           </section>
 
           <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-            <p className="font-medium">完成匯款後，系統會依訂單編號進行對帳。</p>
+            <p className="font-medium">完成匯款後，請保留匯款紀錄，並聯繫客服中心回報您的訂單編號。</p>
             <p className="mt-1">
-              若您已轉帳，請保留匯款紀錄並聯繫客服，回報訂單編號：
+              訂單編號：
               <span className="font-mono font-semibold">{orderNumber || orderId}</span>
             </p>
           </section>
@@ -224,13 +229,13 @@ export default function CheckoutResult() {
               to="/shop"
               className="rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
             >
-              ??????
+              繼續購物
             </Link>
             <Link
               to="/order-query"
               className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
             >
-              {"\u8a02\u55ae\u67e5\u8a62"}
+              訂單查詢
             </Link>
             <Link
               to="/remittance-notice"
@@ -242,7 +247,7 @@ export default function CheckoutResult() {
               to="/cart"
               className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
             >
-              ????????
+              回到購物車
             </Link>
           </div>
         </div>
