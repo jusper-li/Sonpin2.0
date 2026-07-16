@@ -65,6 +65,7 @@ type RemittanceNotificationEmail = {
 
 type NotificationMailSettings = {
   admin_email: string;
+  admin_emails: string[];
   contact_enabled: boolean;
   order_enabled: boolean;
   remittance_enabled: boolean;
@@ -116,6 +117,7 @@ type RemittanceNotificationTemplate = {
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
   admin_email: FALLBACK_ADMIN_EMAIL,
+  admin_emails: [FALLBACK_ADMIN_EMAIL],
   contact_enabled: true,
   order_enabled: true,
   remittance_enabled: true,
@@ -216,6 +218,22 @@ function requiredNumber(value: unknown, label: string) {
 
 function isEmail(value: unknown) {
   return typeof value === "string" && emailPattern.test(value.trim().toLowerCase());
+}
+
+function normalizeEmailList(value: unknown) {
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(/[\n,;]+/)
+      : [];
+
+  return Array.from(
+    new Set(
+      source
+        .map((entry) => normalizeEmail(entry))
+        .filter((entry) => Boolean(entry) && emailPattern.test(entry)),
+    ),
+  );
 }
 
 function normalizeBoolean(value: unknown, fallback: boolean) {
@@ -339,8 +357,11 @@ function parseRemittanceNotificationEmail(data: Record<string, unknown>): Remitt
 
 function parseNotificationSettings(value: unknown): NotificationMailSettings {
   const settings = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  const adminEmails = normalizeEmailList(settings.admin_emails);
+  const adminEmail = optionalString(settings.admin_email);
   return {
-    admin_email: optionalString(settings.admin_email) || FALLBACK_ADMIN_EMAIL,
+    admin_email: adminEmails[0] || adminEmail || FALLBACK_ADMIN_EMAIL,
+    admin_emails: adminEmails.length > 0 ? adminEmails : (adminEmail ? [adminEmail] : [FALLBACK_ADMIN_EMAIL]),
     contact_enabled: settings.contact_enabled === undefined ? true : Boolean(settings.contact_enabled),
     order_enabled: settings.order_enabled === undefined ? true : Boolean(settings.order_enabled),
     remittance_enabled: settings.remittance_enabled === undefined ? true : Boolean(settings.remittance_enabled),
@@ -361,6 +382,7 @@ async function getNotificationSettings() {
     return {
       ...DEFAULT_NOTIFICATION_SETTINGS,
       admin_email: isEmail(explicitAdminEmail) ? explicitAdminEmail : FALLBACK_ADMIN_EMAIL,
+      admin_emails: isEmail(explicitAdminEmail) ? [explicitAdminEmail] : [FALLBACK_ADMIN_EMAIL],
     };
   }
 
@@ -400,19 +422,31 @@ async function getNotificationSettings() {
           : isEmail(explicitAdminEmail)
             ? explicitAdminEmail
           : FALLBACK_ADMIN_EMAIL,
+      admin_emails: Array.from(
+        new Set(
+          [
+            ...(notificationSettings.admin_emails || []),
+            notificationSettings.admin_email,
+            footerContactEmail,
+            explicitAdminEmail,
+            FALLBACK_ADMIN_EMAIL,
+          ].filter((entry): entry is string => isEmail(entry)),
+        ),
+      ),
     };
   } catch (error) {
     console.warn("send-email: skipped admin email lookup", error instanceof Error ? error.message : String(error));
     return {
       ...DEFAULT_NOTIFICATION_SETTINGS,
       admin_email: isEmail(explicitAdminEmail) ? explicitAdminEmail : FALLBACK_ADMIN_EMAIL,
+      admin_emails: isEmail(explicitAdminEmail) ? [explicitAdminEmail] : [FALLBACK_ADMIN_EMAIL],
     };
   }
 }
 
-async function getAdminEmail() {
+async function getAdminEmails() {
   const settings = await getNotificationSettings();
-  return settings.admin_email;
+  return settings.admin_emails.length > 0 ? settings.admin_emails : [settings.admin_email];
 }
 
 async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
@@ -446,6 +480,14 @@ async function sendEmail(params: { to: string; subject: string; html: string; re
     const text = await res.text();
     console.warn(`send-email: Resend request failed (${res.status}): ${text.slice(0, 500)}`);
   }
+}
+
+async function sendEmailToRecipients(
+  recipients: string[],
+  params: { subject: string; html: string; replyTo?: string },
+) {
+  const uniqueRecipients = Array.from(new Set(recipients.filter((recipient) => isEmail(recipient))));
+  await Promise.allSettled(uniqueRecipients.map((to) => sendEmail({ to, ...params })));
 }
 
 function wrapEmail(content: string) {
@@ -734,7 +776,7 @@ Deno.serve(async (req: Request) => {
     const type = requiredString(body.type, "type");
     const data = asRecord(body.data, "data");
     const notificationSettings = await getNotificationSettings();
-    const adminEmail = notificationSettings.admin_email;
+    const adminRecipients = notificationSettings.admin_emails.length > 0 ? notificationSettings.admin_emails : [notificationSettings.admin_email];
 
     switch (type) {
       case "contact": {
@@ -748,8 +790,7 @@ Deno.serve(async (req: Request) => {
         }).trim() || `Sonpin 聯絡表單：${contact.subject}`;
         await Promise.all([
           notificationSettings.contact_enabled
-            ? sendEmail({
-                to: adminEmail,
+            ? sendEmailToRecipients(adminRecipients, {
                 subject,
                 html: generateContactAdminNotify(contact, notificationSettings.contact_template),
                 replyTo: contact.email,
@@ -780,8 +821,7 @@ Deno.serve(async (req: Request) => {
             html: generateOrderConfirmation(order),
           }),
           notificationSettings.order_enabled
-            ? sendEmail({
-                to: adminEmail,
+            ? sendEmailToRecipients(adminRecipients, {
                 subject: adminSubject,
                 html: generateOrderAdminNotify(order, notificationSettings.order_template),
                 replyTo: order.customerEmail,
@@ -839,8 +879,7 @@ Deno.serve(async (req: Request) => {
             actor_type: "customer",
           }),
           notificationSettings.remittance_enabled
-            ? sendEmail({
-                to: adminEmail,
+            ? sendEmailToRecipients(adminRecipients, {
                 subject: adminSubject,
                 html: generateRemittanceNotificationAdminEmail(remittance, order, notificationSettings.remittance_template),
                 replyTo: order.customer_email || undefined,

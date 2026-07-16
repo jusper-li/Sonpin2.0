@@ -92,7 +92,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
         { id: 'theme', label: '色系管理', icon: Palette },
         { id: 'social', label: t('admin.sidebar.social', '社群連結'), icon: Share2 },
         { id: 'languages', label: t('admin.sidebar.languages', '語系管理'), icon: Languages },
-        { id: 'notifications', label: '通知信管理', icon: Mail },
+        { id: 'notifications', label: '信件內容管理', icon: Mail },
         { id: 'seo', label: t('admin.sidebar.seo', 'SEO 設定'), icon: Search },
         { id: 'version-logs', label: '版本紀錄', icon: History },
         { id: 'permissions', label: t('admin.sidebar.permissions', '權限管理'), icon: Shield },
