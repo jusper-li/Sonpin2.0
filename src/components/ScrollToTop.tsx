@@ -1,21 +1,17 @@
-import { useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { burstResetScrollPositions, resetScrollPositions } from '../lib/scrollReset';
 
 export default function ScrollToTop() {
   const { pathname } = useLocation();
 
-  useLayoutEffect(() => {
-    resetScrollPositions();
-    const stopBurstReset = burstResetScrollPositions();
-    const firstFrame = window.requestAnimationFrame(resetScrollPositions);
-    const secondFrame = window.requestAnimationFrame(resetScrollPositions);
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
 
-    return () => {
-      stopBurstReset();
-      window.cancelAnimationFrame(firstFrame);
-      window.cancelAnimationFrame(secondFrame);
-    };
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [pathname]);
 
   return null;
