@@ -50,6 +50,8 @@ const SOCIAL_ICON_MAP: Record<string, any> = {
 
 const normalizePlatform = (value: string) => value.trim().toLowerCase();
 
+const normalizeMenuHref = (href: string) => href.trim().replace(/\/+$/, '').toLowerCase();
+
 export default function SiteFooter() {
   const [settings, setSettings] = useState<FooterSettings>(DEFAULT_FOOTER_SETTINGS);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -142,6 +144,10 @@ export default function SiteFooter() {
       ].filter(Boolean) as Array<{ platform: string; url: string }>);
 
   const renderedLinkGroups = settings.link_groups;
+  const footerLinkHrefSet = new Set(
+    renderedLinkGroups.flatMap((group) => group.links).map((link) => normalizeMenuHref(link.href)),
+  );
+  const shouldRenderLegalLinks = !footerLinkHrefSet.has('/returns') || !footerLinkHrefSet.has('/privacy');
 
   return (
     <footer className="bg-[var(--sonpin-background)] text-stone-700 w-full">
@@ -215,6 +221,26 @@ export default function SiteFooter() {
             {t('footer.copyright', settings.copyright_text)}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {shouldRenderLegalLinks && (
+              <>
+                {!footerLinkHrefSet.has('/privacy') && (
+                  <Link
+                    to="/privacy"
+                    className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
+                  >
+                    {t('footer.privacy', '隱私權政策')}
+                  </Link>
+                )}
+                {!footerLinkHrefSet.has('/returns') && (
+                  <Link
+                    to="/returns"
+                    className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
+                  >
+                    {t('footer.returns', '退換貨政策')}
+                  </Link>
+                )}
+              </>
+            )}
             <button
               type="button"
               onClick={openCookieConsentSettings}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -210,26 +210,6 @@ export default function StaticPage() {
                 </div>
               ))}
 
-              <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[var(--sonpin-primary-border)] pt-8 sm:flex-row">
-                <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">{t('static.more_pages', '更多頁面')}</p>
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                  <Link to="/privacy" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {t('static.more_pages.privacy', '隱私權政策')}
-                  </Link>
-                  <span className="text-[var(--sonpin-primary-border)]">|</span>
-                  <Link to="/terms" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {t('static.more_pages.terms', '服務條款')}
-                  </Link>
-                  <span className="text-[var(--sonpin-primary-border)]">|</span>
-                  <Link to="/shipping" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {t('static.more_pages.shipping', '配送說明')}
-                  </Link>
-                  <span className="text-[var(--sonpin-primary-border)]">|</span>
-                  <Link to="/returns" className="text-sm text-[var(--sonpin-primary-muted)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {t('static.more_pages.returns', '退換貨政策')}
-                  </Link>
-                </div>
-              </div>
             </div>
           </>
         )}
