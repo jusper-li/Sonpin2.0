@@ -152,10 +152,10 @@ export default function AboutPage() {
 
         {intro && (
           <section className="border-b border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]">
-            <div className="container mx-auto max-w-4xl px-6 py-16">
+            <div className="container mx-auto max-w-4xl px-6 py-16 text-left">
               <StaticContent
                 value={intro.content}
-                className="text-center text-lg leading-relaxed text-[var(--sonpin-primary-soft)] md:text-xl"
+                className="text-left text-lg leading-relaxed text-[var(--sonpin-primary-soft)] md:text-xl [&_h1]:text-left [&_h2]:text-left [&_h3]:text-left [&_h4]:text-left [&_p]:text-left [&_li]:text-left [&_div]:text-left [&_span]:text-left"
               />
             </div>
           </section>
@@ -166,12 +166,15 @@ export default function AboutPage() {
             {rest.map((section, index) => (
               <div key={section.title} className={`flex flex-col gap-8 md:flex-row ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
                 <div className="md:w-1/3">
-                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[var(--sonpin-ink)] px-4 py-3 text-[var(--sonpin-surface)]">
+                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[var(--sonpin-ink)] px-4 py-3 text-left text-[var(--sonpin-surface)]">
                     <h2 className="text-lg font-medium tracking-[0.05em] md:text-xl">{section.title}</h2>
                   </div>
                 </div>
                 <div className="md:w-2/3">
-                  <StaticContent value={section.content} className="leading-relaxed text-[var(--sonpin-primary-soft)]" />
+                  <StaticContent
+                    value={section.content}
+                    className="text-left leading-relaxed text-[var(--sonpin-primary-soft)] [&_h1]:text-left [&_h2]:text-left [&_h3]:text-left [&_h4]:text-left [&_p]:text-left [&_li]:text-left [&_div]:text-left [&_span]:text-left"
+                  />
                 </div>
               </div>
             ))}
