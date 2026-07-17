@@ -219,6 +219,7 @@ export default function Homepage() {
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
+  const snapLockRef = useRef(false);
   const heroButtonLabels = {
     'zh-TW': '查看商品',
     en: 'View products',
@@ -498,6 +499,42 @@ export default function Homepage() {
       observer.disconnect();
     };
   }, [loading, stageSections.length]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!document.documentElement.classList.contains('homepage-snap-enabled')) return;
+      if (snapLockRef.current) {
+        event.preventDefault();
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (Math.abs(event.deltaY) < 6) return;
+
+      const direction = event.deltaY > 0 ? 1 : -1;
+      const currentIndex = Math.max(0, Math.min(activeSection, sectionsRef.current.length - 1));
+      const nextIndex = Math.max(0, Math.min(currentIndex + direction, sectionsRef.current.length - 1));
+
+      if (nextIndex === currentIndex) return;
+
+      const nextSection = sectionsRef.current[nextIndex];
+      if (!nextSection) return;
+
+      event.preventDefault();
+      snapLockRef.current = true;
+      nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      window.setTimeout(() => {
+        snapLockRef.current = false;
+      }, 900);
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [activeSection, loading, stageSections.length]);
 
   if (loading) {
     return (
