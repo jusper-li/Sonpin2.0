@@ -4,6 +4,31 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/LOGO-1.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      (function () {
+        try {
+          if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+          }
+
+          var reset = function () {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            var homepageScroller = document.querySelector('.homepage-main');
+            if (homepageScroller) {
+              homepageScroller.scrollTop = 0;
+            }
+          };
+
+          reset();
+          window.addEventListener('pageshow', reset);
+          window.addEventListener('load', reset);
+        } catch (error) {
+          /* no-op */
+        }
+      })();
+    </script>
     <title>淞品土雞專賣店｜土雞精、商品介紹與品牌故事</title>
     <meta
       name="description"
