@@ -108,6 +108,11 @@ const FALLBACK_VISUALS: Record<string, SectionVisual> = {
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-border)',
   },
+  video: {
+    media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
+    objectPosition: 'center center',
+    accent: 'var(--sonpin-primary-warm)',
+  },
   contact: {
     media: '/product-images/huo-gang-coffee-letter-gift-2.jpg',
     objectPosition: 'center center',
@@ -230,6 +235,29 @@ const getSectionSubmenu = (section?: HomepageSection): HomepageSubmenuItem[] =>
 const getSectionHref = (section?: HomepageSection) =>
   section?.content?.href || section?.content?.link || getSectionSubmenu(section)[0]?.href || '';
 
+const getYouTubeEmbedUrl = (url?: string) => {
+  const value = url?.trim();
+  if (!value) return '';
+  if (/youtube\.com\/embed\//i.test(value)) return value;
+
+  const watchMatch = value.match(/[?&]v=([^&]+)/i);
+  if (watchMatch?.[1]) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}?rel=0`;
+  }
+
+  const shortMatch = value.match(/youtu\.be\/([^?&/]+)/i);
+  if (shortMatch?.[1]) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}?rel=0`;
+  }
+
+  const embedMatch = value.match(/youtube\.com\/(?:v|embed)\/([^?&/]+)/i);
+  if (embedMatch?.[1]) {
+    return `https://www.youtube.com/embed/${embedMatch[1]}?rel=0`;
+  }
+
+  return value;
+};
+
 const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual => {
   const fallback = FALLBACK_VISUALS[section?.section_type || ''] || FALLBACK_VISUALS.default;
 
@@ -238,6 +266,17 @@ const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual =
     media: section?.background_image || section?.content?.background_image || section?.content?.image || fallback.media,
     objectPosition: index % 2 === 0 ? fallback.objectPosition : 'center center',
   };
+};
+
+const mergeHomepageSections = (loadedSections: HomepageSection[]) => {
+  const defaultOrder = DEFAULT_HOMEPAGE_SECTIONS.map((section) => section.section_type);
+  const byType = new Map(loadedSections.map((section) => [section.section_type, section] as const));
+  const merged = DEFAULT_HOMEPAGE_SECTIONS.map((section) => byType.get(section.section_type) || section);
+  const extraSections = loadedSections
+    .filter((section) => !defaultOrder.includes(section.section_type))
+    .sort((a, b) => (a.section_type.localeCompare(b.section_type) || (a.content?.number || '').localeCompare(b.content?.number || '')));
+
+  return [...merged, ...extraSections];
 };
 
 export default function Homepage() {
@@ -341,7 +380,7 @@ export default function Homepage() {
         description: section.content?.description || '',
       }));
 
-      setSections(transformedSections.length > 0 ? transformedSections : DEFAULT_HOMEPAGE_SECTIONS);
+      setSections(transformedSections.length > 0 ? mergeHomepageSections(transformedSections) : DEFAULT_HOMEPAGE_SECTIONS);
     } catch (error) {
       if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
         console.warn('Using fallback homepage sections:', error);
@@ -467,7 +506,12 @@ export default function Homepage() {
           : section.content?.description;
         const translatedCtaLabel = t(
           `${keyPrefix}.content.cta_label`,
-          section.content?.cta_label || (section.section_type === 'hero_product' ? '查看商品' : '了解更多'),
+          section.content?.cta_label ||
+            (section.section_type === 'hero_product'
+              ? '查看商品'
+              : section.section_type === 'video'
+                ? '觀看影片'
+                : '了解更多'),
         );
 
         return {
@@ -1016,6 +1060,8 @@ export default function Homepage() {
           const palette = getStagePalette(index);
           const title = getSectionTitle(section) || 'Sonpin';
           const href = getSectionHref(section) || '/shop';
+          const youtubeEmbedUrl = getYouTubeEmbedUrl(section.content?.youtube || section.content?.video_url);
+          const isVideoSection = section.section_type === 'video' && Boolean(youtubeEmbedUrl);
           const localizedTitle = title;
           const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
           const localizedLabel = section.label || section.content?.label || '';
@@ -1023,6 +1069,8 @@ export default function Homepage() {
           const localizedCtaLabel =
             section.section_type === 'hero_product'
               ? section.content?.cta_label || heroButtonLabels[currentLanguage as keyof typeof heroButtonLabels] || '查看商品'
+              : section.section_type === 'video'
+                ? section.content?.cta_label || '觀看影片'
               : ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
           const shouldLoadImage = index === 0 || visibleSections.has(index);
@@ -1042,21 +1090,43 @@ export default function Homepage() {
               className={`ym-stage relative h-screen w-full overflow-hidden ${activeSection === index ? 'is-active' : ''}`}
               style={sectionStyle}
             >
-              <Link
-                to={href}
-                className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden"
-                aria-label={t('homepage.hero.aria', `Go to ${localizedTitle}`)}
-              >
-                {shouldLoadImage ? (
-                  <StageImage
-                    key={visual.media}
-                    src={visual.media}
-                    alt={title}
-                    objectPosition={visual.objectPosition}
-                    eager={index === 0}
-                  />
-                ) : null}
-              </Link>
+              {isVideoSection ? (
+                <div className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden">
+                  {shouldLoadImage ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 px-4">
+                      <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/15 bg-black shadow-2xl">
+                        <div className="aspect-video w-full">
+                          <iframe
+                            src={youtubeEmbedUrl}
+                            title={section.content?.video_title || localizedTitle}
+                            className="h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            referrerPolicy="strict-origin-when-cross-origin"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <Link
+                  to={href}
+                  className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden"
+                  aria-label={t('homepage.hero.aria', `Go to ${localizedTitle}`)}
+                >
+                  {shouldLoadImage ? (
+                    <StageImage
+                      key={visual.media}
+                      src={visual.media}
+                      alt={title}
+                      objectPosition={visual.objectPosition}
+                      eager={index === 0}
+                    />
+                  ) : null}
+                </Link>
+              )}
               <div className="ym-stage-panel absolute inset-x-0 bottom-0 z-20 flex items-center justify-center px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-10 text-center sm:px-8 md:pb-12 md:pt-12">
                 <div className={`ym-stage-copy ym-reveal is-visible mx-auto flex max-w-4xl flex-col items-center ${isVisible ? 'is-active-copy' : ''}`}>
                   <Link to={href} className="ym-stage-title-link group block max-w-[22rem] sm:max-w-2xl md:max-w-4xl">

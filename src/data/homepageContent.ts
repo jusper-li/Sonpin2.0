@@ -17,6 +17,10 @@ export interface HomepageSectionContent {
   tagline?: string;
   href?: string;
   link?: string;
+  youtube?: string;
+  video_url?: string;
+  video_title?: string;
+  video_description?: string;
   cta_label?: string;
 }
 
@@ -140,11 +144,40 @@ export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
     background_image: '/sonpin-images/20260623131731.jpg',
   },
   {
+    id: 'video',
+    label: '影音區塊',
+    subtitle: '品牌影音',
+    title: '品牌影音',
+    number: '04',
+    section_type: 'video',
+    submenu: [
+      { label: '影音專區', title: '影音專區', href: '/media' },
+      { label: '了解更多', title: '了解更多影音內容', href: '/media' },
+    ],
+    content: {
+      label: '影音區塊',
+      subtitle: '品牌影音',
+      title: '品牌影音',
+      description: '透過影片帶你認識淞品土雞的品牌故事與真實現場。',
+      number: '04',
+      href: '/media',
+      youtube: 'https://www.youtube.com/embed/U-jVtVyH93M',
+      video_title: '品牌影音介紹',
+      video_description: '觀看淞品土雞的品牌故事與相關影音內容。',
+      background_image: '/sonpin-images/20250701170434.jpg',
+      submenu: [
+        { label: '影音專區', title: '影音專區', href: '/media' },
+        { label: '了解更多', title: '了解更多影音內容', href: '/media' },
+      ],
+    },
+    background_image: '/sonpin-images/20250701170434.jpg',
+  },
+  {
     id: 'contact',
     label: '客服中心',
     subtitle: '聯絡我們',
     title: '客服中心',
-    number: '04',
+    number: '05',
     section_type: 'contact',
     submenu: [
       { label: '客服中心', title: '聯絡我們', href: '/contact' },
@@ -155,7 +188,7 @@ export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
       subtitle: '聯絡我們',
       title: '客服中心',
       description: '訂購專線、匯款資訊與門市聯絡方式皆可在這裡查詢，出貨與付款由專人核對。',
-      number: '04',
+      number: '05',
       background_image: '/sonpin-images/153285185380.jpg',
       submenu: [
         { label: '客服中心', title: '聯絡我們', href: '/contact' },
