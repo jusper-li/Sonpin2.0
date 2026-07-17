@@ -83,10 +83,10 @@ const NOTIFICATION_SETTING_KEY = 'notification_mail';
 const FOOTER_SETTING_KEY = 'footer';
 
 const DEFAULT_CONTACT_TEMPLATE: ContactNotificationTemplate = {
-  admin_subject: 'Sonpin 聯絡表單：{{subject}}',
-  admin_title: '有新的聯絡表單',
-  admin_intro: '您收到一則來自客服中心的新訊息，以下為表單內容。',
-  admin_note: '請盡快回覆並安排後續處理。',
+  admin_subject: 'Sonpin 客服中心通知：{{subject}}',
+  admin_title: '新的客服聯絡訊息',
+  admin_intro: '客戶已透過客服中心送出表單，以下是通知摘要與內容。',
+  admin_note: '請登入後台查看完整訊息，並盡快回覆客戶。',
   show_name: true,
   show_email: true,
   show_phone: true,
@@ -97,8 +97,8 @@ const DEFAULT_CONTACT_TEMPLATE: ContactNotificationTemplate = {
 const DEFAULT_ORDER_TEMPLATE: OrderNotificationTemplate = {
   admin_subject: 'Sonpin 新訂單通知：{{orderNumber}}',
   admin_title: '新訂單通知',
-  admin_intro: '有顧客完成下單，以下為訂單摘要。',
-  admin_note: '請確認出貨與後續聯絡資訊。',
+  admin_intro: '有顧客完成下單，以下為訂單摘要與出貨資訊。',
+  admin_note: '可在後台直接查看訂單、付款與配送狀態。',
   show_order_number: true,
   show_customer_name: true,
   show_customer_email: true,
@@ -110,10 +110,10 @@ const DEFAULT_ORDER_TEMPLATE: OrderNotificationTemplate = {
 };
 
 const DEFAULT_CUSTOMER_ORDER_TEMPLATE: CustomerOrderNotificationTemplate = {
-  admin_subject: 'Sonpin 訂單已成立：{{orderNumber}}',
+  admin_subject: 'Sonpin 客戶訂單通知：{{orderNumber}}',
   admin_title: '訂單已送出',
   admin_intro: '感謝您的訂購，以下是您的訂單資訊與匯款說明。',
-  admin_note: '若有任何問題，歡迎與客服中心聯繫。',
+  admin_note: '若您已完成匯款，請保留紀錄並通知客服協助對帳。',
   show_order_number: true,
   show_customer_name: true,
   show_customer_email: true,
@@ -128,8 +128,8 @@ const DEFAULT_CUSTOMER_ORDER_TEMPLATE: CustomerOrderNotificationTemplate = {
 const DEFAULT_REMITTANCE_TEMPLATE: RemittanceNotificationTemplate = {
   admin_subject: 'Sonpin 匯款通知：{{orderNumber}}',
   admin_title: '匯款通知',
-  admin_intro: '顧客已回報匯款資訊，請盡快核對帳務。',
-  admin_note: '若匯款金額或帳號末五碼有誤，請聯繫顧客確認。',
+  admin_intro: '顧客已完成匯款，以下為匯款摘要資料。',
+  admin_note: '請核對匯款金額與帳號後五碼，並儘速完成對帳。',
   show_order_number: true,
   show_remittance_amount: true,
   show_remitter_last5: true,
@@ -210,29 +210,29 @@ type TemplateTabId = (typeof templateTabs)[number]['id'];
 
 const templateFieldOptions = {
   contact: [
-    { key: 'show_name', label: '姓名', description: '顯示顧客姓名' },
-    { key: 'show_email', label: 'Email', description: '顯示顧客 Email' },
-    { key: 'show_phone', label: '電話', description: '顯示顧客電話' },
-    { key: 'show_subject', label: '主旨', description: '顯示表單主旨' },
-    { key: 'show_message', label: '訊息', description: '顯示留言內容' },
+    { key: 'show_name', label: '姓名', description: '顯示寄件人姓名' },
+    { key: 'show_email', label: 'Email', description: '顯示寄件人 Email' },
+    { key: 'show_phone', label: '電話', description: '顯示寄件人電話' },
+    { key: 'show_subject', label: '主旨', description: '顯示客服主旨' },
+    { key: 'show_message', label: '訊息內容', description: '顯示聯絡表單訊息' },
   ],
   order: [
     { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
-    { key: 'show_customer_name', label: '顧客姓名', description: '顯示顧客姓名' },
-    { key: 'show_customer_email', label: '顧客 Email', description: '顯示顧客 Email' },
+    { key: 'show_customer_name', label: '客戶姓名', description: '顯示客戶姓名' },
+    { key: 'show_customer_email', label: '客戶 Email', description: '顯示客戶 Email' },
     { key: 'show_address', label: '收件地址', description: '顯示收件地址' },
     { key: 'show_payment_method', label: '付款方式', description: '顯示付款方式' },
-    { key: 'show_items', label: '商品明細', description: '顯示商品清單' },
+    { key: 'show_items', label: '商品明細', description: '顯示商品明細' },
     { key: 'show_totals', label: '金額合計', description: '顯示商品小計與總額' },
     { key: 'show_shipping', label: '運費明細', description: '顯示運費與配送方式' },
   ],
   customerOrder: [
     { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
-    { key: 'show_customer_name', label: '顧客姓名', description: '顯示顧客姓名' },
-    { key: 'show_customer_email', label: '顧客 Email', description: '顯示顧客 Email' },
+    { key: 'show_customer_name', label: '客戶姓名', description: '顯示客戶姓名' },
+    { key: 'show_customer_email', label: '客戶 Email', description: '顯示客戶 Email' },
     { key: 'show_address', label: '收件地址', description: '顯示收件地址' },
     { key: 'show_payment_method', label: '付款方式', description: '顯示付款方式' },
-    { key: 'show_items', label: '商品明細', description: '顯示商品清單' },
+    { key: 'show_items', label: '商品明細', description: '顯示商品明細' },
     { key: 'show_totals', label: '金額合計', description: '顯示商品小計與總額' },
     { key: 'show_shipping', label: '運費明細', description: '顯示運費與配送方式' },
     { key: 'show_remittance_info', label: '匯款資訊', description: '顯示訂單完成後的匯款說明' },
@@ -240,10 +240,10 @@ const templateFieldOptions = {
   remittance: [
     { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
     { key: 'show_remittance_amount', label: '匯款金額', description: '顯示匯款金額' },
-    { key: 'show_remitter_last5', label: '匯款後五碼', description: '顯示匯款帳號後五碼' },
+    { key: 'show_remitter_last5', label: '帳號後 5 碼', description: '顯示匯款帳號後五碼' },
     { key: 'show_order_total', label: '訂單總額', description: '顯示訂單總額' },
-    { key: 'show_customer_name', label: '顧客姓名', description: '顯示顧客姓名' },
-    { key: 'show_customer_email', label: '顧客 Email', description: '顯示顧客 Email' },
+    { key: 'show_customer_name', label: '客戶姓名', description: '顯示客戶姓名' },
+    { key: 'show_customer_email', label: '客戶 Email', description: '顯示客戶 Email' },
   ],
 } as const;
 
@@ -632,7 +632,7 @@ export default function NotificationManagement() {
 
       {activeTab === 'customer-order' && (
         <TemplateEditor
-          title="?????????"
+          title="客戶訂單通知信模板"
           template={settings.customer_order_template}
           onChange={(template) => setSettings((prev) => ({ ...prev, customer_order_template: template }))}
           fieldOptions={templateFieldOptions.customerOrder}
@@ -837,21 +837,21 @@ function OrderPreview({ template }: { template: OrderNotificationTemplate }) {
 function CustomerOrderPreview({ template }: { template: CustomerOrderNotificationTemplate }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-      <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">??????</div>
+      <div className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-700">客戶訂單通知</div>
       <div className="text-lg font-bold text-slate-900">{template.admin_title}</div>
       <p className="mt-2 text-sm leading-6 text-slate-600">{template.admin_intro}</p>
       <div className="mt-4 space-y-2 text-sm text-slate-700">
-        {template.show_order_number && <div>?????ORD-123456</div>}
-        {template.show_customer_name && <div>????????</div>}
-        {template.show_customer_email && <div>Email?customer@example.com</div>}
-        {template.show_address && <div>??????????...</div>}
-        {template.show_payment_method && <div>?????????</div>}
-        {template.show_items && <div className="rounded-lg bg-white p-3 text-slate-600">?? A ?1??? B ?2</div>}
-        {template.show_totals && <div>?????NT$950</div>}
-        {template.show_shipping && <div>???NT$100</div>}
+        {template.show_order_number && <div>訂單編號：ORD-123456</div>}
+        {template.show_customer_name && <div>客戶姓名：王小明</div>}
+        {template.show_customer_email && <div>Email：customer@example.com</div>}
+        {template.show_address && <div>收件地址：台北市中山區...</div>}
+        {template.show_payment_method && <div>付款方式：銀行轉帳</div>}
+        {template.show_items && <div className="rounded-lg bg-white p-3 text-slate-600">商品 A ×1、商品 B ×2</div>}
+        {template.show_totals && <div>金額合計：NT$950</div>}
+        {template.show_shipping && <div>運費：NT$100</div>}
         {template.show_remittance_info && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-slate-700">
-            ?????????????????????????
+            已收到匯款通知，請核對匯款金額與帳號後五碼。
           </div>
         )}
       </div>
@@ -859,6 +859,7 @@ function CustomerOrderPreview({ template }: { template: CustomerOrderNotificatio
     </div>
   );
 }
+
 
 function RemittancePreview({ template }: { template: RemittanceNotificationTemplate }) {
   return (
@@ -869,9 +870,9 @@ function RemittancePreview({ template }: { template: RemittanceNotificationTempl
       <div className="mt-4 space-y-2 text-sm text-slate-700">
         {template.show_order_number && <div>訂單編號：ORD-123456</div>}
         {template.show_remittance_amount && <div>匯款金額：NT$950</div>}
-        {template.show_remitter_last5 && <div>匯款帳號後五碼：12345</div>}
+        {template.show_remitter_last5 && <div>匯款帳號後 5 碼：12345</div>}
         {template.show_order_total && <div>訂單總額：NT$950</div>}
-        {template.show_customer_name && <div>顧客姓名：王小明</div>}
+        {template.show_customer_name && <div>客戶姓名：王小明</div>}
         {template.show_customer_email && <div>Email：customer@example.com</div>}
       </div>
       <p className="mt-4 text-xs leading-6 text-slate-500">{template.admin_note}</p>

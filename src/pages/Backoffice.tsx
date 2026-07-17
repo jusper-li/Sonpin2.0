@@ -144,11 +144,11 @@ function AdminPanel() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 min-h-0 overflow-y-auto">
           <Suspense fallback={<ModuleLoading />}>
             {renderModule()}
           </Suspense>

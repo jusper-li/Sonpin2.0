@@ -119,7 +119,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
   );
 
   return (
-    <div className="flex min-h-screen w-72 flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white shadow-2xl">
+    <div className="flex h-screen w-72 shrink-0 flex-col overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white shadow-2xl">
       <div className="border-b border-slate-800/50 p-6">
         <div className="mb-2 flex items-center gap-3">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg">
@@ -134,7 +134,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
         </div>
       </div>
 
-      <nav className="scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent flex-1 overflow-y-auto px-3 py-4">
+      <nav className="scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="space-y-6">
           {hydratedMenuGroups.map((group, index) => (
             <div key={index}>
