@@ -214,6 +214,18 @@ export default function SiteFooter() {
             {t('footer.copyright', settings.copyright_text)}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <Link
+              to="/returns"
+              className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
+            >
+              {t('footer.returns', '退換貨說明')}
+            </Link>
+            <Link
+              to="/privacy"
+              className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
+            >
+              {t('footer.privacy', '隱私權政策')}
+            </Link>
             <button
               type="button"
               onClick={openCookieConsentSettings}
