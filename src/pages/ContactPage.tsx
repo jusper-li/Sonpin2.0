@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Clock, Mail, Phone, ReceiptText, Search, ChevronRight } from 'lucide-react';
+import { ArrowRight, CheckCircle, ReceiptText, Search, ChevronRight } from 'lucide-react';
 import { isSupabaseContentEnabled, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
@@ -189,7 +189,6 @@ export default function ContactPage() {
 
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(null);
-  const [siteInfo, setSiteInfo] = useState<SiteInfo>({ contact_email: '', contact_phone: '' });
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -248,27 +247,7 @@ export default function ContactPage() {
       }
     };
 
-    const loadSiteInfo = async () => {
-      if (!isSupabaseContentEnabled) return;
-      try {
-        const { data } = await supabase
-          .from('site_settings')
-          .select('setting_value')
-          .eq('setting_key', 'footer')
-          .maybeSingle();
-        if (data?.setting_value) {
-          setSiteInfo({
-            contact_email: data.setting_value.contact_email || '',
-            contact_phone: data.setting_value.contact_phone || '',
-          });
-        }
-      } catch {
-        setSiteInfo({ contact_email: '', contact_phone: '' });
-      }
-    };
-
     void loadPage();
-    void loadSiteInfo();
   }, []);
 
   useEffect(() => {
@@ -404,41 +383,6 @@ export default function ContactPage() {
                   {t.translating}
                 </div>
               )}
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
-                  <Mail className="h-5 w-5 text-[var(--sonpin-primary)]" />
-                </div>
-                <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.email}</p>
-                  <a href={`mailto:${siteInfo.contact_email}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {siteInfo.contact_email || 'service@sonpin.tw'}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
-                  <Phone className="h-5 w-5 text-[var(--sonpin-primary)]" />
-                </div>
-                <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.phone}</p>
-                  <a href={`tel:${siteInfo.contact_phone}`} className="font-light text-[var(--sonpin-ink)] transition-colors hover:text-[var(--sonpin-primary)]">
-                    {siteInfo.contact_phone || '02-2338-0018'}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sonpin-background)]">
-                  <Clock className="h-5 w-5 text-[var(--sonpin-primary)]" />
-                </div>
-                <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.hoursTitle}</p>
-                  <p className="font-light text-[var(--sonpin-ink)]">{t.hours}</p>
-                  <p className="text-sm font-light text-[var(--sonpin-primary-muted)]">{t.hoursNote}</p>
-                </div>
-              </div>
 
               {infoSections.length > 0 && (
                 <div className="space-y-6 border-t border-[var(--sonpin-primary-border)] pt-4">
