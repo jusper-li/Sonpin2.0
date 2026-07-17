@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart, Globe, ChevronRight, CircleUser as UserCircle, Facebook, Instagram, Twitter, Youtube, MessageCircle, ExternalLink } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -7,7 +7,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS } from '../data/homepageContent';
 import { normalizeLang } from '../lib/language';
-import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
 import { subscribeLayoutSettingsSync } from '../lib/layoutSettingsSync';
 
 interface NavItem {
@@ -68,61 +67,6 @@ const normalizeMenuHref = (href: string) => {
   return value.replace(/\/+$/, '').toLowerCase();
 };
 
-const HIDDEN_MENU_HREFS = new Set(['/order-query', '/remittance-notice', '/media']);
-const NAV_LABEL_FALLBACKS: Record<string, string> = {
-  '/': '首頁',
-  '/about': '關於我們',
-  '/products': '商品介紹',
-  '/shipping': '配送資訊',
-  '/service': '客製服務',
-  '/store': '門市資訊',
-  '/process': '生產製程',
-  '/blog': '文章專欄',
-  '/member': '會員專區',
-  '/contact': '客服中心',
-  '/faq': '常見問題',
-  '/cart': '購物車',
-  '/order-query': '訂單查詢',
-  '/remittance-notice': '匯款通知',
-  '/privacy': '隱私權政策',
-  '/terms': '服務條款',
-};
-
-const NAV_LABEL_OVERRIDES: Record<string, string> = {
-  '/blog': '文章專欄',
-};
-
-const FOOTER_GROUP_FALLBACKS = ['關於淞品', '商品與門市'];
-
-const FOOTER_LINK_FALLBACKS: Record<string, string> = {
-  '/about': '關於我們',
-  '/products': '商品介紹',
-  '/service': '客製服務',
-  '/shipping': '配送資訊',
-  '/store': '門市資訊',
-  '/contact': '客服中心',
-  '/order-query': '訂單查詢',
-  '/faq': '常見問題',
-};
-
-const dedupeMenuLinks = <T extends { label: string; href: string }>(
-  links: T[] = [],
-  seen = new Set<string>(),
-) => {
-  const result: T[] = [];
-
-  links.forEach((link) => {
-    const label = link.label?.trim();
-    const href = link.href?.trim();
-    const key = normalizeMenuHref(href);
-    if (!label || !href || !key || seen.has(key)) return;
-    seen.add(key);
-    result.push({ ...link, label, href });
-  });
-
-  return result;
-};
-
 const hasRenderableName = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return false;
@@ -134,27 +78,6 @@ const getDisplayNameFallback = (email?: string | null) => {
   return localPart || '訪客';
 };
 
-const getNavLabel = (href: string, label?: string | null) => {
-  const normalizedHref = normalizeMenuHref(href);
-  const override = NAV_LABEL_OVERRIDES[normalizedHref];
-  if (override) return override;
-  const fallback = NAV_LABEL_FALLBACKS[normalizedHref] || '';
-  const candidate = label?.trim() || '';
-  return hasRenderableName(candidate) ? candidate : fallback;
-};
-
-const getFooterGroupTitle = (index: number, title?: string | null) => {
-  const fallback = FOOTER_GROUP_FALLBACKS[index] || '';
-  const candidate = title?.trim() || '';
-  return hasRenderableName(candidate) ? candidate : fallback;
-};
-
-const getFooterLinkLabel = (href: string, label?: string | null) => {
-  const fallback = FOOTER_LINK_FALLBACKS[normalizeMenuHref(href)] || '';
-  const candidate = label?.trim() || '';
-  return hasRenderableName(candidate) ? candidate : fallback;
-};
-
 export default function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
@@ -164,7 +87,6 @@ export default function SiteHeader() {
     link_groups: DEFAULT_FOOTER_SETTINGS.link_groups,
   });
   const [socials, setSocials] = useState<Social[]>([]);
-  const [staticPages, setStaticPages] = useState(DEFAULT_STATIC_PAGE_NAV_ITEMS);
   const { itemCount } = useCart();
   const { currentLanguage, languages, setLanguage, t } = useLanguage();
   const { user, profile } = useMemberAuth();
@@ -181,92 +103,7 @@ export default function SiteHeader() {
   const normalizedLanguage = normalizeLang(currentLanguage);
   const isHomepage = location.pathname === '/';
   const isSolidHeader = scrolled || isMenuOpen || !isHomepage;
-  const staticPageHrefSet = useMemo(
-    () => new Set(staticPages.map((item) => normalizeMenuHref(item.href))),
-    [staticPages],
-  );
-  const primaryNavigation = useMemo(() => {
-    const links = dedupeMenuLinks(settings.navigation).filter((item) => !HIDDEN_MENU_HREFS.has(normalizeMenuHref(item.href)));
-    if (!links.some((item) => normalizeMenuHref(item.href) === '/blog')) {
-      const blogLink = { label: getNavLabel('/blog', t('header.blog', '文章專欄')), href: '/blog' };
-      const mediaIndex = links.findIndex((item) => normalizeMenuHref(item.href) === '/media');
-      if (mediaIndex >= 0) {
-        links.splice(mediaIndex + 1, 0, blogLink);
-      } else {
-        links.push(blogLink);
-      }
-    }
-    return links;
-  }, [settings.navigation, t]);
-  const translatedPrimaryNavigation = useMemo(
-    () => primaryNavigation.map((item) => ({
-      ...item,
-      label: getNavLabel(item.href, t(`header.nav.${normalizeMenuHref(item.href)}`, item.label)),
-    })),
-    [primaryNavigation, t],
-  );
-  const mobileMenu = useMemo(() => {
-    const seen = new Set(primaryNavigation.map((item) => normalizeMenuHref(item.href)));
-    let footerGroups = (footerSettings.link_groups || [])
-      .map((group, index) => ({
-        title: getFooterGroupTitle(index, t(`header.footer_group.${index}`, group.title)),
-        links: dedupeMenuLinks(
-          (group.links || [])
-            .map((link) => ({
-              ...link,
-              label: getFooterLinkLabel(link.href, t(`header.footer_link.${normalizeMenuHref(link.href)}`, link.label)),
-            }))
-            .filter((link) => {
-              const href = normalizeMenuHref(link.href);
-              return !HIDDEN_MENU_HREFS.has(href) && !staticPageHrefSet.has(href);
-            }),
-          seen,
-        ),
-      }))
-      .filter((group) => group.links.length > 0);
-    const shoppingLinks = dedupeMenuLinks(
-      [
-        { label: getNavLabel('/shop', t('header.shop', '商品專區')), href: '/shop' },
-        ...(settings.show_cart ? [{ label: t('header.cart', `購物車${itemCount > 0 ? ` (${itemCount})` : ''}`), href: '/cart' }] : []),
-      ],
-      seen,
-    );
-
-    if (
-      shoppingLinks.length === 1 &&
-      normalizeMenuHref(shoppingLinks[0].href) === '/cart' &&
-      footerGroups.length > 0
-    ) {
-      const serviceIndex = footerGroups.findIndex((group) => group.title.includes('商品') || group.title.includes('服務'));
-      const targetIndex = serviceIndex >= 0 ? serviceIndex : footerGroups.length - 1;
-      footerGroups = footerGroups.map((group, index) => (
-        index === targetIndex
-          ? { ...group, links: [...group.links, ...shoppingLinks] }
-          : group
-      ));
-      shoppingLinks.length = 0;
-    }
-
-    const legalLinks = dedupeMenuLinks(
-      [
-        { label: getNavLabel('/privacy', t('header.privacy', '隱私權政策')), href: '/privacy' },
-        { label: getNavLabel('/terms', t('header.terms', '服務條款')), href: '/terms' },
-      ],
-      seen,
-    ).filter((link) => !staticPageHrefSet.has(normalizeMenuHref(link.href)));
-
-    const staticPageGroup = {
-      title: t('header.static_pages', '靜態頁面'),
-      links: staticPages.filter((item) => !seen.has(normalizeMenuHref(item.href))),
-    };
-
-    if (staticPageGroup.links.length > 0) {
-      footerGroups = [...footerGroups, staticPageGroup];
-    }
-
-    return { footerGroups, shoppingLinks, legalLinks };
-  }, [footerSettings.link_groups, itemCount, primaryNavigation, settings.show_cart, staticPageHrefSet, staticPages, t]);
-
+  const primaryNavigation = settings.navigation.filter((item) => item.label.trim() && item.href.trim());
   const isActiveMenuItem = (href: string) => {
     const target = normalizeMenuHref(href);
     const current = normalizeMenuHref(location.pathname);
@@ -277,7 +114,6 @@ export default function SiteHeader() {
     loadSettings();
     loadFooterSettings();
     loadSocials();
-    void loadStaticPages();
   }, []);
 
   useEffect(() => {
@@ -290,11 +126,6 @@ export default function SiteHeader() {
       }
     });
   }, []);
-
-  const loadStaticPages = async () => {
-    const items = await loadStaticPageNavItems();
-    setStaticPages(items);
-  };
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -333,11 +164,7 @@ export default function SiteHeader() {
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        const nextSettings = data.setting_value as HeaderSettings;
-        setSettings({
-          ...nextSettings,
-          navigation: nextSettings.navigation?.length ? nextSettings.navigation : DEFAULT_HEADER_SETTINGS.navigation,
-        });
+        setSettings(data.setting_value as HeaderSettings);
       }
     } catch (error) {
       if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) return;
@@ -356,11 +183,7 @@ export default function SiteHeader() {
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        const nextSettings = data.setting_value as FooterSettings;
-        setFooterSettings({
-          ...nextSettings,
-          link_groups: nextSettings.link_groups?.length ? nextSettings.link_groups : DEFAULT_FOOTER_SETTINGS.link_groups,
-        });
+        setFooterSettings(data.setting_value as FooterSettings);
       }
     } catch (error) {
       if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) return;
@@ -430,7 +253,7 @@ export default function SiteHeader() {
 
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-8">
-              {translatedPrimaryNavigation.map((item, index) => (
+              {primaryNavigation.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => handleNavigation(item.href)}
@@ -654,7 +477,7 @@ export default function SiteHeader() {
             <div className="mb-4">
                 <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
               <nav className="space-y-0.5">
-                {translatedPrimaryNavigation.map((item, index) => {
+                {primaryNavigation.map((item, index) => {
                   const isActive = isActiveMenuItem(item.href);
                   return (
                   <button
@@ -674,7 +497,7 @@ export default function SiteHeader() {
             </div>
 
             {/* Footer link groups */}
-            {mobileMenu.footerGroups.map((group, index) => (
+            {footerSettings.link_groups.map((group, index) => (
               <div key={index} className="mb-4">
               <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{group.title}</p>
                 <nav className="space-y-0.5">
@@ -698,55 +521,6 @@ export default function SiteHeader() {
               </div>
             ))}
 
-            {/* Shop pages */}
-            {mobileMenu.shoppingLinks.length > 0 && (
-            <div className="mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.shop_menu', '商品專區')}</p>
-              <nav className="space-y-0.5">
-                {mobileMenu.shoppingLinks.map((link, index) => {
-                  const isActive = isActiveMenuItem(link.href);
-                  return (
-                    <button
-                      key={`${link.href}-${index}`}
-                      onClick={() => handleNavigation(link.href)}
-                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-ink)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left tracking-wide ${
-                        isActive ? 'text-[var(--sonpin-ink)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
-                      }`}
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      <span>{link.label}</span>
-                    <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-            )}
-
-            {/* Legal */}
-            {mobileMenu.legalLinks.length > 0 && (
-            <div className="mb-2">
-                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.policy_menu', '政策選單')}</p>
-              <nav className="space-y-0.5">
-                {mobileMenu.legalLinks.map((link, index) => {
-                  const isActive = isActiveMenuItem(link.href);
-                  return (
-                    <button
-                      key={`${link.href}-${index}`}
-                      onClick={() => handleNavigation(link.href)}
-                      className={`w-full flex items-center justify-between px-3 py-3 text-sm hover:text-[var(--sonpin-primary)] hover:bg-[var(--sonpin-surface)] active:bg-[var(--sonpin-background)] transition-all duration-200 group text-left ${
-                        isActive ? 'text-[var(--sonpin-primary)] bg-[var(--sonpin-surface)] font-medium' : 'text-[var(--sonpin-primary)]'
-                      }`}
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      <span>{link.label}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-            )}
           </div>
 
           {/* Bottom: Social + Language + Copyright */}
@@ -805,6 +579,7 @@ export default function SiteHeader() {
     </>
   );
 }
+
 
 
 

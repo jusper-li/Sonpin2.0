@@ -1,12 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
 import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS } from '../data/homepageContent';
 import { openCookieConsentSettings } from '../lib/cookieConsent';
 import { useLanguage } from '../contexts/LanguageContext';
-import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
 import { subscribeLayoutSettingsSync } from '../lib/layoutSettingsSync';
 
 interface FooterLink {
@@ -42,21 +40,6 @@ interface FooterSettings {
   link_groups: LinkGroup[];
 }
 
-const DEFAULT_FOOTER_LINK_LABELS: Record<string, string> = {
-  '/about': '關於淞品',
-  '/story': '品牌故事',
-  '/blog': '文章專欄',
-  '/contact': '客服中心',
-  '/shop': '商品介紹',
-  '/faq': '常見問題',
-  '/shipping': '購物須知',
-  '/privacy': '隱私權政策',
-  '/terms': '服務條款',
-  '/backoffice': '後台管理',
-};
-
-const isGarbledText = (value?: string) => !value || /[\uFFFD?]/.test(value);
-
 const SOCIAL_ICON_MAP: Record<string, any> = {
   facebook: Facebook,
   instagram: Instagram,
@@ -66,55 +49,15 @@ const SOCIAL_ICON_MAP: Record<string, any> = {
 };
 
 const normalizePlatform = (value: string) => value.trim().toLowerCase();
-
-const HIDDEN_FOOTER_HREFS = new Set(['/order-query', '/remittance-notice']);
-
-const normalizeMenuHref = (href: string) => href.trim().replace(/\/+$/, '').toLowerCase();
-
-const sanitizeFooterSettings = (nextSettings: FooterSettings): FooterSettings => {
-  const fallbackGroups = DEFAULT_FOOTER_SETTINGS.link_groups;
-
-  return {
-    ...nextSettings,
-    about_text: isGarbledText(nextSettings.about_text)
-      ? DEFAULT_FOOTER_SETTINGS.about_text
-      : nextSettings.about_text,
-    copyright_text: isGarbledText(nextSettings.copyright_text)
-      ? DEFAULT_FOOTER_SETTINGS.copyright_text
-      : nextSettings.copyright_text,
-    link_groups: fallbackGroups.map((fallbackGroup, groupIndex) => {
-      const nextGroup = nextSettings.link_groups?.[groupIndex];
-      const groupTitle = isGarbledText(nextGroup?.title) ? fallbackGroup.title : nextGroup!.title;
-      const sourceLinks = nextGroup?.links?.length ? nextGroup.links : fallbackGroup.links;
-
-      return {
-        title: groupTitle,
-        links: sourceLinks
-          .map((link, linkIndex) => {
-            const fallbackLink = fallbackGroup.links[linkIndex];
-            const normalizedLabel = DEFAULT_FOOTER_LINK_LABELS[link.href] || fallbackLink?.label || link.label;
-            return {
-              href: link.href,
-              label: isGarbledText(link.label) ? normalizedLabel : link.label,
-            };
-          })
-          .filter((link) => !HIDDEN_FOOTER_HREFS.has(normalizeMenuHref(link.href))),
-      };
-    }),
-  };
-};
-
 export default function SiteFooter() {
   const [settings, setSettings] = useState<FooterSettings>(DEFAULT_FOOTER_SETTINGS);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
-  const [staticPages, setStaticPages] = useState(DEFAULT_STATIC_PAGE_NAV_ITEMS);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
     loadSettings();
     loadSocialAccounts();
-    void loadStaticPages();
   }, []);
 
   useEffect(() => {
@@ -124,11 +67,6 @@ export default function SiteFooter() {
       }
     });
   }, []);
-
-  const loadStaticPages = async () => {
-    const items = await loadStaticPageNavItems();
-    setStaticPages(items);
-  };
 
   const loadSettings = async () => {
     if (!isSupabaseContentEnabled) return;
@@ -142,12 +80,7 @@ export default function SiteFooter() {
 
       if (error) throw error;
       if (data) {
-        const nextSettings = data.setting_value as FooterSettings;
-        setSettings(sanitizeFooterSettings({
-          ...DEFAULT_FOOTER_SETTINGS,
-          ...nextSettings,
-          link_groups: nextSettings.link_groups?.length ? nextSettings.link_groups : DEFAULT_FOOTER_SETTINGS.link_groups,
-        }));
+        setSettings(data.setting_value as FooterSettings);
       }
     } catch (error) {
       if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) return;
@@ -207,27 +140,7 @@ export default function SiteFooter() {
         },
       ].filter(Boolean) as Array<{ platform: string; url: string }>);
 
-  const staticPageHrefSet = useMemo(
-    () => new Set(staticPages.map((item) => normalizeMenuHref(item.href))),
-    [staticPages],
-  );
-
-  const renderedLinkGroups = useMemo(() => {
-    const filteredGroups = settings.link_groups
-      .map((group) => ({
-        title: group.title,
-        links: group.links.filter((link) => !staticPageHrefSet.has(normalizeMenuHref(link.href))),
-      }))
-      .filter((group) => group.links.length > 0);
-
-    return [
-      ...filteredGroups,
-      {
-        title: t('footer.static_pages', '靜態頁面'),
-        links: staticPages,
-      },
-    ];
-  }, [settings.link_groups, staticPageHrefSet, staticPages, t]);
+  const renderedLinkGroups = settings.link_groups;
 
   return (
     <footer className="bg-[var(--sonpin-background)] text-stone-700 w-full">
@@ -301,18 +214,6 @@ export default function SiteFooter() {
             {t('footer.copyright', settings.copyright_text)}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <Link
-              to="/privacy"
-              className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
-            >
-              {t('footer.privacy', '隱私權政策')}
-            </Link>
-            <Link
-              to="/terms"
-              className="text-xs text-stone-400 hover:text-stone-700 transition-colors duration-300 font-light tracking-wide"
-            >
-              {t('footer.terms', '服務條款')}
-            </Link>
             <button
               type="button"
               onClick={openCookieConsentSettings}
