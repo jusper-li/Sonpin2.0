@@ -255,9 +255,12 @@ export default function Homepage() {
 
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     root.classList.add('homepage-snap-enabled');
+    body.classList.add('homepage-snap-enabled');
     return () => {
       root.classList.remove('homepage-snap-enabled');
+      body.classList.remove('homepage-snap-enabled');
     };
   }, []);
 
@@ -593,8 +596,9 @@ export default function Homepage() {
           min-height: 100dvh;
           background: var(--sonpin-background);
         }
-        html.homepage-snap-enabled {
-          scroll-snap-type: y proximity;
+        html.homepage-snap-enabled,
+        body.homepage-snap-enabled {
+          scroll-snap-type: y mandatory;
           scroll-padding-top: 88px;
         }
         .homepage-page section,
