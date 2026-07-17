@@ -8,6 +8,7 @@ import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS } from '../data/homepageContent';
 import { normalizeLang } from '../lib/language';
 import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
+import { subscribeLayoutSettingsSync } from '../lib/layoutSettingsSync';
 
 interface NavItem {
   label: string;
@@ -277,6 +278,17 @@ export default function SiteHeader() {
     loadFooterSettings();
     loadSocials();
     void loadStaticPages();
+  }, []);
+
+  useEffect(() => {
+    return subscribeLayoutSettingsSync((payload) => {
+      if (payload.scope === 'header' || payload.scope === 'both') {
+        void loadSettings();
+      }
+      if (payload.scope === 'footer' || payload.scope === 'both') {
+        void loadFooterSettings();
+      }
+    });
   }, []);
 
   const loadStaticPages = async () => {

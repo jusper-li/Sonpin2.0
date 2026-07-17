@@ -7,6 +7,7 @@ import { DEFAULT_FOOTER_SETTINGS } from '../data/homepageContent';
 import { openCookieConsentSettings } from '../lib/cookieConsent';
 import { useLanguage } from '../contexts/LanguageContext';
 import { DEFAULT_STATIC_PAGE_NAV_ITEMS, loadStaticPageNavItems } from '../lib/staticPageNavigation';
+import { subscribeLayoutSettingsSync } from '../lib/layoutSettingsSync';
 
 interface FooterLink {
   label: string;
@@ -114,6 +115,14 @@ export default function SiteFooter() {
     loadSettings();
     loadSocialAccounts();
     void loadStaticPages();
+  }, []);
+
+  useEffect(() => {
+    return subscribeLayoutSettingsSync((payload) => {
+      if (payload.scope === 'footer' || payload.scope === 'both') {
+        void loadSettings();
+      }
+    });
   }, []);
 
   const loadStaticPages = async () => {

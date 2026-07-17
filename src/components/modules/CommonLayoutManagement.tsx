@@ -4,6 +4,7 @@ import ImageUpload from '../ImageUpload';
 import { isSupabaseContentEnabled, supabase } from '../../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS, type FooterLinkGroup, type FooterSettings, type HeaderNavItem, type HeaderSettings } from '../../data/homepageContent';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { emitLayoutSettingsSync, subscribeLayoutSettingsSync } from '../../lib/layoutSettingsSync';
 
 interface SiteSettingRow {
   id: string | number;
@@ -115,6 +116,14 @@ export default function CommonLayoutManagement() {
     void loadData();
   }, []);
 
+  useEffect(() => {
+    return subscribeLayoutSettingsSync((payload) => {
+      if (payload.scope === 'header' || payload.scope === 'footer' || payload.scope === 'both') {
+        void loadData();
+      }
+    });
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
 
@@ -193,6 +202,7 @@ export default function CommonLayoutManagement() {
       setHeaderSettings(normalizedHeader);
       setFooterSettings(normalizedFooter);
       setUpdatedAt(new Date().toISOString());
+      emitLayoutSettingsSync('both');
       alert('頁首與頁尾設定已儲存。');
     } catch (error) {
       console.error('Failed to save common layout settings:', error);
