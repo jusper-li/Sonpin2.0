@@ -946,7 +946,7 @@ export default function Homepage() {
                 ? section.content?.cta_label || '觀看影片'
               : ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
-          const shouldLoadImage = index === 0 || visibleSections.has(index);
+          const shouldLoadImage = true;
           const sectionStyle = {
             '--ym-bg': palette.background,
             '--ym-panel': palette.panel,
@@ -995,7 +995,7 @@ export default function Homepage() {
                       src={visual.media}
                       alt={title}
                       objectPosition={visual.objectPosition}
-                      eager={index === 0}
+                      eager
                     />
                   ) : null}
                 </Link>
