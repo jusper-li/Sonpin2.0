@@ -55,29 +55,36 @@ const normalizeHeaderSettings = (value: unknown): HeaderSettings => {
 
 const normalizeFooterSettings = (value: unknown): FooterSettings => {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-  const groupSource = Array.isArray(source.link_groups) ? source.link_groups : DEFAULT_FOOTER_SETTINGS.link_groups;
+  const groupSource = Array.isArray(source.link_groups) ? source.link_groups : [];
   const socialSource = source.social_links && typeof source.social_links === 'object' ? (source.social_links as Record<string, unknown>) : {};
 
-  const linkGroups = groupSource
-    .map((group) => {
-      const groupRecord = group && typeof group === 'object' && !Array.isArray(group) ? (group as Record<string, unknown>) : {};
-      const linksSource = Array.isArray(groupRecord.links) ? groupRecord.links : [];
-      const links = linksSource
-        .map((link) => {
-          const linkRecord = link && typeof link === 'object' && !Array.isArray(link) ? (link as Record<string, unknown>) : {};
-          return {
-            label: normalizeString(linkRecord.label),
-            href: normalizeString(linkRecord.href),
-          };
-        })
-        .filter((link) => link.label || link.href);
-
+  const normalizeGroup = (group: unknown, fallbackGroup: FooterLinkGroup): FooterLinkGroup => {
+    const groupRecord = group && typeof group === 'object' && !Array.isArray(group) ? (group as Record<string, unknown>) : {};
+    const linksSource = Array.isArray(groupRecord.links) ? groupRecord.links : [];
+    const links = Array.from({ length: Math.max(linksSource.length, fallbackGroup.links.length) }, (_, index) => {
+      const link = linksSource[index];
+      const fallbackLink = fallbackGroup.links[index];
+      const linkRecord = link && typeof link === 'object' && !Array.isArray(link) ? (link as Record<string, unknown>) : {};
       return {
-        title: normalizeString(groupRecord.title),
-        links: links.length > 0 ? links : [{ label: '', href: '' }],
+        label: normalizeString(linkRecord.label, fallbackLink?.label || ''),
+        href: normalizeString(linkRecord.href, fallbackLink?.href || ''),
       };
-    })
+    }).filter((link) => link.label || link.href);
+
+    return {
+      title: normalizeString(groupRecord.title, fallbackGroup.title),
+      links: links.length > 0 ? links : fallbackGroup.links,
+    };
+  };
+
+  const defaultGroups = DEFAULT_FOOTER_SETTINGS.link_groups;
+  const mergedDefaultGroups = defaultGroups.map((fallbackGroup, index) => normalizeGroup(groupSource[index], fallbackGroup));
+  const extraGroups = groupSource
+    .slice(defaultGroups.length)
+    .map((group) => normalizeGroup(group, { title: '', links: [{ label: '', href: '' }] }))
     .filter((group) => group.title || group.links.some((link) => link.label || link.href));
+
+  const linkGroups = [...mergedDefaultGroups, ...extraGroups].filter((group) => group.title || group.links.some((link) => link.label || link.href));
 
   return {
     about_text: normalizeString(source.about_text, DEFAULT_FOOTER_SETTINGS.about_text),

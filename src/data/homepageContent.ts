@@ -249,6 +249,13 @@ export const DEFAULT_FOOTER_SETTINGS: FooterSettings = {
         { label: '常見問題', href: '/faq' },
       ],
     },
+    {
+      title: '政策資訊',
+      links: [
+        { label: '退換貨說明', href: '/returns' },
+        { label: '隱私權政策', href: '/privacy' },
+      ],
+    },
   ],
 };
 
