@@ -49,6 +49,29 @@ type ProductRow = {
   is_active?: boolean | null;
 };
 
+type SectionFormContent = {
+  label: string;
+  subtitle: string;
+  title: string;
+  description: string;
+  number: string;
+  href: string;
+  background_image: string;
+  cta_label: string;
+  youtube: string;
+  video_title: string;
+  video_description: string;
+};
+
+type SectionFormState = {
+  id: string;
+  section_type: string;
+  title: string;
+  sort_order: number;
+  is_active: boolean;
+  content: SectionFormContent;
+};
+
 type HeroBlockFormState = {
   id: string;
   mode: 'product' | 'custom';
@@ -62,6 +85,29 @@ type HeroBlockFormState = {
 };
 
 const HERO_BLOCKS_CACHE_KEY = 'ym_homepage_hero_blocks_cache_v1';
+
+const EMPTY_SECTION_CONTENT: SectionFormContent = {
+  label: '',
+  subtitle: '',
+  title: '',
+  description: '',
+  number: '',
+  href: '',
+  background_image: '',
+  cta_label: '',
+  youtube: '',
+  video_title: '',
+  video_description: '',
+};
+
+const EMPTY_SECTION_FORM: SectionFormState = {
+  id: '',
+  section_type: 'video',
+  title: '',
+  sort_order: 1,
+  is_active: true,
+  content: { ...EMPTY_SECTION_CONTENT },
+};
 
 const EMPTY_FORM: HeroBlockFormState = {
   id: '',
@@ -104,6 +150,9 @@ export default function HomepageManagement() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<HomepageHeroBlock | null>(null);
   const [form, setForm] = useState<HeroBlockFormState>(EMPTY_FORM);
+  const [isSectionEditorOpen, setIsSectionEditorOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<HomepageSection | null>(null);
+  const [sectionForm, setSectionForm] = useState<SectionFormState>(EMPTY_SECTION_FORM);
   const [saving, setSaving] = useState(false);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
@@ -257,6 +306,137 @@ export default function HomepageManagement() {
     setIsEditorOpen(false);
     setEditingBlock(null);
     setForm(EMPTY_FORM);
+  };
+
+  const openSectionCreateForm = () => {
+    const nextOrder = sections.length ? Math.max(...sections.map((section) => Number(section.sort_order || 0))) + 1 : 1;
+    setEditingSection(null);
+    setSectionForm({
+      ...EMPTY_SECTION_FORM,
+      id: `homepage-section-${Date.now()}`,
+      sort_order: nextOrder,
+    });
+    setIsSectionEditorOpen(true);
+  };
+
+  const openSectionEditForm = (section: HomepageSection) => {
+    const content = section.content || {};
+    setEditingSection(section);
+    setSectionForm({
+      id: section.id,
+      section_type: section.section_type || 'video',
+      title: section.title || '',
+      sort_order: Number(section.sort_order || 1),
+      is_active: section.is_active !== false,
+      content: {
+        label: content.label || '',
+        subtitle: content.subtitle || '',
+        title: content.title || '',
+        description: content.description || '',
+        number: content.number || '',
+        href: content.href || '',
+        background_image: content.background_image || '',
+        cta_label: content.cta_label || '',
+        youtube: content.youtube || content.video_url || '',
+        video_title: content.video_title || '',
+        video_description: content.video_description || '',
+      },
+    });
+    setIsSectionEditorOpen(true);
+  };
+
+  const closeSectionEditor = () => {
+    if (saving) return;
+    setIsSectionEditorOpen(false);
+    setEditingSection(null);
+    setSectionForm(EMPTY_SECTION_FORM);
+  };
+
+  const updateSectionFormContent = (field: keyof SectionFormContent, value: string) => {
+    setSectionForm((current) => ({
+      ...current,
+      content: {
+        ...current.content,
+        [field]: value,
+      },
+    }));
+  };
+
+  const saveHomepageSection = async () => {
+    const title = sectionForm.title.trim();
+    const sectionType = sectionForm.section_type.trim() || 'video';
+    const content = {
+      ...sectionForm.content,
+      label: sectionForm.content.label.trim(),
+      subtitle: sectionForm.content.subtitle.trim(),
+      title: sectionForm.content.title.trim(),
+      description: sectionForm.content.description.trim(),
+      number: sectionForm.content.number.trim(),
+      href: sectionForm.content.href.trim(),
+      background_image: sectionForm.content.background_image.trim(),
+      cta_label: sectionForm.content.cta_label.trim(),
+      youtube: sectionForm.content.youtube.trim(),
+      video_title: sectionForm.content.video_title.trim(),
+      video_description: sectionForm.content.video_description.trim(),
+    };
+
+    if (!title) {
+      alert('請輸入區塊標題');
+      return;
+    }
+
+    if (sectionType === 'video' && !content.youtube) {
+      alert('請輸入 YouTube 連結');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        section_type: sectionType,
+        title,
+        content,
+        sort_order: Number(sectionForm.sort_order || 1),
+        is_active: sectionForm.is_active,
+      };
+
+      if (editingSection?.id) {
+        const { error } = await supabase.from('homepage_sections').update(payload).eq('id', editingSection.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('homepage_sections').insert([
+          {
+            id: sectionForm.id || crypto.randomUUID(),
+            ...payload,
+          },
+        ]);
+        if (error) throw error;
+      }
+
+      await loadData();
+      closeSectionEditor();
+    } catch (error) {
+      console.error('Failed to save homepage section:', error);
+      alert(`儲存首頁區塊失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteHomepageSection = async (section: HomepageSection) => {
+    if (!window.confirm(`確定要刪除「${section.title}」嗎？`)) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('homepage_sections').delete().eq('id', section.id);
+      if (error) throw error;
+      await loadData();
+    } catch (error) {
+      console.error('Failed to delete homepage section:', error);
+      alert(`刪除首頁區塊失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleProductSelect = (productId: string) => {
@@ -554,17 +734,71 @@ export default function HomepageManagement() {
       )}
 
       {activeTab === 'sections' && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-slate-500">
+              共 {sections.length} 個首頁區塊，影片區塊可直接修改 YouTube 連結。
+            </div>
+            <button
+              type="button"
+              onClick={openSectionCreateForm}
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              <Plus className="h-4 w-4" />
+              新增首頁區塊
+            </button>
+          </div>
+
           {sections.length === 0 ? (
-            <EmptyState text={t('homepage_management.empty_sections', '尚未建立首頁區塊。')} />
+            <EmptyState text="目前沒有首頁區塊資料" />
           ) : (
-            sections.map((section) => (
-              <div key={section.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="text-xs text-slate-500">{section.section_type}</div>
-                <div className="mt-1 font-semibold text-slate-900">{section.title}</div>
-                <div className="mt-2 text-sm text-slate-600">{section.is_active ? t('common.active', '顯示中') : t('common.hidden', '已隱藏')}</div>
-              </div>
-            ))
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {sections.map((section) => {
+                const content = section.content || {};
+                const isVideo = section.section_type === 'video';
+                return (
+                  <div key={section.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{section.section_type}</div>
+                        <div className="mt-1 truncate text-lg font-semibold text-slate-900">{section.title}</div>
+                        <div className="mt-1 text-sm text-slate-600">{content.subtitle || content.description || '沒有內容摘要'}</div>
+                        <div className="mt-2 text-xs text-slate-500">排序：{section.sort_order}</div>
+                        {isVideo && content.youtube ? (
+                          <div className="mt-2 break-all text-xs text-blue-600">{content.youtube}</div>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          section.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                        }`}
+                      >
+                        {section.is_active ? '啟用' : '停用'}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openSectionEditForm(section)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        編輯
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteHomepageSection(section)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        刪除
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -575,6 +809,214 @@ export default function HomepageManagement() {
           頁首、頁尾內容已統一到「共同頁首頁尾」管理。要調整 Logo、導覽、聯絡資訊或頁尾連結，請到那個頁面修改。
         </p>
       </div>
+
+      {isSectionEditorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">{editingSection ? '編輯首頁區塊' : '新增首頁區塊'}</h2>
+                <p className="text-sm text-slate-500">影片區塊可直接修改 YouTube 連結與預覽標題。</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeSectionEditor}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6 px-6 py-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="區塊類型">
+                  <select
+                    value={sectionForm.section_type}
+                    onChange={(event) => setSectionForm((current) => ({ ...current, section_type: event.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  >
+                    <option value="hero">首頁主視覺</option>
+                    <option value="shop">商品介紹</option>
+                    <option value="story">品牌故事</option>
+                    <option value="video">影音區塊</option>
+                    <option value="contact">客服中心</option>
+                  </select>
+                </Field>
+
+                <Field label="排序">
+                  <input
+                    type="number"
+                    min={1}
+                    value={sectionForm.sort_order}
+                    onChange={(event) =>
+                      setSectionForm((current) => ({ ...current, sort_order: Number(event.target.value || 1) }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+              </div>
+
+              <Field label="區塊標題">
+                <input
+                  type="text"
+                  value={sectionForm.title}
+                  onChange={(event) => setSectionForm((current) => ({ ...current, title: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                />
+              </Field>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="頁面標籤">
+                  <input
+                    type="text"
+                    value={sectionForm.content.label}
+                    onChange={(event) => updateSectionFormContent('label', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+
+                <Field label="副標題">
+                  <input
+                    type="text"
+                    value={sectionForm.content.subtitle}
+                    onChange={(event) => updateSectionFormContent('subtitle', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="顯示標題">
+                  <input
+                    type="text"
+                    value={sectionForm.content.title}
+                    onChange={(event) => updateSectionFormContent('title', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+
+                <Field label="區塊編號">
+                  <input
+                    type="text"
+                    value={sectionForm.content.number}
+                    onChange={(event) => updateSectionFormContent('number', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+              </div>
+
+              <Field label="區塊說明">
+                <textarea
+                  rows={4}
+                  value={sectionForm.content.description}
+                  onChange={(event) => updateSectionFormContent('description', event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                />
+              </Field>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="背景圖片網址">
+                  <input
+                    type="text"
+                    value={sectionForm.content.background_image}
+                    onChange={(event) => updateSectionFormContent('background_image', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+
+                <Field label="按鈕連結">
+                  <input
+                    type="text"
+                    value={sectionForm.content.href}
+                    onChange={(event) => updateSectionFormContent('href', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="按鈕文案">
+                  <input
+                    type="text"
+                    value={sectionForm.content.cta_label}
+                    onChange={(event) => updateSectionFormContent('cta_label', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+
+                <label className="flex items-center gap-2 self-end text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={sectionForm.is_active}
+                    onChange={(event) => setSectionForm((current) => ({ ...current, is_active: event.target.checked }))}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  顯示於首頁
+                </label>
+              </div>
+
+              {sectionForm.section_type === 'video' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="YouTube 連結">
+                    <input
+                      type="text"
+                      value={sectionForm.content.youtube}
+                      onChange={(event) => updateSectionFormContent('youtube', event.target.value)}
+                      placeholder="https://www.youtube.com/embed/..."
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                    />
+                  </Field>
+
+                  <Field label="影片標題">
+                    <input
+                      type="text"
+                      value={sectionForm.content.video_title}
+                      onChange={(event) => updateSectionFormContent('video_title', event.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                    />
+                  </Field>
+                </div>
+              )}
+
+              {sectionForm.section_type === 'video' && (
+                <Field label="影片說明">
+                  <textarea
+                    rows={3}
+                    value={sectionForm.content.video_description}
+                    onChange={(event) => updateSectionFormContent('video_description', event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  />
+                </Field>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4">
+              <div className="text-sm text-slate-500">
+                {editingSection ? `正在編輯：${editingSection.section_type}` : '新增後會立即更新首頁區塊。'}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={closeSectionEditor}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  disabled={saving}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={saveHomepageSection}
+                  className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-60"
+                  disabled={saving}
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? '儲存中...' : '儲存首頁區塊'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isEditorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8">
