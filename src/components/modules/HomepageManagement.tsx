@@ -109,6 +109,20 @@ const EMPTY_SECTION_FORM: SectionFormState = {
   content: { ...EMPTY_SECTION_CONTENT },
 };
 
+const getYouTubeEmbedUrl = (url?: string) => {
+  if (!url) return '';
+  const value = url.trim();
+  if (!value) return '';
+  if (/youtube\.com\/embed\//i.test(value)) return value;
+  const watchMatch = value.match(/[?&]v=([^&]+)/i);
+  if (watchMatch?.[1]) return `https://www.youtube.com/embed/${watchMatch[1]}?rel=0`;
+  const shortMatch = value.match(/youtu\.be\/([^?&/]+)/i);
+  if (shortMatch?.[1]) return `https://www.youtube.com/embed/${shortMatch[1]}?rel=0`;
+  const embedMatch = value.match(/youtube\.com\/(?:v|embed)\/([^?&/]+)/i);
+  if (embedMatch?.[1]) return `https://www.youtube.com/embed/${embedMatch[1]}?rel=0`;
+  return value;
+};
+
 const EMPTY_FORM: HeroBlockFormState = {
   id: '',
   mode: 'product',
@@ -915,12 +929,11 @@ export default function HomepageManagement() {
               </Field>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="背景圖片網址">
-                  <input
-                    type="text"
+                <Field label="背景圖片">
+                  <ImageUpload
                     value={sectionForm.content.background_image}
-                    onChange={(event) => updateSectionFormContent('background_image', event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                    onChange={(url) => updateSectionFormContent('background_image', url)}
+                    label="上傳或更換背景圖片"
                   />
                 </Field>
 
@@ -956,37 +969,67 @@ export default function HomepageManagement() {
               </div>
 
               {sectionForm.section_type === 'video' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="YouTube 連結">
-                    <input
-                      type="text"
-                      value={sectionForm.content.youtube}
-                      onChange={(event) => updateSectionFormContent('youtube', event.target.value)}
-                      placeholder="https://www.youtube.com/embed/..."
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                    />
-                  </Field>
+                <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                  <div className="space-y-4">
+                    <Field label="YouTube 連結">
+                      <input
+                        type="text"
+                        value={sectionForm.content.youtube}
+                        onChange={(event) => updateSectionFormContent('youtube', event.target.value)}
+                        placeholder="https://www.youtube.com/embed/... 或 https://youtu.be/..."
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                      />
+                    </Field>
 
-                  <Field label="影片標題">
-                    <input
-                      type="text"
-                      value={sectionForm.content.video_title}
-                      onChange={(event) => updateSectionFormContent('video_title', event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                    />
-                  </Field>
+                    <Field label="影片標題">
+                      <input
+                        type="text"
+                        value={sectionForm.content.video_title}
+                        onChange={(event) => updateSectionFormContent('video_title', event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                      />
+                    </Field>
+
+                    <Field label="影片說明">
+                      <textarea
+                        rows={3}
+                        value={sectionForm.content.video_description}
+                        onChange={(event) => updateSectionFormContent('video_description', event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3 text-sm font-medium text-slate-700">即時預覽</div>
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                      <div className="aspect-video w-full bg-black">
+                        {getYouTubeEmbedUrl(sectionForm.content.youtube) ? (
+                          <iframe
+                            src={getYouTubeEmbedUrl(sectionForm.content.youtube)}
+                            title={sectionForm.content.video_title || sectionForm.title || '影片預覽'}
+                            className="h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-white/70">
+                            請先輸入 YouTube 連結
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">VIDEO SECTION</div>
+                        <div className="text-lg font-semibold text-slate-900">
+                          {sectionForm.content.video_title || sectionForm.content.title || '品牌影音'}
+                        </div>
+                        <p className="text-sm leading-6 text-slate-600">
+                          {sectionForm.content.video_description || sectionForm.content.description || '影片說明會顯示在這裡。'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-
-              {sectionForm.section_type === 'video' && (
-                <Field label="影片說明">
-                  <textarea
-                    rows={3}
-                    value={sectionForm.content.video_description}
-                    onChange={(event) => updateSectionFormContent('video_description', event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-                  />
-                </Field>
               )}
             </div>
 
