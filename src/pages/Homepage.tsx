@@ -579,14 +579,14 @@ export default function Homepage() {
           color: var(--sonpin-surface) !important;
           filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
         }
-        .homepage-main {
+        .homepage-page {
           min-height: 100vh;
           min-height: 100svh;
           min-height: 100dvh;
           background: var(--sonpin-background);
         }
-        .homepage-main section,
-        .homepage-main > div {
+        .homepage-page section,
+        .homepage-page > div {
           scroll-margin-top: 88px;
         }
         .ym-stage {
@@ -909,7 +909,7 @@ export default function Homepage() {
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .homepage-main {
+          .homepage-page {
             scroll-behavior: auto;
           }
           .ym-stage-media img,
@@ -927,7 +927,7 @@ export default function Homepage() {
 
       <SiteHeader />
 
-      <main className="homepage-main">
+      <main className="homepage-page">
         {localizedStageSections.map((section, index) => {
           const visual = getSectionVisual(section, index);
           const palette = getStagePalette(index);
