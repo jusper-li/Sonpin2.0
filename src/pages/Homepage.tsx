@@ -8,6 +8,7 @@ import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { localBusinessSchema, organizationSchema, websiteSchema } from '../utils/schemaMarkup';
 import { getOptimizedProductImage } from '../utils/optimizedImages';
+import { burstResetScrollPositions, resetScrollPositions } from '../lib/scrollReset';
 import {
   HomepageSection,
   HomepageSectionContent,
@@ -253,20 +254,17 @@ export default function Homepage() {
   }, []);
 
   useLayoutEffect(() => {
-    const homepageScroller = document.querySelector('.homepage-main') as HTMLElement | null;
-    const resetScrollPositions = () => {
-      homepageScroller?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      if (homepageScroller) homepageScroller.scrollTop = 0;
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
     resetScrollPositions();
+    const stopBurstReset = burstResetScrollPositions();
     const frameId = window.requestAnimationFrame(resetScrollPositions);
+    const secondFrameId = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resetScrollPositions);
+    });
 
     return () => {
+      stopBurstReset();
       window.cancelAnimationFrame(frameId);
+      window.cancelAnimationFrame(secondFrameId);
     };
   }, []);
 
