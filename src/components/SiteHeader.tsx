@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart, Globe, ChevronRight, CircleUser as UserCircle, Facebook, Instagram, Twitter, Youtube, MessageCircle, ExternalLink } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
@@ -137,19 +137,14 @@ export default function SiteHeader() {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    const getScrollTarget = () => document.querySelector('.homepage-main') as HTMLElement | null;
     const onScroll = () => {
-      const homepageScroller = getScrollTarget();
-      setScrolled((homepageScroller?.scrollTop || window.scrollY) > 60);
+      setScrolled(window.scrollY > 60);
     };
 
-    const homepageScroller = getScrollTarget();
     window.addEventListener('scroll', onScroll, { passive: true });
-    homepageScroller?.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => {
       window.removeEventListener('scroll', onScroll);
-      homepageScroller?.removeEventListener('scroll', onScroll);
     };
   }, []);
 

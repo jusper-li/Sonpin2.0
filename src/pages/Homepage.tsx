@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -8,7 +8,6 @@ import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { localBusinessSchema, organizationSchema, websiteSchema } from '../utils/schemaMarkup';
 import { getOptimizedProductImage } from '../utils/optimizedImages';
-import { burstResetScrollPositions, resetScrollPositions } from '../lib/scrollReset';
 import {
   HomepageSection,
   HomepageSectionContent,
@@ -254,20 +253,8 @@ export default function Homepage() {
     };
   }, []);
 
-  useLayoutEffect(() => {
-    resetScrollPositions();
-    const stopBurstReset = burstResetScrollPositions();
-    const frameId = window.requestAnimationFrame(resetScrollPositions);
-    const secondFrameId = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(resetScrollPositions);
-    });
 
-    return () => {
-      stopBurstReset();
-      window.cancelAnimationFrame(frameId);
-      window.cancelAnimationFrame(secondFrameId);
-    };
-  }, []);
+
 
   const loadHomepageData = async (isCancelled: () => boolean) => {
     if (!isSupabaseContentEnabled || isCancelled()) {
@@ -471,12 +458,8 @@ export default function Homepage() {
     setVisibleSections(new Set([0]));
     sectionsRef.current = [];
   }, [stageSections.length]);
-
   useEffect(() => {
     if (loading) return;
-
-    const root = document.querySelector('.homepage-main');
-    if (!root) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -488,7 +471,7 @@ export default function Homepage() {
           }
         });
       },
-      { root, threshold: 0.38 }
+      { threshold: 0.38 }
     );
 
     const observedSections = [...sectionsRef.current];
@@ -501,43 +484,7 @@ export default function Homepage() {
       observedSections.forEach((section) => {
         if (section) observer.unobserve(section);
       });
-    };
-  }, [loading, stageSections.length]);
-
-  useEffect(() => {
-    if (loading) return;
-
-    const mainElement = document.querySelector('.homepage-main') as HTMLElement | null;
-    if (!mainElement) return;
-
-    let frameId = 0;
-    const syncActiveSection = () => {
-      window.cancelAnimationFrame(frameId);
-      frameId = window.requestAnimationFrame(() => {
-        const sectionHeight = Math.max(mainElement.clientHeight || window.innerHeight, 1);
-        const currentIndex = Math.min(
-          stageSections.length - 1,
-          Math.max(0, Math.round(mainElement.scrollTop / sectionHeight))
-        );
-
-        setActiveSection(currentIndex);
-        setVisibleSections((prev) => {
-          if (prev.has(currentIndex)) return prev;
-          const next = new Set(prev);
-          next.add(currentIndex);
-          return next;
-        });
-      });
-    };
-
-    mainElement.addEventListener('scroll', syncActiveSection, { passive: true });
-    window.addEventListener('resize', syncActiveSection);
-    syncActiveSection();
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      mainElement.removeEventListener('scroll', syncActiveSection);
-      window.removeEventListener('resize', syncActiveSection);
+      observer.disconnect();
     };
   }, [loading, stageSections.length]);
 
@@ -633,19 +580,14 @@ export default function Homepage() {
           filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
         }
         .homepage-main {
-          height: 100vh;
-          height: 100svh;
-          height: 100dvh;
-          overflow-y: auto;
-          scroll-behavior: smooth;
-          scroll-snap-type: y mandatory;
-          -webkit-overflow-scrolling: touch;
+          min-height: 100vh;
+          min-height: 100svh;
+          min-height: 100dvh;
           background: var(--sonpin-background);
         }
         .homepage-main section,
         .homepage-main > div {
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
+          scroll-margin-top: 88px;
         }
         .ym-stage {
           background: var(--ym-bg);

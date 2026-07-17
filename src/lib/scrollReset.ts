@@ -1,6 +1,4 @@
-const SCROLL_RESET_DELAYS = [0, 32, 120, 360, 900];
-
-const getHomepageScroller = () => document.querySelector('.homepage-main') as HTMLElement | null;
+const SCROLL_RESET_DELAYS = [0, 40, 160, 420];
 
 export const resetScrollPositions = () => {
   if (typeof window === 'undefined') return;
@@ -12,12 +10,6 @@ export const resetScrollPositions = () => {
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-
-  const homepageScroller = getHomepageScroller();
-  if (homepageScroller) {
-    homepageScroller.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    homepageScroller.scrollTop = 0;
-  }
 };
 
 export const burstResetScrollPositions = () => {
