@@ -18,6 +18,7 @@ import {
   HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
   HomepageHeroBlock,
   HomepageHeroProduct,
+  mergeHomepageHeroProducts,
   normalizeHomepageHeroBlocks,
   ResolvedHomepageHeroBlock,
   resolveHomepageHeroBlock,
