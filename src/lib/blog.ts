@@ -199,7 +199,11 @@ export const loadBlogData = async (options: { publishedOnly?: boolean } = {}) =>
       })),
     ).filter((category) => category.slug);
 
-    const categories = sortCategories(uniqueCategories([...BLOG_CATEGORIES, ...settingsCategories, ...derivedCategories]));
+    const categories = sortCategories(uniqueCategories([
+      ...settingsCategories,
+      ...derivedCategories,
+      ...BLOG_CATEGORIES,
+    ]));
 
     return {
       categories,

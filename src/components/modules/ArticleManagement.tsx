@@ -247,6 +247,16 @@ export default function ArticleManagement() {
         : [...categories, nextCategory];
 
       await saveBlogCategories(nextCategories);
+      if (editingCategorySlug && editingCategorySlug !== nextCategory.slug) {
+        const remappedCategoryMap = Object.fromEntries(
+          Object.entries(articleCategoryMap).map(([articleSlug, categorySlug]) => [
+            articleSlug,
+            categorySlug === editingCategorySlug ? nextCategory.slug : categorySlug,
+          ]),
+        );
+        await saveBlogArticleCategoryMap(remappedCategoryMap);
+        setArticleCategoryMap(remappedCategoryMap);
+      }
       setCategories(nextCategories);
       setShowCategoryForm(false);
       setEditingCategorySlug(null);
