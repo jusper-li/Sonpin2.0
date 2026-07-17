@@ -14,6 +14,14 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -30,7 +38,12 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage.from('homepage-images').upload(fileName, file);
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.warn('Storage upload failed, using inline data URL fallback.', uploadError);
+        const dataUrl = await fileToDataUrl(file);
+        onChange(dataUrl);
+        return;
+      }
 
       const { data } = supabase.storage.from('homepage-images').getPublicUrl(fileName);
       onChange(data.publicUrl);
