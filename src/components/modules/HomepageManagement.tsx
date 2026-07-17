@@ -3,9 +3,7 @@ import type { ReactNode } from 'react';
 import {
   Database,
   GripVertical,
-  Info,
   LayoutGrid as Layout,
-  Menu as MenuIcon,
   Package,
   Pencil,
   Plus,
@@ -16,7 +14,7 @@ import {
 } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import { isSupabaseContentEnabled, supabase } from '../../lib/supabase';
-import { DEFAULT_FOOTER_SETTINGS, DEFAULT_HEADER_SETTINGS, toHomepageManagementSections } from '../../data/homepageContent';
+import { toHomepageManagementSections } from '../../data/homepageContent';
 import {
   createDefaultHomepageHeroBlocks,
   HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
@@ -97,14 +95,12 @@ function reorderBlocks(blocks: HomepageHeroBlock[], draggedId: string, targetId:
 
 export default function HomepageManagement() {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'heroBlocks' | 'sections' | 'header' | 'footer'>('heroBlocks');
+  const [activeTab, setActiveTab] = useState<'heroBlocks' | 'sections'>('heroBlocks');
   const [loading, setLoading] = useState(true);
   const [isLocalContent, setIsLocalContent] = useState(false);
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>([]);
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
-  const [headerSettings, setHeaderSettings] = useState<any>(DEFAULT_HEADER_SETTINGS);
-  const [footerSettings, setFooterSettings] = useState<any>(DEFAULT_FOOTER_SETTINGS);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<HomepageHeroBlock | null>(null);
   const [form, setForm] = useState<HeroBlockFormState>(EMPTY_FORM);
@@ -126,12 +122,12 @@ export default function HomepageManagement() {
     }
 
     try {
-      const [sectionsRes, settingsRes, productsRes] = await Promise.all([
+      const [sectionsRes, heroBlocksRes, productsRes] = await Promise.all([
         supabase.from('homepage_sections').select('*').order('sort_order', { ascending: true }),
         supabase
           .from('site_settings')
           .select('*')
-          .in('setting_key', ['header', 'footer', HOMEPAGE_HERO_BLOCKS_SETTING_KEY]),
+          .eq('setting_key', HOMEPAGE_HERO_BLOCKS_SETTING_KEY),
         supabase
           .from('products')
           .select('id,name,slug,summary,images,is_active')
@@ -139,21 +135,17 @@ export default function HomepageManagement() {
           .order('created_at', { ascending: false }),
       ]);
 
-      if (sectionsRes.error || settingsRes.error || productsRes.error) {
+      if (sectionsRes.error || heroBlocksRes.error || productsRes.error) {
         loadLocalContent();
         return;
       }
 
       const sectionRows = (sectionsRes.data || []) as HomepageSection[];
-      const settingRows = (settingsRes.data || []) as SettingsRow[];
+      const settingRows = (heroBlocksRes.data || []) as SettingsRow[];
       const heroBlocksRow = settingRows.find((row) => row.setting_key === HOMEPAGE_HERO_BLOCKS_SETTING_KEY);
-      const headerRow = settingRows.find((row) => row.setting_key === 'header');
-      const footerRow = settingRows.find((row) => row.setting_key === 'footer');
       const productRows = (productsRes.data || []) as ProductRow[];
 
       setSections(sectionRows);
-      setHeaderSettings(headerRow?.setting_value || DEFAULT_HEADER_SETTINGS);
-      setFooterSettings(footerRow?.setting_value || DEFAULT_FOOTER_SETTINGS);
       setHeroProducts(mergeHomepageHeroProducts(productRows));
       setHeroBlocks(normalizeHomepageHeroBlocks(heroBlocksRow?.setting_value));
       setIsLocalContent(false);
@@ -168,8 +160,6 @@ export default function HomepageManagement() {
   const loadLocalContent = () => {
     const products = mergeHomepageHeroProducts();
     setSections(toHomepageManagementSections());
-    setHeaderSettings(DEFAULT_HEADER_SETTINGS);
-    setFooterSettings(DEFAULT_FOOTER_SETTINGS);
     setHeroProducts(products);
     setHeroBlocks(createDefaultHomepageHeroBlocks(products));
     setIsLocalContent(true);
@@ -410,8 +400,6 @@ export default function HomepageManagement() {
         <div className="flex flex-wrap gap-6">
           <TabButton active={activeTab === 'sections'} icon={Layout} label={t('homepage_management.tab_sections', '首頁區塊')} onClick={() => setActiveTab('sections')} />
           <TabButton active={activeTab === 'heroBlocks'} icon={Package} label={t('homepage_management.tab_hero_products', '首頁商品')} onClick={() => setActiveTab('heroBlocks')} />
-          <TabButton active={activeTab === 'header'} icon={MenuIcon} label={t('homepage_management.tab_header', '頁首設定')} onClick={() => setActiveTab('header')} />
-          <TabButton active={activeTab === 'footer'} icon={Info} label={t('homepage_management.tab_footer', '頁尾設定')} onClick={() => setActiveTab('footer')} />
         </div>
       </div>
 
@@ -581,9 +569,12 @@ export default function HomepageManagement() {
         </div>
       )}
 
-      {activeTab === 'header' && <SettingsPreview title={t('homepage_management.tab_header', '頁首設定')} data={headerSettings} />}
-
-      {activeTab === 'footer' && <SettingsPreview title={t('homepage_management.tab_footer', '頁尾設定')} data={footerSettings} />}
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
+        <div className="font-semibold text-slate-900">共同頁首頁尾設定</div>
+        <p className="mt-1">
+          頁首、頁尾內容已統一到「共同頁首頁尾」管理。要調整 Logo、導覽、聯絡資訊或頁尾連結，請到那個頁面修改。
+        </p>
+      </div>
 
       {isEditorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8">
@@ -746,15 +737,6 @@ function TabButton({
       <Icon className="h-4 w-4" />
       {label}
     </button>
-  );
-}
-
-function SettingsPreview({ title, data }: { title: string; data: any }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-xl font-bold text-slate-900">{title}</h2>
-      <pre className="overflow-auto rounded-lg bg-slate-50 p-4 text-xs text-slate-700">{JSON.stringify(data, null, 2)}</pre>
-    </div>
   );
 }
 
