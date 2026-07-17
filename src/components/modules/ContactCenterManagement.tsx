@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bell, ExternalLink, Eye, Mail, Plus, RefreshCw, Save, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import BatchDocumentManagement from './BatchDocumentManagement';
 
 type PageSection = {
   type: 'intro' | 'section';
@@ -410,6 +411,7 @@ export default function ContactCenterManagement() {
               </div>
             </div>
           </section>
+          <BatchDocumentManagement />
         </div>
 
         <aside className="space-y-4">

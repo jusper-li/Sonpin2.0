@@ -5,6 +5,7 @@ import { isSupabaseContentEnabled, supabase, supabaseAnonKey, supabaseBaseUrl } 
 import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import StaticContent from '../components/StaticContent';
+import BatchDocumentSearch from '../components/BatchDocumentSearch';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -428,6 +429,8 @@ export default function ContactPage() {
                     );
                   })}
                 </div>
+
+                <BatchDocumentSearch />
               </div>
             </div>
 
