@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { isSupabaseContentEnabled, isSupabaseNetworkError, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { normalizeLang, pickByLang, type SupportedLanguage } from '../lib/language';
 
@@ -37,15 +37,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [translationRevision, setTranslationRevision] = useState(0);
   const translationSourcesRef = useRef(new Map<string, string>());
 
-  useEffect(() => {
-    loadLanguages();
-    const savedLanguage = localStorage.getItem('preferred_language');
-    if (savedLanguage) {
-      setCurrentLanguage(normalizeLang(savedLanguage));
-    }
-  }, []);
-
-  const loadLanguages = async () => {
+  const loadLanguages = useCallback(async () => {
     if (!isSupabaseContentEnabled) {
       setLanguages(DEFAULT_LANGUAGES);
       setIsLoading(false);
@@ -67,6 +59,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }));
 
       setLanguages(normalizedLanguages);
+
+      const availableCodes = new Set(normalizedLanguages.map((lang) => lang.code));
+      const defaultLanguage = normalizedLanguages.find((lang) => lang.is_default)?.code || normalizedLanguages[0]?.code || 'zh-TW';
+      setCurrentLanguage((current) => {
+        const normalizedCurrent = normalizeLang(current);
+        if (availableCodes.has(normalizedCurrent)) return normalizedCurrent;
+        const savedLanguage = normalizeLang(localStorage.getItem('preferred_language'));
+        if (availableCodes.has(savedLanguage)) {
+          localStorage.setItem('preferred_language', savedLanguage);
+          return savedLanguage;
+        }
+        localStorage.setItem('preferred_language', defaultLanguage);
+        return defaultLanguage;
+      });
     } catch (error) {
       if (!isSupabaseNetworkError(error)) {
         console.warn('Using default languages:', error);
@@ -75,7 +81,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadLanguages();
+    const savedLanguage = localStorage.getItem('preferred_language');
+    if (savedLanguage) {
+      setCurrentLanguage(normalizeLang(savedLanguage));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseContentEnabled) return;
+
+    const channel = supabase
+      .channel('languages-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'languages' },
+        () => {
+          void loadLanguages();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadLanguages]);
 
   const setLanguage = (code: string) => {
     const normalized = normalizeLang(code);

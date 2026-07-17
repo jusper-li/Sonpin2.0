@@ -252,6 +252,14 @@ export default function Homepage() {
     };
   }, []);
 
+  useEffect(() => {
+    const homepageScroller = document.querySelector('.homepage-main') as HTMLElement | null;
+    if (homepageScroller) {
+      homepageScroller.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   const loadHomepageData = async (isCancelled: () => boolean) => {
     if (!isSupabaseContentEnabled || isCancelled()) {
       setSections([]);

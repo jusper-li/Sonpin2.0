@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, Globe, X, Save, CreditCard as Edit, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Language {
@@ -28,17 +28,43 @@ export default function LanguageManagement() {
     loadLanguages();
   }, []);
 
-  const loadLanguages = async () => {
+  const loadLanguages = useCallback(async () => {
+    if (!isSupabaseContentEnabled) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.from('languages').select('*').order('is_default', { ascending: false });
       if (error) throw error;
       setLanguages(data || []);
     } catch (error) {
-      console.error('Failed to load languages:', error);
+      if (!isSupabaseNetworkError(error)) {
+        console.error('Failed to load languages:', error);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseContentEnabled) return;
+
+    const channel = supabase
+      .channel('language-management-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'languages' },
+        () => {
+          void loadLanguages();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadLanguages]);
 
   const saveLanguage = async () => {
     try {
