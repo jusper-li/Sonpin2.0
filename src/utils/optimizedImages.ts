@@ -3,6 +3,7 @@ const OPTIMIZED_WIDTHS = [640, 1280, 1920] as const;
 
 export function getOptimizedProductImage(src?: string | null) {
   if (!src) return null;
+  if (import.meta.env.VITE_ENABLE_OPTIMIZED_IMAGES !== 'true') return null;
 
   const match = src.match(OPTIMIZABLE_IMAGE_PATTERN);
   if (!match || src.includes('/optimized/')) return null;
