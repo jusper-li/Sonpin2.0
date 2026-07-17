@@ -444,8 +444,12 @@ export default function Homepage() {
       .map((block) => resolveHomepageHeroBlock(block, products))
       .filter((block): block is ResolvedHomepageHeroBlock => Boolean(block));
 
+    const displaySections = sections.length > 0 ? sections : DEFAULT_HOMEPAGE_SECTIONS;
+    const heroSection = displaySections.find((section) => section.section_type === 'hero') || displaySections[0];
+    const chapterSections = displaySections.filter((section) => section !== heroSection);
+
     if (resolvedBlocks.length > 0) {
-      return resolvedBlocks.map((block, index): HomepageSection => ({
+      const heroProductSections = resolvedBlocks.map((block, index): HomepageSection => ({
         id: block.id,
         label: block.subtitle,
         subtitle: block.subtitle,
@@ -467,11 +471,9 @@ export default function Homepage() {
           background_image: block.image,
           description: block.description,
         }));
+      return heroSection ? [...heroProductSections, ...chapterSections] : [...heroProductSections, ...displaySections];
     }
 
-    const displaySections = sections.length > 0 ? sections : DEFAULT_HOMEPAGE_SECTIONS;
-    const heroSection = displaySections.find((section) => section.section_type === 'hero') || displaySections[0];
-    const chapterSections = displaySections.filter((section) => section !== heroSection);
     return heroSection ? [heroSection, ...chapterSections] : displaySections;
   }, [heroBlocks, heroProducts, sections]);
 
