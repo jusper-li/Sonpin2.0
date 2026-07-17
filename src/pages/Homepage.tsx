@@ -219,7 +219,6 @@ export default function Homepage() {
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
-  const snapLockRef = useRef(false);
   const heroButtonLabels = {
     'zh-TW': '查看商品',
     en: 'View products',
@@ -251,17 +250,6 @@ export default function Homepage() {
 
     return () => {
       cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
-    root.classList.add('homepage-snap-enabled');
-    body.classList.add('homepage-snap-enabled');
-    return () => {
-      root.classList.remove('homepage-snap-enabled');
-      body.classList.remove('homepage-snap-enabled');
     };
   }, []);
 
@@ -500,42 +488,6 @@ export default function Homepage() {
     };
   }, [loading, stageSections.length]);
 
-  useEffect(() => {
-    if (loading) return;
-
-    const handleWheel = (event: WheelEvent) => {
-      if (!document.documentElement.classList.contains('homepage-snap-enabled')) return;
-      if (snapLockRef.current) {
-        event.preventDefault();
-        return;
-      }
-
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (Math.abs(event.deltaY) < 6) return;
-
-      const direction = event.deltaY > 0 ? 1 : -1;
-      const currentIndex = Math.max(0, Math.min(activeSection, sectionsRef.current.length - 1));
-      const nextIndex = Math.max(0, Math.min(currentIndex + direction, sectionsRef.current.length - 1));
-
-      if (nextIndex === currentIndex) return;
-
-      const nextSection = sectionsRef.current[nextIndex];
-      if (!nextSection) return;
-
-      event.preventDefault();
-      snapLockRef.current = true;
-      nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      window.setTimeout(() => {
-        snapLockRef.current = false;
-      }, 900);
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleWheel);
-  }, [activeSection, loading, stageSections.length]);
-
   if (loading) {
     return (
       <div className="ym-home-loading relative flex h-screen items-center justify-center overflow-hidden text-[var(--sonpin-ink)]">
@@ -633,23 +585,14 @@ export default function Homepage() {
           min-height: 100dvh;
           background: var(--sonpin-background);
         }
-        html.homepage-snap-enabled,
-        body.homepage-snap-enabled {
-          scroll-snap-type: y mandatory;
-          scroll-padding-top: 0;
-        }
         .homepage-page section,
         .homepage-page > div {
-          scroll-margin-top: 0;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
+          scroll-margin-top: 88px;
         }
         .ym-stage {
           background: var(--ym-bg);
           color: var(--ym-ink);
           contain: layout paint style;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
         }
         .ym-stage::before,
         .ym-stage::after {
