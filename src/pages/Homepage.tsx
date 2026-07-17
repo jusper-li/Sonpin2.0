@@ -9,17 +9,14 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { localBusinessSchema, organizationSchema, websiteSchema } from '../utils/schemaMarkup';
 import { getOptimizedProductImage } from '../utils/optimizedImages';
 import {
-  DEFAULT_HOMEPAGE_SECTIONS,
   HomepageSection,
   HomepageSectionContent,
   HomepageSubmenuItem,
 } from '../data/homepageContent';
 import {
-  createDefaultHomepageHeroBlocks,
   HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
   HomepageHeroBlock,
   HomepageHeroProduct,
-  mergeHomepageHeroProducts,
   normalizeHomepageHeroBlocks,
   ResolvedHomepageHeroBlock,
   resolveHomepageHeroBlock,
@@ -159,62 +156,6 @@ function StageImage({
 const getStagePalette = (index: number) =>
   PRODUCT_STAGE_PALETTES[index % PRODUCT_STAGE_PALETTES.length];
 
-const DEFAULT_HERO_PRODUCTS = mergeHomepageHeroProducts();
-const HERO_BLOCKS_CACHE_KEY = 'ym_homepage_hero_blocks_cache_v1';
-const HERO_PRODUCTS_CACHE_KEY = 'ym_homepage_hero_products_cache_v1';
-const DEFAULT_HERO_BLOCKS: HomepageHeroBlock[] = [
-  {
-    id: 'product-reserved-for-you-huasitian-huo-limited',
-    mode: 'product',
-    product_slug: 'reserved-for-you-huasitian-huo-limited',
-    image: '/homepage-images/homepage-hero-01.jpg',
-    href: '',
-    title: '',
-    is_active: true,
-    sort_order: 1,
-  },
-  {
-    id: 'product-reserved-for-you-zuo-wce-wu-limited',
-    mode: 'product',
-    product_slug: 'reserved-for-you-zuo-wce-wu-limited',
-    image: '/homepage-images/homepage-hero-02.jpg',
-    href: '',
-    title: '',
-    is_active: true,
-    sort_order: 2,
-  },
-  {
-    id: 'product-the-one-and-only-huo-gang-drip',
-    mode: 'product',
-    product_slug: 'the-one-and-only-huo-gang-drip',
-    image: '/homepage-images/homepage-hero-03.jpg',
-    href: '',
-    title: '',
-    is_active: true,
-    sort_order: 3,
-  },
-  {
-    id: 'product-champion-coffee-chocolate-koyama-gift-box',
-    mode: 'product',
-    product_slug: 'champion-coffee-chocolate-koyama-gift-box',
-    image: '/homepage-images/homepage-hero-04.jpg',
-    href: '',
-    title: '',
-    is_active: true,
-    sort_order: 4,
-  },
-  {
-    id: 'product-the-one-and-only-15-drip-canvas-set',
-    mode: 'product',
-    product_slug: 'the-one-and-only-15-drip-canvas-set',
-    image: '/homepage-images/homepage-hero-05.jpg',
-    href: '',
-    title: '',
-    is_active: true,
-    sort_order: 5,
-  },
-];
-
 const withRequestTimeout = <T,>(request: PromiseLike<T>, ms = 2600) =>
   Promise.race([
     request,
@@ -268,43 +209,13 @@ const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual =
   };
 };
 
-const mergeHomepageSections = (loadedSections: HomepageSection[]) => {
-  const defaultOrder = DEFAULT_HOMEPAGE_SECTIONS.map((section) => section.section_type);
-  const byType = new Map(loadedSections.map((section) => [section.section_type, section] as const));
-  const merged = DEFAULT_HOMEPAGE_SECTIONS.map((section) => byType.get(section.section_type) || section);
-  const extraSections = loadedSections
-    .filter((section) => !defaultOrder.includes(section.section_type))
-    .sort((a, b) => (a.section_type.localeCompare(b.section_type) || (a.content?.number || '').localeCompare(b.content?.number || '')));
-
-  return [...merged, ...extraSections];
-};
-
 export default function Homepage() {
   const { currentLanguage, t } = useLanguage();
   const [activeSection, setActiveSection] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set([0]));
-  const [sections, setSections] = useState<HomepageSection[]>(DEFAULT_HOMEPAGE_SECTIONS);
-  const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>(() => {
-    try {
-      const raw = localStorage.getItem(HERO_BLOCKS_CACHE_KEY);
-      if (!raw) return DEFAULT_HERO_BLOCKS;
-      const parsed = JSON.parse(raw);
-      const normalized = normalizeHomepageHeroBlocks(parsed);
-      return normalized.length ? normalized : DEFAULT_HERO_BLOCKS;
-    } catch {
-      return DEFAULT_HERO_BLOCKS;
-    }
-  });
-  const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>(() => {
-    try {
-      const raw = localStorage.getItem(HERO_PRODUCTS_CACHE_KEY);
-      if (!raw) return DEFAULT_HERO_PRODUCTS;
-      const parsed = JSON.parse(raw) as HomepageHeroProduct[];
-      return parsed.length ? parsed : DEFAULT_HERO_PRODUCTS;
-    } catch {
-      return DEFAULT_HERO_PRODUCTS;
-    }
-  });
+  const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>([]);
+  const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
   const heroButtonLabels = {
@@ -343,6 +254,9 @@ export default function Homepage() {
 
   const loadHomepageData = async (isCancelled: () => boolean) => {
     if (!isSupabaseContentEnabled || isCancelled()) {
+      setSections([]);
+      setHeroBlocks([]);
+      setHeroProducts([]);
       setLoading(false);
       return;
     }
@@ -380,12 +294,12 @@ export default function Homepage() {
         description: section.content?.description || '',
       }));
 
-      setSections(transformedSections.length > 0 ? mergeHomepageSections(transformedSections) : DEFAULT_HOMEPAGE_SECTIONS);
+      setSections(transformedSections);
     } catch (error) {
       if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
         console.warn('Using fallback homepage sections:', error);
       }
-      setSections(DEFAULT_HOMEPAGE_SECTIONS);
+      setSections([]);
     }
   };
 
@@ -403,12 +317,11 @@ export default function Homepage() {
       if (isCancelled()) return;
       const nextBlocks = normalizeHomepageHeroBlocks(data?.setting_value);
       setHeroBlocks(nextBlocks);
-      localStorage.setItem(HERO_BLOCKS_CACHE_KEY, JSON.stringify(nextBlocks));
     } catch (error) {
       if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
         console.warn('Using fallback homepage hero blocks:', error);
       }
-      setHeroBlocks((prev) => (prev.length ? prev : DEFAULT_HERO_BLOCKS));
+      setHeroBlocks([]);
     }
   };
 
@@ -426,26 +339,25 @@ export default function Homepage() {
       if (isCancelled()) return;
       const nextProducts = mergeHomepageHeroProducts((data || []) as HomepageProductRow[]);
       setHeroProducts(nextProducts);
-      localStorage.setItem(HERO_PRODUCTS_CACHE_KEY, JSON.stringify(nextProducts));
     } catch (error) {
       if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
         console.warn('Using fallback homepage hero products:', error);
       }
-      setHeroProducts((prev) => (prev.length ? prev : DEFAULT_HERO_PRODUCTS));
+      setHeroProducts([]);
     }
   };
 
   const stageSections = useMemo(() => {
-    const products = heroProducts.length ? heroProducts : DEFAULT_HERO_PRODUCTS;
-    const configuredBlocks = heroBlocks.length ? heroBlocks : createDefaultHomepageHeroBlocks(products);
+    const products = heroProducts;
+    const configuredBlocks = heroBlocks;
     const resolvedBlocks = configuredBlocks
       .filter((block) => block.is_active !== false)
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((block) => resolveHomepageHeroBlock(block, products))
       .filter((block): block is ResolvedHomepageHeroBlock => Boolean(block));
 
-    const displaySections = sections.length > 0 ? sections : DEFAULT_HOMEPAGE_SECTIONS;
-    const heroSection = displaySections.find((section) => section.section_type === 'hero') || displaySections[0];
+    const displaySections = sections;
+    const heroSection = displaySections.find((section) => section.section_type === 'hero') || null;
     const chapterSections = displaySections.filter((section) => section !== heroSection);
 
     if (resolvedBlocks.length > 0) {
