@@ -253,6 +253,14 @@ export default function Homepage() {
     };
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('homepage-snap-enabled');
+    return () => {
+      root.classList.remove('homepage-snap-enabled');
+    };
+  }, []);
+
 
 
 
@@ -585,9 +593,15 @@ export default function Homepage() {
           min-height: 100dvh;
           background: var(--sonpin-background);
         }
+        html.homepage-snap-enabled {
+          scroll-snap-type: y proximity;
+          scroll-padding-top: 88px;
+        }
         .homepage-page section,
         .homepage-page > div {
           scroll-margin-top: 88px;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
         }
         .ym-stage {
           background: var(--ym-bg);
