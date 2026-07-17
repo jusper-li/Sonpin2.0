@@ -599,11 +599,11 @@ export default function Homepage() {
         html.homepage-snap-enabled,
         body.homepage-snap-enabled {
           scroll-snap-type: y mandatory;
-          scroll-padding-top: 88px;
+          scroll-padding-top: 0;
         }
         .homepage-page section,
         .homepage-page > div {
-          scroll-margin-top: 88px;
+          scroll-margin-top: 0;
           scroll-snap-align: start;
           scroll-snap-stop: always;
         }
@@ -611,6 +611,8 @@ export default function Homepage() {
           background: var(--ym-bg);
           color: var(--ym-ink);
           contain: layout paint style;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
         }
         .ym-stage::before,
         .ym-stage::after {
