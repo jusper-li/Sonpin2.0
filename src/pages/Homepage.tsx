@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, supabase } from '../lib/supabase';
@@ -252,12 +252,22 @@ export default function Homepage() {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const homepageScroller = document.querySelector('.homepage-main') as HTMLElement | null;
-    if (homepageScroller) {
-      homepageScroller.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const resetScrollPositions = () => {
+      homepageScroller?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      if (homepageScroller) homepageScroller.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetScrollPositions();
+    const frameId = window.requestAnimationFrame(resetScrollPositions);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, []);
 
   const loadHomepageData = async (isCancelled: () => boolean) => {
