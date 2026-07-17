@@ -92,32 +92,32 @@ const PRODUCT_STAGE_PALETTES: ProductStagePalette[] = [
 
 const FALLBACK_VISUALS: Record<string, SectionVisual> = {
   hero: {
-    media: '/product-images/reserved-for-you-huasitian-huo-limited-1.jpg',
+    media: '/sonpin-images/175135830617.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary)',
   },
   shop: {
-    media: '/product-images/champion-coffee-chocolate-huo-gang-gift-box-1.jpg',
+    media: '/sonpin-images/163081696885.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-warm)',
   },
   story: {
-    media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
+    media: '/sonpin-images/20240618103536.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-border)',
   },
   video: {
-    media: '/product-images/the-one-and-only-huo-gang-drip-2.jpg',
+    media: '/sonpin-images/20250701175515.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-warm)',
   },
   contact: {
-    media: '/product-images/huo-gang-coffee-letter-gift-2.jpg',
+    media: '/sonpin-images/153285217452.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-muted)',
   },
   default: {
-    media: '/product-images/the-one-and-only-15-drip-canvas-set-1.jpg',
+    media: '/sonpin-images/154399503735.jpg',
     objectPosition: 'center center',
     accent: 'var(--sonpin-primary-warm)',
   },
