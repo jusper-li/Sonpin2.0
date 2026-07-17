@@ -224,7 +224,60 @@ export default function ContactCenterManagement() {
   }
 
   return (
-    <div className="p-6">
+    <div className="contact-center-management p-6">
+      <style>{`
+        .contact-center-management {
+          color: var(--sonpin-ink);
+        }
+        .contact-center-management > div:first-child {
+          margin-bottom: 1.75rem;
+        }
+        .contact-center-management > div:nth-of-type(2) {
+          align-items: start;
+        }
+        @media (min-width: 1280px) {
+          .contact-center-management > div:nth-of-type(2) {
+            grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+          }
+          .contact-center-management > div:nth-of-type(2) > aside {
+            position: sticky;
+            top: 1.5rem;
+          }
+        }
+        .contact-center-management section {
+          border-radius: 1.5rem;
+          border-color: var(--sonpin-primary-border);
+          background: color-mix(in srgb, var(--sonpin-surface) 94%, white);
+          box-shadow: 0 12px 34px rgba(37, 24, 12, 0.06);
+        }
+        .contact-center-management section > .mb-4,
+        .contact-center-management section > .mb-3 {
+          margin-bottom: 1rem;
+        }
+        .contact-center-management input,
+        .contact-center-management textarea,
+        .contact-center-management select {
+          border-color: var(--sonpin-primary-border);
+          background: white;
+          color: var(--sonpin-ink);
+        }
+        .contact-center-management input:focus,
+        .contact-center-management textarea:focus,
+        .contact-center-management select:focus {
+          outline: none;
+          border-color: var(--sonpin-primary);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--sonpin-primary) 12%, transparent);
+        }
+        .contact-center-management button {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+        }
+        .contact-center-management button:hover {
+          transform: translateY(-1px);
+        }
+        .contact-center-management .divide-y > :not([hidden]) ~ :not([hidden]) {
+          border-color: var(--sonpin-primary-border);
+        }
+      `}</style>
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium tracking-[0.2em] text-blue-700">
