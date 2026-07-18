@@ -471,7 +471,7 @@ export default function Homepage() {
           }
         });
       },
-      { threshold: 0.38 }
+      { threshold: 0.38, root: homepageMainRef.current }
     );
 
     const observedSections = [...sectionsRef.current];
@@ -580,29 +580,20 @@ export default function Homepage() {
           filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
         }
         .homepage-page {
-          min-height: 100vh;
-          min-height: 100svh;
-          min-height: 100dvh;
+          height: 100vh;
+          height: 100svh;
+          height: 100dvh;
+          overflow-y: auto;
           background: var(--sonpin-background);
           scroll-behavior: smooth;
+          scroll-snap-type: y mandatory;
           overscroll-behavior-y: contain;
-          scroll-padding-top: 88px;
+          -webkit-overflow-scrolling: touch;
         }
         .homepage-page section,
         .homepage-page > div {
-          scroll-margin-top: 88px;
           scroll-snap-align: start;
           scroll-snap-stop: always;
-        }
-        @media (min-width: 768px) {
-          .homepage-page {
-            scroll-snap-type: y mandatory;
-          }
-        }
-        @media (max-width: 767px) {
-          .homepage-page {
-            scroll-snap-type: y proximity;
-          }
         }
         .ym-stage {
           background: var(--ym-bg);
@@ -939,7 +930,7 @@ export default function Homepage() {
 
       <SiteHeader />
 
-      <main className="homepage-page">
+      <main ref={homepageMainRef} className="homepage-page">
         {localizedStageSections.map((section, index) => {
           const visual = getSectionVisual(section, index);
           const palette = getStagePalette(index);
