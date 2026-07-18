@@ -610,21 +610,18 @@ export default function Homepage() {
           pointer-events: none;
           position: absolute;
           inset: 0;
-          background:
-            linear-gradient(180deg, rgba(49, 38, 31, 0.2) 0%, rgba(251, 246, 238, 0.04) 30%, color-mix(in srgb, var(--ym-panel) 18%, transparent) 58%, rgba(46, 34, 27, 0.5) 100%),
-            radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--ym-accent) 20%, transparent), transparent 34%),
-            radial-gradient(circle at 82% 72%, color-mix(in srgb, var(--ym-stripe) 16%, transparent), transparent 38%);
+          background: transparent;
         }
         .ym-stage-media img {
           transform: none;
           transition: transform 1.35s cubic-bezier(0.16, 1, 0.3, 1), filter 1.35s cubic-bezier(0.16, 1, 0.3, 1);
-          filter: saturate(0.96) contrast(1.02) sepia(0.06);
+          filter: none;
           backface-visibility: hidden;
           will-change: transform;
         }
         .ym-stage.is-active .ym-stage-media img {
           transform: scale(1);
-          filter: saturate(0.98) contrast(1.03) sepia(0.05);
+          filter: none;
         }
         .ym-stage-panel {
           inset: 0;
