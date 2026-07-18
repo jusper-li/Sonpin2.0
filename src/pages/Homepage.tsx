@@ -218,6 +218,7 @@ export default function Homepage() {
   const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>([]);
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  const homepageMainRef = useRef<HTMLElement | null>(null);
   const sectionsRef = useRef<(HTMLElement | HTMLDivElement | null)[]>([]);
   const heroButtonLabels = {
     'zh-TW': '查看商品',
