@@ -460,6 +460,13 @@ export default function Homepage() {
     sectionsRef.current = [];
   }, [stageSections.length]);
   useEffect(() => {
+    const main = homepageMainRef.current;
+    if (!main) return;
+
+    main.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    main.scrollTop = 0;
+  }, [stageSections.length, loading]);
+  useEffect(() => {
     if (loading) return;
 
     const observer = new IntersectionObserver(
