@@ -584,10 +584,25 @@ export default function Homepage() {
           min-height: 100svh;
           min-height: 100dvh;
           background: var(--sonpin-background);
+          scroll-behavior: smooth;
+          overscroll-behavior-y: contain;
+          scroll-padding-top: 88px;
         }
         .homepage-page section,
         .homepage-page > div {
           scroll-margin-top: 88px;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+        }
+        @media (min-width: 768px) {
+          .homepage-page {
+            scroll-snap-type: y mandatory;
+          }
+        }
+        @media (max-width: 767px) {
+          .homepage-page {
+            scroll-snap-type: y proximity;
+          }
         }
         .ym-stage {
           background: var(--ym-bg);
