@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, FileText, Loader2, Plus, RefreshCw, Save, Search, Trash2, Upload, X } from 'lucide-react';
+import { ExternalLink, FileText, Loader2, Plus, RefreshCw, Save, Search, Upload, X } from 'lucide-react';
 import { BATCH_DOCUMENTS_BUCKET, loadBatchDocuments, type BatchDocument } from '../../lib/batchDocuments';
 import { supabase } from '../../lib/supabase';
 

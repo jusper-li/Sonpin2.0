@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { isSupabaseContentEnabled, isSupabaseNetworkError, supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { normalizeLang, pickByLang, type SupportedLanguage } from '../lib/language';
+import { getLocalTranslation } from '../lib/i18n';
 
 interface Language {
   code: string;
@@ -169,6 +170,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const sourceText = defaultText || key;
 
     translationSourcesRef.current.set(key, sourceText);
+
+    const localTranslation = getLocalTranslation(lang, key, sourceText);
+    if (localTranslation !== undefined) {
+      return localTranslation;
+    }
 
     if (!isSupabaseContentEnabled || !shouldTranslate) {
       return sourceText;

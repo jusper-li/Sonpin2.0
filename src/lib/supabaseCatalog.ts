@@ -37,7 +37,7 @@ export interface CatalogProduct {
   is_hidden: boolean;
   created_at?: string;
   updated_at?: string;
-  categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null;
+  categories?: { id: string; name: string; slug: string } | null;
   category_slug: string;
   category_name: string;
 }

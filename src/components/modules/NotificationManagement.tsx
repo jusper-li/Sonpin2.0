@@ -181,17 +181,17 @@ const collectInvalidEmails = (value: string) =>
 
 const formatEmailList = (emails: string[]) => emails.join('\n');
 
-const normalizeTemplate = <T extends Record<string, unknown>>(value: unknown, fallback: T): T => {
+const normalizeTemplate = <T extends object>(value: unknown, fallback: T): T => {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
   const result = { ...fallback } as T;
 
   (Object.keys(fallback) as Array<keyof T>).forEach((key) => {
-    const fallbackValue = fallback[key];
+    const fallbackValue = (fallback as Record<string, unknown>)[String(key)];
     const currentValue = source[String(key)];
     if (typeof fallbackValue === 'boolean') {
-      result[key] = normalizeBoolean(currentValue, fallbackValue) as T[keyof T];
+      (result as Record<string, unknown>)[String(key)] = normalizeBoolean(currentValue, fallbackValue);
     } else {
-      result[key] = (typeof currentValue === 'string' && currentValue.trim() ? currentValue.trim() : fallbackValue) as T[keyof T];
+      (result as Record<string, unknown>)[String(key)] = typeof currentValue === 'string' && currentValue.trim() ? currentValue.trim() : fallbackValue;
     }
   });
 
@@ -663,7 +663,7 @@ function TemplateEditor<T extends { admin_subject: string; admin_title: string; 
   title: string;
   template: T;
   onChange: (template: T) => void;
-  fieldOptions: Array<{ key: keyof T; label: string; description: string }>;
+  fieldOptions: ReadonlyArray<{ key: keyof T; label: string; description: string }>;
   preview: ReactNode;
 }) {
   const update = (key: keyof T, value: string | boolean) => {

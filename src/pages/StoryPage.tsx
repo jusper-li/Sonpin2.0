@@ -9,7 +9,7 @@ import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
-interface StaticPageData extends TranslatableStaticPage {}
+type StaticPageData = TranslatableStaticPage;
 
 const FALLBACK_HERO = 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1600';
 
@@ -43,7 +43,7 @@ const STORY_FALLBACK: StaticPageData = {
 };
 
 export default function StoryPage() {
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData | null>(STORY_FALLBACK);
   const [loading, setLoading] = useState(true);

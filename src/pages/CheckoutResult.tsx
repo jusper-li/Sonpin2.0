@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { REMITTANCE_INFO, remittanceLines } from '../data/remittanceInfo';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type PaymentState = 'paid' | 'failed' | 'pending' | 'unknown';
 
@@ -51,6 +52,7 @@ const stateConfig: Record<
 };
 
 export default function CheckoutResult() {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order_id') || '';
   const orderNumberParam = searchParams.get('order_number') || '';
@@ -60,6 +62,7 @@ export default function CheckoutResult() {
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [orderCopyState, setOrderCopyState] = useState<'idle' | 'copied'>('idle');
 
   useEffect(() => {
     document.title = '訂單完成｜淞品土雞專賣店';
@@ -140,6 +143,18 @@ export default function CheckoutResult() {
     }
   };
 
+  const copyOrderNumber = async () => {
+    const value = orderNumber || orderId;
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setOrderCopyState('copied');
+      window.setTimeout(() => setOrderCopyState('idle'), 2000);
+    } catch {
+      setOrderCopyState('idle');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -155,8 +170,18 @@ export default function CheckoutResult() {
             {orderNumber && (
               <div className="mt-6 rounded-2xl bg-stone-50 px-4 py-4 text-left">
                 <p className="text-xs tracking-[0.16em] text-stone-400 uppercase">訂單編號</p>
-                <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                   <p className="font-mono text-lg text-stone-900">{orderNumber}</p>
+                  <button
+                    type="button"
+                    onClick={() => void copyOrderNumber()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 transition hover:bg-white"
+                  >
+                    <Copy className="h-4 w-4" />
+                    {orderCopyState === 'copied'
+                      ? t('order.inquiry.copied', '已複製')
+                      : t('order.inquiry.copy', '複製訂單編號')}
+                  </button>
                 </div>
               </div>
             )}

@@ -22,11 +22,6 @@ interface ShippingFormRow {
   is_active: boolean;
 }
 
-interface ShippingCategoryGroup {
-  name: string;
-  rows: ShippingCategory[];
-}
-
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 const formatRange = (row: ShippingCategory) => {
@@ -115,10 +110,11 @@ export default function ShippingManagement() {
   const groupedRows = useMemo(() => groupShippingCategories(rows), [rows]);
 
   const openForm = (target?: ShippingCategory | ShippingCategory[]) => {
-    if (Array.isArray(target) && target.length > 0) {
-      setEditingSingle(target[0] || null);
+    const targetRows = Array.isArray(target) ? target : target ? [target] : [];
+    if (targetRows.length > 0) {
+      setEditingSingle(targetRows[0] || null);
       setFormRows(
-        target.map((row) => ({
+        targetRows.map((row) => ({
           id: row.id,
           name: row.name,
           quantity: row.quantity,
@@ -127,18 +123,6 @@ export default function ShippingManagement() {
           is_active: row.is_active,
         }))
       );
-    } else if (target) {
-      setEditingSingle(target);
-      setFormRows([
-        {
-          id: target.id,
-          name: target.name,
-          quantity: target.quantity,
-          quantity_to: target.quantity_to,
-          amount: target.amount,
-          is_active: target.is_active,
-        },
-      ]);
     } else {
       setEditingSingle(null);
       setFormRows([createEmptyRow()]);

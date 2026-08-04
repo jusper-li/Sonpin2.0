@@ -144,7 +144,7 @@ export default function SiteHeader() {
       <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500 ${isSolidHeader ? 'bg-[var(--sonpin-background)]/96 shadow-[0_1px_30px_rgba(61,43,31,0.08)] border-b border-[var(--sonpin-primary-border)]/90' : 'bg-transparent'}`}>
         <nav className="container mx-auto px-5 py-2 md:py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="group relative block flex-shrink-0" aria-label="??? Sonpin ???">
+            <Link to="/" className="group relative block flex-shrink-0" aria-label="淞品土雞專賣店首頁">
               {settings.logo_image ? (
                 <img
                   src={settings.logo_image}
@@ -179,7 +179,7 @@ export default function SiteHeader() {
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2.5 transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
-                title={user ? '??蛔???' : '?擗 / ?桅????蛔'}
+                title={user ? '會員中心' : '登入 / 註冊'}
               >
                 {memberInitial ? (
                   <span className="w-5 h-5 flex items-center justify-center bg-[var(--sonpin-ink)] text-[var(--sonpin-surface)] text-xs font-medium">
@@ -275,7 +275,7 @@ export default function SiteHeader() {
                     type="button"
                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
                     className={`relative inline-flex h-9 min-w-9 items-center justify-center rounded-full border px-2 transition-all duration-200 ${isSolidHeader ? 'border-white/30 bg-transparent text-[var(--sonpin-ink)] backdrop-blur-[1px] hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)]' : 'mix-blend-difference border-white/35 bg-transparent text-white hover:border-white/55 hover:text-white'}`}
-                    aria-label="????止筆?"
+                    aria-label="切換語言"
                     aria-expanded={showLanguageMenu}
                   >
                     <Globe className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function SiteHeader() {
               <button
                 className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? '?謚??閰制?' : '????閰制?'}
+                aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
                 aria-expanded={isMenuOpen}
               >
                 <div className="relative w-5 h-5 flex items-center justify-center">

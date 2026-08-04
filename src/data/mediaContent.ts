@@ -105,9 +105,9 @@ export const MEDIA_ARTICLES: MediaArticle[] = [
   {
     "groupSlug": "79",
     "articleSlug": "66",
-    "title": "??????????@??",
+    "title": "淞品土雞專賣店品牌故事",
     "date": "2014-03-27",
-    "excerpt": "?????????????",
+    "excerpt": "淞品品牌與土雞料理的相關報導。",
     "bodyParagraphs": [],
     "htmlContent": "",
     "featuredImage": "",
@@ -119,7 +119,7 @@ export const MEDIA_ARTICLES: MediaArticle[] = [
   {
     "groupSlug": "79",
     "articleSlug": "40",
-    "title": "????---?????? \"??? & ??\"",
+    "title": "淞品商行：白斬雞與燻雞",
     "date": "2010-01-01",
     "excerpt": "淞品商行---令人噴口水的 \"白斬雞 & 燻雞\"",
     "bodyParagraphs": [],
@@ -259,9 +259,9 @@ export const MEDIA_ARTICLES: MediaArticle[] = [
   {
     "groupSlug": "78",
     "articleSlug": "81",
-    "title": "???????-????????",
+    "title": "淞品土雞品牌影音報導",
     "date": "2017-08-19",
-    "excerpt": "????????????",
+    "excerpt": "淞品土雞專賣店的品牌與產製故事。",
     "bodyParagraphs": [],
     "htmlContent": "<p style=\"text-align: center;\"><iframe allowfullscreen=\"\" frameborder=\"0\" height=\"480\" scrolling=\"no\" src=\"https://www.youtube.com/embed/HCTmM1PKLUU\" width=\"100%\"></iframe>​</p>",
     "featuredImage": "",

@@ -82,6 +82,7 @@ export default function Shop() {
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addedProduct, setAddedProduct] = useState<string | null>(null);
 
   useSEO({
     title: t('shop.seo.title', '商品列表'),
@@ -183,6 +184,15 @@ export default function Shop() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)] text-stone-800">
       <SiteHeader />
+
+      <div
+        aria-live="polite"
+        className={`fixed right-5 top-24 z-40 max-w-[calc(100vw-2.5rem)] rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-ink)] px-5 py-3 text-sm text-white shadow-xl transition-all duration-300 ${
+          addedProduct ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-3 opacity-0'
+        }`}
+      >
+        {addedProduct ? `${addedProduct} 已加入購物車` : ''}
+      </div>
 
       <main className="flex-1 pt-20">
         <section className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
@@ -300,6 +310,8 @@ export default function Shop() {
                     },
                     1,
                   );
+                  setAddedProduct(translatedName);
+                  window.setTimeout(() => setAddedProduct(null), 2400);
                 };
 
                 return (

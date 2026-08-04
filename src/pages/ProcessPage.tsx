@@ -9,7 +9,7 @@ import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
-interface StaticPageData extends TranslatableStaticPage {}
+type StaticPageData = TranslatableStaticPage;
 
 const PROCESS_IMAGES = ['/sonpin-images/153285065447.jpg', '/sonpin-images/153285183849.jpg'];
 const PROCESS_VIDEOS = ['https://www.youtube.com/embed/27K4gLy_eDg', 'https://www.youtube.com/embed/yh1SyCxqLJk'];

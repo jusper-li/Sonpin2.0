@@ -47,8 +47,15 @@ function ModuleLoading() {
 function AdminPanel() {
   const { t } = useLanguage();
   const { admin, isLoading } = useAuth();
-  const [activeModule, setActiveModule] = useState('dashboard');
+  const [activeModule, setActiveModule] = useState(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    return window.sessionStorage.getItem('sonpin.backoffice.activeModule') || 'dashboard';
+  });
   const lastAuditKeyRef = useRef('');
+
+  useEffect(() => {
+    window.sessionStorage.setItem('sonpin.backoffice.activeModule', activeModule);
+  }, [activeModule]);
 
   useEffect(() => {
     if (!admin) return;

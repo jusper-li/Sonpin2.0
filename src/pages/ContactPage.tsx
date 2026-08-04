@@ -11,12 +11,7 @@ import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
-interface StaticPageData extends TranslatableStaticPage {}
-
-interface SiteInfo {
-  contact_email: string;
-  contact_phone: string;
-}
+type StaticPageData = TranslatableStaticPage;
 
 interface FormState {
   name: string;

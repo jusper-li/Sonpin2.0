@@ -10,7 +10,7 @@ import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
-interface StaticPageData extends TranslatableStaticPage {}
+type StaticPageData = TranslatableStaticPage;
 
 const CULTURE_IMAGE = '/sonpin-images/20250917152151.jpg';
 
@@ -47,7 +47,7 @@ const CULTURE_FALLBACK: StaticPageData = {
 };
 
 export default function CulturePage() {
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData>(CULTURE_FALLBACK);
   const [loading, setLoading] = useState(true);

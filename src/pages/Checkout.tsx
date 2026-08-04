@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -18,6 +18,7 @@ export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
+  const submitLockRef = useRef(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -54,6 +55,8 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLockRef.current || loading) return;
+    submitLockRef.current = true;
     setLoading(true);
 
     try {
@@ -138,7 +141,7 @@ export default function Checkout() {
       await insertMinimal('payments', {
         order_id: orderId,
         amount: finalTotal,
-        method: 'bank_transfer',
+        method: formData.paymentMethod,
         status: 'pending',
         metadata: {
           customer_name: formData.name,
@@ -146,35 +149,48 @@ export default function Checkout() {
         },
       });
 
-      fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'order_confirmation',
-          data: {
-            orderNumber,
-            customerName: formData.name,
-            customerEmail: formData.email,
-            items: orderItems,
-            subtotal: total,
-            total: finalTotal,
-            shipping: shippingAmount,
-            shippingBreakdown,
-            shippingMethod: shippingMethodSummary,
-            address: `${formData.address}, ${formData.city} ${formData.postalCode}`,
-            paymentMethod: 'bank_transfer',
+      try {
+        const emailResponse = await fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
           },
-        }),
-      }).catch(() => {});
+          body: JSON.stringify({
+            type: 'order_confirmation',
+            data: {
+              orderNumber,
+              customerName: formData.name,
+              customerEmail: formData.email,
+              items: orderItems,
+              subtotal: total,
+              total: finalTotal,
+              shipping: shippingAmount,
+              shippingBreakdown,
+              shippingMethod: shippingMethodSummary,
+              address: `${formData.address}, ${formData.city} ${formData.postalCode}`,
+              paymentMethod: formData.paymentMethod,
+            },
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.warn('Order created but notification email was not accepted:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.warn('Order created but notification email could not be sent:', emailError);
+      }
 
       clearCart();
       navigate('/checkout/result?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNumber), { replace: true });
     } catch (error) {
       console.error('Checkout failed:', error);
-      alert('結帳失敗，請稍後再試。');
+      submitLockRef.current = false;
+      alert(
+        error instanceof Error && error.message === 'Shipping quote is still loading'
+          ? t('checkout.error.shipping', '運費仍在計算中，請稍後再試。')
+          : t('checkout.error.generic', '訂單送出失敗，請稍後再試。'),
+      );
     } finally {
       setLoading(false);
     }

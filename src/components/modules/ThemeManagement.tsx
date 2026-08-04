@@ -48,19 +48,6 @@ const pageLabels: Record<ThemePageKey, string> = {
   content: '內容與靜態頁',
 };
 
-const toDraft = (palette: ThemeSettings['global']): ThemePaletteDraft => ({
-  primary: palette.primary,
-  primaryStrong: palette.primaryStrong,
-  primarySoft: palette.primarySoft,
-  primaryMuted: palette.primaryMuted,
-  primaryWarm: palette.primaryWarm,
-  primaryBorder: palette.primaryBorder,
-  surface: palette.surface,
-  background: palette.background,
-  ink: palette.ink,
-  muted: palette.muted,
-});
-
 const makePageDraft = (palette: ThemePaletteDraft): ThemePaletteDraft => ({
   primary: palette.primary || DEFAULT_THEME_SETTINGS.global.primary,
   primaryWarm: palette.primaryWarm || DEFAULT_THEME_SETTINGS.global.primaryWarm,

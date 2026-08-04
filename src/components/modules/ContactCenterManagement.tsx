@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, ExternalLink, Eye, Mail, Plus, RefreshCw, Save, Search, Trash2, X } from 'lucide-react';
+import { Bell, ExternalLink, Plus, RefreshCw, Save, Search, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import BatchDocumentManagement from './BatchDocumentManagement';
 

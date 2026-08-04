@@ -477,11 +477,6 @@ async function getNotificationSettings() {
   }
 }
 
-async function getAdminEmails() {
-  const settings = await getNotificationSettings();
-  return settings.admin_emails.length > 0 ? settings.admin_emails : [settings.admin_email];
-}
-
 async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
   if (!resendApiKey) {
@@ -766,14 +761,14 @@ function generateRemittanceNotificationAdminEmail(data: RemittanceNotificationEm
 
 function generateRemittanceNotificationCustomerEmail(data: RemittanceNotificationEmail) {
   return wrapEmail(`
-    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">???????????</h2>
-    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">?????????????????????????</p>
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">匯款通知已收到</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">我們已收到您的匯款通知，客服將核對款項後更新訂單狀態。</p>
     <div style="margin:0 0 24px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
-      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${escapeHtml(data.orderNumber)}</p>
-      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>?????</strong>${formatMoney(data.remittanceAmount)}</p>
-      <p style="margin:0;color:#57534e;line-height:1.8;"><strong>????? 5 ??</strong>${escapeHtml(data.remitterAccountLast5)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>訂單編號：</strong>${escapeHtml(data.orderNumber)}</p>
+      <p style="margin:0 0 8px 0;color:#57534e;line-height:1.8;"><strong>匯款金額：</strong>${formatMoney(data.remittanceAmount)}</p>
+      <p style="margin:0;color:#57534e;line-height:1.8;"><strong>匯款帳號後 5 碼：</strong>${escapeHtml(data.remitterAccountLast5)}</p>
     </div>
-    <p style="color:#57534e;line-height:1.8;margin:0;">?????????????????????</p>
+    <p style="color:#57534e;line-height:1.8;margin:0;">如需補充資料，客服會再與您聯繫，謝謝。</p>
   `);
 }
 
@@ -859,7 +854,7 @@ Deno.serve(async (req: Request) => {
         const welcome = parseWelcomeEmail(data);
         await sendEmail({
           to: welcome.email,
-          subject: "Sonpin ??????",
+          subject: "Sonpin 歡迎加入",
           html: generateWelcomeEmail(welcome),
         });
         break;
@@ -881,7 +876,7 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         if (orderError || !orderData) {
-          throw new HttpError(404, "order_not_found", "?????????????????");
+          throw new HttpError(404, "order_not_found", "找不到對應的訂單，請確認訂單編號。");
         }
 
         const order = orderData as OrderLookup;

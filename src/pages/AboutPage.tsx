@@ -10,7 +10,7 @@ import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { useLanguage } from '../contexts/LanguageContext';
 import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStaticPage } from '../lib/staticPageTranslation';
 
-interface StaticPageData extends TranslatableStaticPage {}
+type StaticPageData = TranslatableStaticPage;
 
 const ABOUT_IMAGES = ['/sonpin-images/20180730135352.jpg', '/sonpin-images/20180730135448.jpg'];
 
@@ -29,7 +29,7 @@ const ABOUT_FALLBACK: StaticPageData = {
 };
 
 export default function AboutPage() {
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData>(ABOUT_FALLBACK);
   const [loading, setLoading] = useState(true);

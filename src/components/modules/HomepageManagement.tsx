@@ -44,9 +44,9 @@ type ProductRow = {
   id: string;
   name: string;
   slug: string;
-  summary?: string | null;
-  images?: string[] | null;
-  is_active?: boolean | null;
+  summary?: string;
+  images?: string[];
+  is_active?: boolean;
 };
 
 type SectionFormContent = {
@@ -232,19 +232,6 @@ export default function HomepageManagement() {
     () => (heroProducts.length ? heroProducts : mergeHomepageHeroProducts()),
     [heroProducts],
   );
-
-  const resolvedHeroBlocks = useMemo(() => {
-    const configuredBlocks = heroBlocks.length ? heroBlocks : createDefaultHomepageHeroBlocks(heroSourceProducts);
-
-    return configuredBlocks
-      .filter((block) => block.is_active !== false)
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((block) => {
-        const resolved = resolveHomepageHeroBlock(block, heroSourceProducts);
-        return resolved ? { ...resolved, mode: block.mode, product_id: block.product_id, product_slug: block.product_slug } : null;
-      })
-      .filter((block): block is NonNullable<typeof block> => Boolean(block));
-  }, [heroBlocks, heroSourceProducts]);
 
   const localNotice = useMemo(
     () =>

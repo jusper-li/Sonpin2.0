@@ -1,6 +1,8 @@
 import { isSupabaseContentEnabled, supabase } from './supabase';
 import { buildServiceArticleRows, SERVICE_ARTICLE_SLUGS, type ServiceArticleRow } from './serviceArticleSeed';
 
+export type { ServiceArticleRow } from './serviceArticleSeed';
+
 type DbArticleRow = {
   id?: string;
   title: string;

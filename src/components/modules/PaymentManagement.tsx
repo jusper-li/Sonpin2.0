@@ -15,6 +15,7 @@ type PaymentRow = {
   created_at: string;
   order?: {
     order_number?: string;
+    member_id?: string | null;
   } | null;
 };
 
