@@ -815,15 +815,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <div className="mb-6 flex items-center gap-2.5">
-                <div className={`h-2 w-2 flex-shrink-0 rounded-full ${inStock ? 'bg-green-400' : 'bg-red-400'}`} />
-                <span className={`text-sm ${inStock ? 'text-green-700' : 'text-red-500'}`}>
-                  {inStock
-                    ? t('product.detail.stock', `現貨充足（庫存 ${product.stock} 件）`)
-                    : t('product.detail.outOfStock', '暫時缺貨')}
-                </span>
-              </div>
-
               {storeOnly && (
                 <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                   {purchaseUnavailableLabel}
@@ -1066,5 +1057,4 @@ export default function ProductDetail() {
     </div>
   );
 }
-
 

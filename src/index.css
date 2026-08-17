@@ -6,8 +6,8 @@
   :root {
     --sonpin-primary: #351e0d;
     --sonpin-primary-strong: #211208;
-    --sonpin-primary-soft: #6d4f3d;
-    --sonpin-primary-muted: #9f8a7b;
+    --sonpin-primary-soft: #5f4535;
+    --sonpin-primary-muted: #765f50;
     --sonpin-primary-warm: #8e6448;
     --sonpin-primary-border: #d8c8b6;
     --sonpin-surface: #fffaf2;
@@ -229,6 +229,13 @@
       height: min(520px, calc(100dvh - 8rem)) !important;
     }
   }
+}
+
+/* Keep secondary copy readable and consistent across every page. */
+@layer utilities {
+  .text-stone-300 { color: #8d786a !important; }
+  .text-stone-400 { color: #765f50 !important; }
+  .text-stone-500 { color: #5f4a3c !important; }
 }
 
 @layer utilities {

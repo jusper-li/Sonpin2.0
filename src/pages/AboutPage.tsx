@@ -163,19 +163,17 @@ export default function AboutPage() {
 
         <section className="container mx-auto max-w-5xl px-6 py-20">
           <div className="space-y-16">
-            {rest.map((section, index) => (
-              <div key={section.title} className={`flex flex-col gap-8 md:flex-row ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
-                <div className="md:w-1/3">
-                  <div className="flex h-full min-h-[68px] flex-col justify-center rounded-3xl bg-[var(--sonpin-ink)] px-4 py-3 text-left text-[var(--sonpin-surface)]">
-                    <h2 className="text-lg font-medium tracking-[0.05em] md:text-xl">{section.title}</h2>
-                  </div>
+            {rest.map((section) => (
+              <div key={section.title} className="space-y-6">
+                <div className="relative overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-6 py-6 text-left shadow-[0_18px_45px_-30px_rgba(53,30,13,0.45)] md:px-8">
+                  <span className="absolute left-0 top-6 h-10 w-1 rounded-r-full bg-[var(--sonpin-primary-warm)]" aria-hidden="true" />
+                  <p className="mb-2 pl-1 text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--sonpin-primary)]/70">About Sonpin</p>
+                  <h2 className="pl-1 text-lg font-medium leading-relaxed tracking-[0.05em] text-[var(--sonpin-ink)] md:text-xl">{section.title}</h2>
                 </div>
-                <div className="md:w-2/3">
-                  <StaticContent
-                    value={section.content}
-                    className="text-left leading-relaxed text-[var(--sonpin-primary-soft)] [&_h1]:text-left [&_h2]:text-left [&_h3]:text-left [&_h4]:text-left [&_p]:text-left [&_li]:text-left [&_div]:text-left [&_span]:text-left"
-                  />
-                </div>
+                <StaticContent
+                  value={section.content}
+                  className="text-left leading-relaxed text-[var(--sonpin-primary-soft)] [&_h1]:text-left [&_h2]:text-left [&_h3]:text-left [&_h4]:text-left [&_p]:text-left [&_li]:text-left [&_div]:text-left [&_span]:text-left"
+                />
               </div>
             ))}
           </div>

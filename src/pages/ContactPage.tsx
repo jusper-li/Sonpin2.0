@@ -13,6 +13,8 @@ import { shouldTranslateStaticPage, translateStaticPage, type TranslatableStatic
 
 type StaticPageData = TranslatableStaticPage;
 
+const normalizeContactContent = (value: string) => value.replace(/&(?:amp;)?nbsp;?/gi, ' ').replace(/\u00a0/g, ' ');
+
 interface FormState {
   name: string;
   email: string;
@@ -353,20 +355,20 @@ export default function ContactPage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="bg-gradient-to-br from-[var(--sonpin-ink)] via-[var(--sonpin-primary-soft)] to-[var(--sonpin-primary)] pt-32 pb-20 text-[var(--sonpin-surface)]">
-          <div className="container mx-auto px-6">
-            <div className="mb-6 flex items-center gap-2 text-xs tracking-[0.1em] text-[var(--sonpin-primary-border)]">
-              <Link to="/" className="transition-colors hover:text-[var(--sonpin-surface)]">
+        <section className="relative overflow-hidden border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-background)_44%,var(--sonpin-surface)_100%)]">
+          <div className="container mx-auto px-6 py-16 md:py-24">
+            <div className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
+              <Link to="/" className="transition-colors hover:text-stone-700">
                 {t.home}
               </Link>
               <ChevronRight size={12} />
-              <span className="text-[var(--sonpin-background)]">{t.breadcrumb}</span>
+              <span className="text-stone-700">{t.breadcrumb}</span>
             </div>
-            <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[var(--sonpin-primary-warm)]">Contact Us</p>
-            <h1 className="mb-4 text-5xl font-light tracking-wide md:text-6xl">{page.title || t.contactCenter}</h1>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">Contact</p>
+            <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">{page.title || t.contactCenter}</h1>
             <StaticContent
-              value={intro?.content || t.lead}
-              className="max-w-2xl text-base font-light leading-relaxed text-[var(--sonpin-primary-border)]"
+              value={normalizeContactContent(intro?.content || t.lead)}
+              className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500"
             />
           </div>
         </section>
@@ -386,8 +388,8 @@ export default function ContactPage() {
                     <div key={section.title}>
                       <h3 className="mb-2 text-sm font-medium text-[var(--sonpin-primary-soft)]">{section.title}</h3>
                       <StaticContent
-                        value={section.content}
-                        className="text-sm leading-relaxed font-light text-[var(--sonpin-primary-muted)]"
+                        value={normalizeContactContent(section.content)}
+                        className="text-sm leading-relaxed font-light text-[var(--sonpin-primary-soft)]"
                       />
                     </div>
                   ))}
@@ -396,9 +398,9 @@ export default function ContactPage() {
 
               <div className="space-y-4 border-t border-[var(--sonpin-primary-border)] pt-6">
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-[var(--sonpin-primary-muted)]">{t.customerService}</p>
+                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-[var(--sonpin-primary-soft)]">{t.customerService}</p>
                   <h2 className="text-2xl font-light tracking-wide text-[var(--sonpin-ink)]">{t.serviceCardTitle}</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{t.contactCenterIntro}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--sonpin-primary-soft)]">{t.contactCenterIntro}</p>
                 </div>
 
                 <div className="grid gap-4">
@@ -416,10 +418,10 @@ export default function ContactPage() {
                           </div>
                           <div>
                             <h3 className="text-lg font-medium text-[var(--sonpin-ink)]">{item.title}</h3>
-                            <p className="mt-1 max-w-md text-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{item.description}</p>
+                            <p className="mt-1 max-w-md text-sm leading-relaxed text-[var(--sonpin-primary-soft)]">{item.description}</p>
                           </div>
                         </div>
-                        <ArrowRight className="h-5 w-5 text-[var(--sonpin-primary-muted)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--sonpin-primary)]" />
+                        <ArrowRight className="h-5 w-5 text-[var(--sonpin-primary-soft)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--sonpin-primary)]" />
                       </Link>
                     );
                   })}
@@ -436,7 +438,7 @@ export default function ContactPage() {
                     <CheckCircle className="h-10 w-10 text-[var(--sonpin-primary)]" />
                   </div>
                   <h2 className="mb-3 text-2xl font-light text-[var(--sonpin-ink)]">{t.messageSent}</h2>
-                  <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-muted)]">{t.messageSentDesc}</p>
+                  <p className="mb-8 max-w-sm leading-relaxed text-[var(--sonpin-primary-soft)]">{t.messageSentDesc}</p>
                   <button
                     type="button"
                     onClick={() => setSubmitted(false)}
@@ -455,7 +457,7 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-soft)]">
                         {t.name} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
@@ -467,7 +469,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-soft)]">
                         {t.emailLabel} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
@@ -482,7 +484,7 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">{t.phoneLabel}</label>
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-soft)]">{t.phoneLabel}</label>
                       <input
                         type="tel"
                         value={form.phone}
@@ -492,7 +494,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                      <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-soft)]">
                         {t.subject} <span className="text-[var(--sonpin-primary)]">*</span>
                       </label>
                       <input
@@ -506,7 +508,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-muted)]">
+                    <label className="mb-2 block text-xs uppercase tracking-widest text-[var(--sonpin-primary-soft)]">
                       {t.message} <span className="text-[var(--sonpin-primary)]">*</span>
                     </label>
                     <textarea
