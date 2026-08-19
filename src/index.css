@@ -76,6 +76,25 @@
 }
 
 @layer components {
+  /* Shared solid header treatment for the homepage and inner pages. */
+  .site-header-shared {
+    background: color-mix(in srgb, var(--sonpin-background) 96%, transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--sonpin-primary-border) 90%, transparent) !important;
+    box-shadow: 0 1px 30px rgb(61 43 31 / 0.08) !important;
+  }
+
+  .site-header-desktop-menu > button,
+  .site-header-desktop-menu > a,
+  .site-header-desktop-menu > div > button {
+    color: var(--sonpin-primary) !important;
+  }
+
+  .site-header-desktop-menu > button:hover,
+  .site-header-desktop-menu > a:hover,
+  .site-header-desktop-menu > div > button:hover {
+    color: var(--sonpin-ink) !important;
+  }
+
   .page-heading {
     @apply text-4xl md:text-5xl font-light text-stone-800 tracking-[0.15em];
   }
@@ -236,6 +255,8 @@
   .text-stone-300 { color: #8d786a !important; }
   .text-stone-400 { color: #765f50 !important; }
   .text-stone-500 { color: #5f4a3c !important; }
+
+  .member-profile-hero .text-stone-400 { color: rgb(255 255 255 / 0.72) !important; }
 }
 
 @layer utilities {

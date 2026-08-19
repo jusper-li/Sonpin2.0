@@ -43,7 +43,6 @@ const getDisplayNameFallback = (email?: string | null) => {
 export default function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [settings, setSettings] = useState<HeaderSettings>(DEFAULT_HEADER_SETTINGS);
   const { itemCount } = useCart();
   const { currentLanguage, languages, setLanguage, t } = useLanguage();
@@ -59,8 +58,8 @@ export default function SiteHeader() {
     ? rawDisplayName
     : getDisplayNameFallback(user?.email);
   const normalizedLanguage = normalizeLang(currentLanguage);
-  const isHomepage = location.pathname === '/';
-  const isSolidHeader = scrolled || isMenuOpen || !isHomepage;
+  // The header is shared by every page, including the homepage.
+  const isSolidHeader = true;
   const primaryNavigation = settings.navigation.filter((item) => item.label.trim() && item.href.trim());
   const isActiveMenuItem = (href: string) => {
     const target = normalizeMenuHref(href);
@@ -88,18 +87,6 @@ export default function SiteHeader() {
     }
     return () => { document.body.style.overflow = ''; };
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 60);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
 
   const loadSettings = async () => {
     if (!isSupabaseContentEnabled) return;
@@ -141,7 +128,10 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500 ${isSolidHeader ? 'bg-[var(--sonpin-background)]/96 shadow-[0_1px_30px_rgba(61,43,31,0.08)] border-b border-[var(--sonpin-primary-border)]/90' : 'bg-transparent'}`}>
+      <header
+        className="site-header-shared fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500"
+        style={{ backgroundColor: 'var(--sonpin-background)' }}
+      >
         <nav className="container mx-auto px-5 py-2 md:py-3">
           <div className="flex items-center justify-between">
             <Link to="/" className="group relative block flex-shrink-0" aria-label="淞品土雞專賣店首頁">
@@ -164,7 +154,7 @@ export default function SiteHeader() {
             </Link>
 
             {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="site-header-desktop-menu hidden md:flex items-center gap-8">
               {primaryNavigation.map((item, index) => (
                 <button
                   key={index}
@@ -416,7 +406,3 @@ export default function SiteHeader() {
     </>
   );
 }
-
-
-
-

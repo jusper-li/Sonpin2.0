@@ -140,7 +140,7 @@ export default function MemberProfile() {
           </div>
 
           <div className="mb-5 overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_18px_50px_rgba(61,43,31,0.08)]">
-            <div className="flex items-center gap-5 bg-[linear-gradient(135deg,var(--sonpin-primary-warm)_0%,var(--sonpin-primary)_100%)] px-6 py-8">
+            <div className="member-profile-hero flex items-center gap-5 bg-[linear-gradient(135deg,var(--sonpin-primary-warm)_0%,var(--sonpin-primary)_100%)] px-6 py-8">
               <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[var(--sonpin-ink)] shadow-lg">
                 <span className="text-2xl font-semibold text-[var(--sonpin-surface)]">{initials}</span>
               </div>
@@ -148,7 +148,7 @@ export default function MemberProfile() {
                 <h1 className="truncate text-lg font-semibold text-white">
                   {profile?.display_name || t('member.profile.titleFallback', '會員中心')}
                 </h1>
-                <p className="truncate text-sm text-stone-400">{user?.email}</p>
+                <p className="truncate text-sm text-white/75">{user?.email}</p>
                 <div className="mt-2 flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                   <span className="text-xs tracking-wide text-stone-400">Sonpin {t('member.profile.badge', '會員')}</span>
