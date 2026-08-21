@@ -28,6 +28,10 @@ const DEFAULT_LANGUAGES: Language[] = [
   { code: 'ko', name: '한국어', is_default: false, is_active: true },
 ];
 
+// Bump the key so existing sessions that were accidentally saved as English
+// start from the corrected Traditional Chinese default.
+const LANGUAGE_STORAGE_KEY = 'preferred_language_v2';
+
 const translations: Record<string, Record<string, string>> = {};
 const translationCache: Record<string, Promise<string>> = {};
 
@@ -66,13 +70,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setCurrentLanguage((current) => {
         const normalizedCurrent = normalizeLang(current);
         if (availableCodes.has(normalizedCurrent)) return normalizedCurrent;
-        const savedLanguage = normalizeLang(localStorage.getItem('preferred_language'));
+        const savedLanguage = normalizeLang(localStorage.getItem(LANGUAGE_STORAGE_KEY));
         if (availableCodes.has(savedLanguage)) {
-          localStorage.setItem('preferred_language', savedLanguage);
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, savedLanguage);
           return savedLanguage;
         }
-        localStorage.setItem('preferred_language', defaultLanguage);
-        return defaultLanguage;
+        const initialLanguage = availableCodes.has('zh-TW') ? 'zh-TW' : defaultLanguage;
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, initialLanguage);
+        return initialLanguage;
       });
     } catch (error) {
       if (!isSupabaseNetworkError(error)) {
@@ -86,7 +91,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadLanguages();
-    const savedLanguage = localStorage.getItem('preferred_language');
+    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
     if (savedLanguage) {
       setCurrentLanguage(normalizeLang(savedLanguage));
     }
@@ -114,7 +119,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = (code: string) => {
     const normalized = normalizeLang(code);
     setCurrentLanguage(normalized);
-    localStorage.setItem('preferred_language', normalized);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
   };
 
   const fetchTranslation = async (key: string, sourceText: string, targetLanguage: SupportedLanguage): Promise<string> => {

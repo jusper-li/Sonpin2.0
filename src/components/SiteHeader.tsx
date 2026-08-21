@@ -366,8 +366,8 @@ export default function SiteHeader() {
               >
                   <UserCircle className="w-5 h-5 text-[var(--sonpin-primary)]" />
                 <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('header.login_join', 'Log in / Join')}</p>
-                    <p className="text-xs text-[var(--sonpin-primary)]">{t('header.login_join_sub', 'Log in to access your account and benefits')}</p>
+                    <p className="text-sm font-medium text-[var(--sonpin-ink)]">{t('header.login_join', '登入 / 註冊')}</p>
+                    <p className="text-xs text-[var(--sonpin-primary)]">{t('header.login_join_sub', '登入以查看會員資料與優惠')}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--sonpin-primary-border)] group-hover:text-[var(--sonpin-primary)] transition-colors" />
               </Link>
@@ -377,7 +377,7 @@ export default function SiteHeader() {
           {/* Scrollable nav area */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
             <div className="mb-4">
-                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', 'Main menu')}</p>
+                <p className="text-[10px] tracking-[0.35em] text-[var(--sonpin-primary)] uppercase mb-2 px-1">{t('header.primary_menu', '主選單')}</p>
               <nav className="space-y-0.5">
                 {primaryNavigation.map((item, index) => {
                   const isActive = isActiveMenuItem(item.href);
