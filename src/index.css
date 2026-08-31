@@ -95,6 +95,23 @@
     color: var(--sonpin-ink) !important;
   }
 
+  .site-header-desktop-menu > button,
+  .site-header-desktop-menu > a,
+  .site-header-desktop-menu > div > button {
+    font-size: 0.9375rem !important;
+  }
+
+  footer p.text-sm,
+  footer button.text-sm {
+    font-size: 1rem;
+  }
+
+  footer p.text-xs,
+  footer a.text-xs,
+  footer button.text-xs {
+    font-size: 0.875rem;
+  }
+
   .page-heading {
     @apply text-4xl md:text-5xl font-light text-stone-800 tracking-[0.15em];
   }
