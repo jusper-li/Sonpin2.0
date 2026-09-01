@@ -130,7 +130,7 @@ export default function SiteHeader() {
     <>
       <header
         className="site-header-shared fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500"
-        style={{ backgroundColor: 'var(--sonpin-background)' }}
+        style={{ backgroundColor: '#fbf6ee', color: '#351e0d' }}
       >
         <nav className="container mx-auto px-5 py-2 md:py-3">
           <div className="flex items-center justify-between">

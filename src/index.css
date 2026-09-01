@@ -78,7 +78,7 @@
 @layer components {
   /* Shared solid header treatment for the homepage and inner pages. */
   .site-header-shared {
-    background: color-mix(in srgb, var(--sonpin-background) 96%, transparent) !important;
+    background: #fbf6ee !important;
     border-bottom: 1px solid color-mix(in srgb, var(--sonpin-primary-border) 90%, transparent) !important;
     box-shadow: 0 1px 30px rgb(61 43 31 / 0.08) !important;
   }
@@ -86,13 +86,13 @@
   .site-header-desktop-menu > button,
   .site-header-desktop-menu > a,
   .site-header-desktop-menu > div > button {
-    color: var(--sonpin-primary) !important;
+    color: #351e0d !important;
   }
 
   .site-header-desktop-menu > button:hover,
   .site-header-desktop-menu > a:hover,
   .site-header-desktop-menu > div > button:hover {
-    color: var(--sonpin-ink) !important;
+    color: #211208 !important;
   }
 
   .site-header-desktop-menu > button,
