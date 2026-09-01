@@ -192,21 +192,16 @@ const getYouTubeEmbedUrl = (url?: string) => {
     return `https://www.youtube.com/embed/${shortMatch[1]}?rel=0`;
   }
 
-  const embedMatch = value.match(/youtube\.com\/(?:v|embed)\/([^?&/]+)/i);
-  if (embedMatch?.[1]) {
-    return `https://www.youtube.com/embed/${embedMatch[1]}?rel=0`;
-  }
-
   return value;
 };
 
-const getSectionVisual = (section?: HomepageSection, index = 0): SectionVisual => {
+const getSectionVisual = (section?: HomepageSection): SectionVisual => {
   const fallback = FALLBACK_VISUALS[section?.section_type || ''] || FALLBACK_VISUALS.default;
 
   return {
     ...fallback,
     media: section?.background_image || section?.content?.background_image || section?.content?.image || fallback.media,
-    objectPosition: index % 2 === 0 ? fallback.objectPosition : 'center center',
+    objectPosition: fallback.objectPosition,
   };
 };
 
@@ -353,17 +348,14 @@ export default function Homepage() {
   };
 
   const stageSections = useMemo(() => {
-    const products = heroProducts;
-    const configuredBlocks = heroBlocks;
-    const resolvedBlocks = configuredBlocks
+    const resolvedBlocks = heroBlocks
       .filter((block) => block.is_active !== false)
       .sort((a, b) => a.sort_order - b.sort_order)
-      .map((block) => resolveHomepageHeroBlock(block, products))
+      .map((block) => resolveHomepageHeroBlock(block, heroProducts))
       .filter((block): block is ResolvedHomepageHeroBlock => Boolean(block));
 
-    const displaySections = sections;
-    const heroSection = displaySections.find((section) => section.section_type === 'hero') || null;
-    const chapterSections = displaySections.filter((section) => section !== heroSection);
+    const heroSection = sections.find((section) => section.section_type === 'hero') || null;
+    const chapterSections = sections.filter((section) => section !== heroSection);
 
     if (resolvedBlocks.length > 0) {
       const heroProductSections = resolvedBlocks.map((block, index): HomepageSection => ({
@@ -388,10 +380,10 @@ export default function Homepage() {
           background_image: block.image,
           description: block.description,
         }));
-      return heroSection ? [...heroProductSections, ...chapterSections] : [...heroProductSections, ...displaySections];
+      return heroSection ? [...heroProductSections, ...chapterSections] : [...heroProductSections, ...sections];
     }
 
-    return heroSection ? [heroSection, ...chapterSections] : displaySections;
+    return heroSection ? [heroSection, ...chapterSections] : sections;
   }, [heroBlocks, heroProducts, sections]);
 
   const localizedStageSections = useMemo(
@@ -572,21 +564,6 @@ export default function Homepage() {
   return (
     <div className="ym-homepage overflow-x-hidden bg-[var(--sonpin-surface)] text-[var(--sonpin-ink)]">
       <style>{`
-        .ym-homepage header {
-          background: transparent !important;
-          border-bottom-color: transparent !important;
-          box-shadow: none !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-        }
-        .ym-homepage header img {
-          filter: none !important;
-        }
-        .ym-homepage header nav a,
-        .ym-homepage header nav button {
-          color: var(--sonpin-surface) !important;
-          filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
-        }
         .homepage-page {
           height: 100vh;
           height: 100svh;
@@ -656,9 +633,9 @@ export default function Homepage() {
           text-shadow: 0 2px 18px rgba(36, 27, 21, 0.48);
         }
         .ym-stage-title {
-          color: var(--sonpin-surface) !important;
+          color: var(--sonpin-primary) !important;
           font-family: "Noto Serif TC", "Songti TC", "Noto Serif CJK TC", Georgia, serif;
-          font-size: clamp(1.08rem, 2.1vw, 2rem) !important;
+          font-size: clamp(1.4rem, 3vw, 2.6rem) !important;
           font-weight: 540 !important;
           line-height: 1.58 !important;
           letter-spacing: 0.08em;
@@ -673,7 +650,7 @@ export default function Homepage() {
         }
         .ym-stage-actions {
           margin-top: 20px !important;
-          display: grid;
+          display: flex !important;
           width: min(78vw, 560px);
           grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
           align-items: end;
@@ -688,16 +665,16 @@ export default function Homepage() {
           height: 34px !important;
           min-width: 108px !important;
           border-color: color-mix(in srgb, var(--ym-stripe) 82%, var(--sonpin-surface)) !important;
-          color: var(--sonpin-surface) !important;
-          background: color-mix(in srgb, var(--ym-panel) 26%, transparent) !important;
+          color: var(--sonpin-primary) !important;
+          background: color-mix(in srgb, var(--sonpin-surface) 72%, transparent) !important;
           padding-inline: 16px !important;
           font-size: 11px !important;
           letter-spacing: 0.08em;
-          text-shadow: 0 2px 14px rgba(36, 27, 21, 0.42);
+          text-shadow: none;
           box-shadow: 0 0 0 1px color-mix(in srgb, var(--ym-accent) 18%, transparent) inset;
         }
         .ym-stage-cta:hover {
-          background: color-mix(in srgb, var(--ym-stripe) 36%, rgba(255, 250, 242, 0.14)) !important;
+          background: var(--sonpin-primary) !important;
           color: var(--sonpin-surface) !important;
         }
         .ym-stage-side-label {
@@ -793,9 +770,6 @@ export default function Homepage() {
           display: block;
         }
         @media (min-width: 768px) {
-          .ym-homepage header nav {
-            padding-top: 20px !important;
-          }
           .ym-stage-copy {
             padding-bottom: clamp(3rem, 7vh, 5.8rem);
           }
@@ -940,15 +914,12 @@ export default function Homepage() {
 
       <main ref={homepageMainRef} className="homepage-page">
         {localizedStageSections.map((section, index) => {
-          const visual = getSectionVisual(section, index);
+          const visual = getSectionVisual(section);
           const palette = getStagePalette(index);
           const title = getSectionTitle(section) || 'Sonpin';
           const href = getSectionHref(section) || '/shop';
           const youtubeEmbedUrl = getYouTubeEmbedUrl(section.content?.youtube || section.content?.video_url);
           const isVideoSection = section.section_type === 'video' && Boolean(youtubeEmbedUrl);
-          const localizedTitle = title;
-          const localizedSubtitle = section.subtitle || section.content?.subtitle || '';
-          const localizedLabel = section.label || section.content?.label || '';
           const ctaLabel = section.content?.cta_label || (section.section_type === 'hero_product' ? '查看商品' : '了解更多');
           const localizedCtaLabel =
             section.section_type === 'hero_product'
@@ -957,7 +928,6 @@ export default function Homepage() {
                 ? section.content?.cta_label || '觀看影片'
               : ctaLabel;
           const isVisible = visibleSections.has(index) || index === 0;
-          const shouldLoadImage = true;
           const sectionStyle = {
             '--ym-bg': palette.background,
             '--ym-panel': palette.panel,
@@ -976,13 +946,12 @@ export default function Homepage() {
             >
               {isVideoSection ? (
                 <div className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden">
-                  {shouldLoadImage ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 px-4">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/25 px-4">
                       <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/15 bg-black shadow-2xl">
                         <div className="aspect-video w-full">
                           <iframe
                             src={youtubeEmbedUrl}
-                            title={section.content?.video_title || localizedTitle}
+                            title={section.content?.video_title || title}
                             className="h-full w-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
@@ -992,23 +961,20 @@ export default function Homepage() {
                         </div>
                       </div>
                     </div>
-                  ) : null}
                 </div>
               ) : (
                 <Link
                   to={href}
                   className="ym-stage-media absolute inset-x-0 top-0 z-10 block overflow-hidden"
-                  aria-label={t('homepage.hero.aria', `Go to ${localizedTitle}`)}
+                  aria-label={t('homepage.hero.aria', `Go to ${title}`)}
                 >
-                  {shouldLoadImage ? (
-                    <StageImage
-                      key={visual.media}
-                      src={visual.media}
-                      alt={title}
-                      objectPosition={visual.objectPosition}
-                      eager
-                    />
-                  ) : null}
+                  <StageImage
+                    key={visual.media}
+                    src={visual.media}
+                    alt={title}
+                    objectPosition={visual.objectPosition}
+                    eager
+                  />
                 </Link>
               )}
               <div className="ym-stage-panel absolute inset-x-0 bottom-0 z-20 flex items-center justify-center px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-10 text-center sm:px-8 md:pb-12 md:pt-12">
@@ -1019,19 +985,17 @@ export default function Homepage() {
                         index === 0 ? '' : 'md:text-3xl'
                       }`}
                     >
-                      {localizedTitle}
+                      {title}
                     </h1>
                   </Link>
 
                   <div className="ym-stage-actions mt-4 flex w-full items-center justify-center md:mt-5">
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedLabel || 'Songpin'}</span>
                     <Link
                       to={href}
                       className="ym-stage-cta inline-flex h-8 min-w-[104px] items-center justify-center border border-[var(--sonpin-ink)] bg-transparent px-5 text-sm font-medium text-[var(--sonpin-ink)] transition-colors duration-300 hover:bg-[var(--sonpin-ink)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--sonpin-ink)]/30"
                     >
                       {localizedCtaLabel}
                     </Link>
-                    <span className="ym-stage-side-label" aria-hidden="true">{localizedSubtitle || 'Brand story'}</span>
                   </div>
                 </div>
               </div>
@@ -1049,5 +1013,3 @@ export default function Homepage() {
     </div>
   );
 }
-
-
