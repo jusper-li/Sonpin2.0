@@ -808,8 +808,8 @@ export default function Homepage() {
         .ym-homepage header nav > div > div:last-child > a,
         .ym-homepage header nav > div > div:last-child > button {
           pointer-events: auto;
-          color: var(--sonpin-surface) !important;
-          filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.32));
+          color: var(--sonpin-primary) !important;
+          filter: none;
         }
         .ym-homepage header nav > div > div:last-child > div {
           pointer-events: auto;
