@@ -197,6 +197,12 @@
   }
 
   .site-header-desktop-menu > button,
+  .site-header-desktop-menu .header-more-menu > button,
+  .site-header-desktop-menu .header-more-menu [role='menuitem'] {
+    font-size: 14px !important;
+  }
+
+  .site-header-desktop-menu > button,
   .site-header-desktop-menu > a,
   .site-header-desktop-menu > div > button {
     font-size: 0.9375rem !important;

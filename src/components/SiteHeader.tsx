@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingCart, Globe, ChevronRight, CircleUser as UserCircle } from 'lucide-react';
+import { Menu, X, ShoppingCart, Globe, ChevronRight, ChevronDown, CircleUser as UserCircle } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -42,6 +42,7 @@ const getDisplayNameFallback = (email?: string | null) => {
 
 export default function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [settings, setSettings] = useState<HeaderSettings>(DEFAULT_HEADER_SETTINGS);
   const { itemCount } = useCart();
@@ -61,6 +62,9 @@ export default function SiteHeader() {
   // The header is shared by every page, including the homepage.
   const isSolidHeader = true;
   const primaryNavigation = settings.navigation.filter((item) => item.label.trim() && item.href.trim());
+  const mainNavigationHrefs = new Set(['/products', '/shipping', '/store', '/member']);
+  const mainNavigation = primaryNavigation.filter((item) => mainNavigationHrefs.has(normalizeMenuHref(item.href)));
+  const moreNavigation = primaryNavigation.filter((item) => !mainNavigationHrefs.has(normalizeMenuHref(item.href)) && normalizeMenuHref(item.href) !== '/');
   const isActiveMenuItem = (href: string) => {
     const target = normalizeMenuHref(href);
     const current = normalizeMenuHref(location.pathname);
@@ -110,6 +114,7 @@ export default function SiteHeader() {
   const handleNavigation = (href: string) => {
     setIsMenuOpen(false);
     setShowLanguageMenu(false);
+    setShowMoreMenu(false);
     if (href.startsWith('#')) {
       if (window.location.pathname !== '/') {
         navigate('/');
@@ -155,7 +160,7 @@ export default function SiteHeader() {
 
             {/* Desktop nav */}
             <div className="site-header-desktop-menu hidden md:flex items-center gap-8">
-              {primaryNavigation.map((item, index) => (
+              {mainNavigation.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => handleNavigation(item.href)}
@@ -165,6 +170,21 @@ export default function SiteHeader() {
                   <span className={`absolute -bottom-0.5 left-0 w-0 h-px transition-all duration-400 group-hover:w-full ${isSolidHeader ? 'bg-[var(--sonpin-primary)]' : 'bg-[var(--sonpin-surface)]/60'}`}></span>
                 </button>
               ))}
+
+              {moreNavigation.length > 0 && <div className="header-more-menu relative">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreMenu((value) => !value)}
+                  className={`relative flex items-center gap-1 py-2 text-xs font-medium tracking-[0.12em] transition-all duration-300 group ${isSolidHeader ? 'text-[var(--sonpin-ink)] hover:text-[var(--sonpin-primary)]' : 'text-white/80 hover:text-white'}`}
+                  aria-expanded={showMoreMenu}
+                  aria-haspopup="menu"
+                >
+                  <span>更多...</span><ChevronDown size={14} className={`transition-transform ${showMoreMenu ? 'rotate-180' : ''}`} />
+                </button>
+                {showMoreMenu && <div className="absolute right-0 top-full z-[70] mt-2 min-w-[180px] overflow-hidden border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_12px_30px_rgba(43,34,29,0.14)]" role="menu">
+                  {moreNavigation.map((item, index) => <button type="button" key={`${item.href}-${index}`} onClick={() => handleNavigation(item.href)} className="block w-full px-4 py-3 text-left text-xs tracking-[0.1em] text-[var(--sonpin-ink)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[var(--sonpin-primary-strong)]" role="menuitem">{item.label}</button>)}
+                </div>}
+              </div>}
 
               <Link
                 to={user ? '/member/profile' : '/member'}
