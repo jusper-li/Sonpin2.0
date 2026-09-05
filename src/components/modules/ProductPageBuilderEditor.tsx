@@ -240,11 +240,13 @@ export default function ProductPageBuilderEditor({
   const tryGenerateWithRemoteAi = async () => {
     const url = supabaseBaseUrl;
     const anon = supabaseAnonKey;
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isPrivateNetworkIp =
+      /^(10|127)(\.\d{1,3}){3}$/.test(hostname) ||
+      /^192\.168(\.\d{1,3}){2}$/.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[0-1])(\.\d{1,3}){2}$/.test(hostname);
     const isLocalDev =
-      typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === '::1');
+      hostname === 'localhost' || hostname === '::1' || isPrivateNetworkIp;
 
     if (isLocalDev || !isSupabaseAiEnabled || !url || !anon) return null;
 

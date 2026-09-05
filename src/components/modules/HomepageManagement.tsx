@@ -14,9 +14,7 @@ import {
 } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import { isSupabaseContentEnabled, supabase } from '../../lib/supabase';
-import { toHomepageManagementSections } from '../../data/homepageContent';
 import {
-  createDefaultHomepageHeroBlocks,
   HOMEPAGE_HERO_BLOCKS_SETTING_KEY,
   HomepageHeroBlock,
   HomepageHeroProduct,
@@ -49,7 +47,28 @@ type ProductRow = {
   is_active?: boolean;
 };
 
+type ArticleRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  featured_image?: string | null;
+  status?: string;
+};
+
+type StoreRow = {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  phone: string;
+  images?: string[] | null;
+  is_active?: boolean;
+};
+
 type SectionFormContent = {
+  source_type: '' | 'article' | 'store';
+  source_id: string;
   label: string;
   subtitle: string;
   title: string;
@@ -87,6 +106,8 @@ type HeroBlockFormState = {
 const HERO_BLOCKS_CACHE_KEY = 'ym_homepage_hero_blocks_cache_v1';
 
 const EMPTY_SECTION_CONTENT: SectionFormContent = {
+  source_type: '',
+  source_id: '',
   label: '',
   subtitle: '',
   title: '',
@@ -161,6 +182,8 @@ export default function HomepageManagement() {
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>([]);
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
+  const [articles, setArticles] = useState<ArticleRow[]>([]);
+  const [stores, setStores] = useState<StoreRow[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<HomepageHeroBlock | null>(null);
   const [form, setForm] = useState<HeroBlockFormState>(EMPTY_FORM);
@@ -185,7 +208,7 @@ export default function HomepageManagement() {
     }
 
     try {
-      const [sectionsRes, heroBlocksRes, productsRes] = await Promise.all([
+      const [sectionsRes, heroBlocksRes, productsRes, articlesRes, storesRes] = await Promise.all([
         supabase.from('homepage_sections').select('*').order('sort_order', { ascending: true }),
         supabase
           .from('site_settings')
@@ -196,9 +219,20 @@ export default function HomepageManagement() {
           .select('id,name,slug,summary,images,is_active')
           .eq('is_active', true)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('articles')
+          .select('id,title,slug,excerpt,featured_image,status')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false }),
+        supabase
+          .from('stores')
+          .select('id,name,city,address,phone,images,is_active')
+          .eq('is_active', true)
+          .order('city', { ascending: true })
+          .order('name', { ascending: true }),
       ]);
 
-      if (sectionsRes.error || heroBlocksRes.error || productsRes.error) {
+      if (sectionsRes.error || heroBlocksRes.error || productsRes.error || articlesRes.error || storesRes.error) {
         loadLocalContent();
         return;
       }
@@ -207,10 +241,14 @@ export default function HomepageManagement() {
       const settingRows = (heroBlocksRes.data || []) as SettingsRow[];
       const heroBlocksRow = settingRows.find((row) => row.setting_key === HOMEPAGE_HERO_BLOCKS_SETTING_KEY);
       const productRows = (productsRes.data || []) as ProductRow[];
+      const articleRows = (articlesRes.data || []) as ArticleRow[];
+      const storeRows = (storesRes.data || []) as StoreRow[];
 
       setSections(sectionRows);
       setHeroProducts(mergeHomepageHeroProducts(productRows));
       setHeroBlocks(normalizeHomepageHeroBlocks(heroBlocksRow?.setting_value));
+      setArticles(articleRows);
+      setStores(storeRows);
       setIsLocalContent(false);
     } catch (error) {
       console.error('Failed to load homepage management data:', error);
@@ -221,11 +259,12 @@ export default function HomepageManagement() {
   };
 
   const loadLocalContent = () => {
-    const products = mergeHomepageHeroProducts();
-    setSections(toHomepageManagementSections());
-    setHeroProducts(products);
-    setHeroBlocks(createDefaultHomepageHeroBlocks(products));
-    setIsLocalContent(true);
+    setSections([]);
+    setHeroProducts([]);
+    setHeroBlocks([]);
+    setArticles([]);
+    setStores([]);
+    setIsLocalContent(false);
   };
 
   const heroSourceProducts = useMemo(
@@ -330,6 +369,8 @@ export default function HomepageManagement() {
       sort_order: Number(section.sort_order || 1),
       is_active: section.is_active !== false,
       content: {
+        source_type: content.source_type === 'article' || content.source_type === 'store' ? content.source_type : '',
+        source_id: content.source_id || '',
         label: content.label || '',
         subtitle: content.subtitle || '',
         title: content.title || '',
@@ -361,6 +402,54 @@ export default function HomepageManagement() {
         [field]: value,
       },
     }));
+  };
+
+  const selectContentSource = (value: string) => {
+    if (!value) {
+      updateSectionFormContent('source_type', '');
+      updateSectionFormContent('source_id', '');
+      return;
+    }
+    const [sourceType, sourceId] = value.split(':');
+    if (sourceType === 'article') {
+      const article = articles.find((item) => item.id === sourceId);
+      if (!article) return;
+      setSectionForm((current) => ({
+        ...current,
+        section_type: 'article',
+        title: article.title,
+        content: {
+          ...current.content,
+          source_type: 'article',
+          source_id: article.id,
+          title: article.title,
+          description: article.excerpt || '',
+          background_image: article.featured_image || '',
+          href: `/blog/posts/${article.slug}`,
+        },
+      }));
+      return;
+    }
+
+    if (sourceType === 'store') {
+      const store = stores.find((item) => item.id === sourceId);
+      if (!store) return;
+      setSectionForm((current) => ({
+        ...current,
+        section_type: 'store',
+        title: store.name,
+        content: {
+          ...current.content,
+          source_type: 'store',
+          source_id: store.id,
+          title: store.name,
+          subtitle: store.city,
+          description: `${store.address} ${store.phone}`,
+          background_image: store.images?.[0] || '',
+          href: '/store',
+        },
+      }));
+    }
   };
 
   const saveHomepageSection = async () => {
@@ -830,6 +919,17 @@ export default function HomepageManagement() {
 
             <div className="space-y-6 px-6 py-5">
               <div className="grid gap-4 md:grid-cols-2">
+                <Field label="資料庫內容來源">
+                  <select
+                    value={sectionForm.content.source_type && sectionForm.content.source_id ? `${sectionForm.content.source_type}:${sectionForm.content.source_id}` : ''}
+                    onChange={(event) => selectContentSource(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  >
+                    <option value="">自訂 Banner / 一般區塊</option>
+                    {articles.length > 0 && <optgroup label="文章（資料庫）">{articles.map((article) => <option key={`article:${article.id}`} value={`article:${article.id}`}>{article.title}</option>)}</optgroup>}
+                    {stores.length > 0 && <optgroup label="門市（資料庫）">{stores.map((store) => <option key={`store:${store.id}`} value={`store:${store.id}`}>{store.name}｜{store.city}</option>)}</optgroup>}
+                  </select>
+                </Field>
                 <Field label="區塊類型">
                   <select
                     value={sectionForm.section_type}
@@ -837,9 +937,12 @@ export default function HomepageManagement() {
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
                   >
                     <option value="hero">首頁主視覺</option>
+                    <option value="banner">Banner</option>
                     <option value="shop">商品介紹</option>
+                    <option value="article">文章</option>
                     <option value="story">品牌故事</option>
                     <option value="video">影音區塊</option>
+                    <option value="store">門市</option>
                     <option value="contact">客服中心</option>
                   </select>
                 </Field>

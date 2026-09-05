@@ -8,6 +8,7 @@ import { useSEO } from '../hooks/useSEO';
 import { useLanguage } from '../contexts/LanguageContext';
 import { localBusinessSchema, organizationSchema, websiteSchema } from '../utils/schemaMarkup';
 import { getOptimizedProductImage } from '../utils/optimizedImages';
+import HomepageVisual from '../components/HomepageVisual';
 import {
   HomepageSection,
   HomepageSectionContent,
@@ -35,6 +36,16 @@ interface HomepageProductRow {
   slug: string;
   summary?: string;
   images?: string[];
+  is_active?: boolean;
+}
+
+interface HomepageStoreRow {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  phone: string;
+  images?: string[] | null;
   is_active?: boolean;
 }
 
@@ -210,6 +221,7 @@ export default function Homepage() {
   const [activeSection, setActiveSection] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set([0]));
   const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [storeSections, setStoreSections] = useState<HomepageSection[]>([]);
   const [heroBlocks, setHeroBlocks] = useState<HomepageHeroBlock[]>([]);
   const [heroProducts, setHeroProducts] = useState<HomepageHeroProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -255,6 +267,7 @@ export default function Homepage() {
   const loadHomepageData = async (isCancelled: () => boolean) => {
     if (!isSupabaseContentEnabled || isCancelled()) {
       setSections([]);
+      setStoreSections([]);
       setHeroBlocks([]);
       setHeroProducts([]);
       setLoading(false);
@@ -263,9 +276,52 @@ export default function Homepage() {
 
     await Promise.allSettled([
       loadSections(isCancelled),
+      loadStores(isCancelled),
       loadHeroBlocks(isCancelled),
       loadHeroProducts(isCancelled),
     ]);
+  };
+
+  const loadStores = async (isCancelled: () => boolean) => {
+    try {
+      const { data, error } = await withRequestTimeout(
+        supabase
+          .from('stores')
+          .select('id,name,city,address,phone,images,is_active')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+          .limit(3)
+      );
+
+      if (error) throw error;
+      if (isCancelled()) return;
+
+      const transformedStores = ((data || []) as HomepageStoreRow[]).map((store, index) => ({
+        id: `store-${store.id}`,
+        label: '門市據點',
+        subtitle: store.city,
+        title: store.name,
+        number: String(index + 1).padStart(2, '0'),
+        section_type: 'store',
+        content: {
+          label: '門市據點',
+          subtitle: store.city,
+          title: store.name,
+          description: `${store.address}｜${store.phone}`,
+          background_image: store.images?.[0] || '',
+          href: '/store',
+        },
+        background_image: store.images?.[0] || '',
+        description: `${store.address}｜${store.phone}`,
+      }));
+
+      setStoreSections(transformedStores);
+    } catch (error) {
+      if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
+        console.warn('Using fallback homepage stores:', error);
+      }
+      setStoreSections([]);
+    }
   };
 
   const loadSections = async (isCancelled: () => boolean) => {
@@ -348,14 +404,15 @@ export default function Homepage() {
   };
 
   const stageSections = useMemo(() => {
+    const homepageSections = [...sections.filter((section) => section.section_type !== 'store'), ...storeSections];
     const resolvedBlocks = heroBlocks
       .filter((block) => block.is_active !== false)
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((block) => resolveHomepageHeroBlock(block, heroProducts))
       .filter((block): block is ResolvedHomepageHeroBlock => Boolean(block));
 
-    const heroSection = sections.find((section) => section.section_type === 'hero') || null;
-    const chapterSections = sections.filter((section) => section !== heroSection);
+    const heroSection = homepageSections.find((section) => section.section_type === 'hero') || null;
+    const chapterSections = homepageSections.filter((section) => section !== heroSection);
 
     if (resolvedBlocks.length > 0) {
       const heroProductSections = resolvedBlocks.map((block, index): HomepageSection => ({
@@ -380,11 +437,11 @@ export default function Homepage() {
           background_image: block.image,
           description: block.description,
         }));
-      return heroSection ? [...heroProductSections, ...chapterSections] : [...heroProductSections, ...sections];
+      return heroSection ? [...heroProductSections, ...chapterSections] : [...heroProductSections, ...homepageSections];
     }
 
-    return heroSection ? [heroSection, ...chapterSections] : sections;
-  }, [heroBlocks, heroProducts, sections]);
+    return heroSection ? [heroSection, ...chapterSections] : homepageSections;
+  }, [heroBlocks, heroProducts, sections, storeSections]);
 
   const localizedStageSections = useMemo(
     () =>
@@ -560,6 +617,8 @@ export default function Homepage() {
       </div>
     );
   }
+
+  return <HomepageVisual sections={localizedStageSections} />;
 
   return (
     <div className="ym-homepage overflow-x-hidden bg-[var(--sonpin-surface)] text-[var(--sonpin-ink)]">
