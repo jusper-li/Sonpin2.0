@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Coffee, Eye, EyeOff, KeyRound, Lock, Mail, User } from 'lucide-react';
+import { ArrowLeft, Egg, Eye, EyeOff, KeyRound, Lock, Mail, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { supabase } from '../lib/supabase';
@@ -296,7 +296,7 @@ export default function MemberAuth() {
       <div className="relative hidden overflow-hidden bg-[var(--sonpin-primary-warm)] lg:flex lg:w-1/2">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-30"
-          style={{ backgroundImage: 'url(https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=1200)' }}
+          style={{ backgroundImage: 'url(/member-login-chicken.png)' }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--sonpin-ink)]/70 via-[var(--sonpin-primary-soft)]/50 to-[var(--sonpin-primary-border)]/30" />
         <div className="relative z-10 flex w-full flex-col justify-between p-12">
@@ -307,22 +307,16 @@ export default function MemberAuth() {
           <div>
             <div className="mb-6 flex items-center gap-3">
               <div className="h-px w-10 bg-[var(--sonpin-primary-border)]" />
-              <Coffee className="h-5 w-5 text-[var(--sonpin-primary-border)]" />
+              <Egg className="h-5 w-5 text-[var(--sonpin-primary-border)]" />
             </div>
             <h2 className="mb-4 text-4xl font-light leading-snug text-[var(--sonpin-surface)]">
-              登入後，收藏與訂單都在這裡
+              登入後，安心選購優質土雞
               <br />
-              <span className="text-amber-300">會員登入後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。</span>
+              <span className="text-amber-300">會員登入後可查看最新訂單、會員資料與購物紀錄，享受更便利的購物體驗。</span>
             </h2>
             <p className="max-w-xs text-sm font-light leading-relaxed text-[var(--sonpin-background)]">
-              登入會員後可查看最新訂單、會員資料與購物紀錄，也可以更快完成結帳與重複購買。
+              嚴選在地放養土雞，從產地到餐桌都用心把關，為你提供新鮮安心的雞肉產品。
             </p>
-          </div>
-
-          <div className="flex items-center gap-8 text-xs uppercase tracking-widest text-[var(--sonpin-primary-border)]">
-            <span>Premium Coffee</span>
-            <span className="h-1 w-1 rounded-full bg-amber-500" />
-            <span>Since 2020</span>
           </div>
         </div>
       </div>
@@ -638,4 +632,3 @@ export default function MemberAuth() {
     </div>
   );
 }
-
