@@ -50,6 +50,7 @@ type OrderEmail = {
   shippingBreakdown?: ShippingBreakdownItem[];
   address: string;
   paymentMethod: string;
+  trackingNumber?: string;
 };
 
 type WelcomeEmail = {
@@ -69,11 +70,13 @@ type NotificationMailSettings = {
   contact_enabled: boolean;
   order_enabled: boolean;
   remittance_enabled: boolean;
+  shipped_enabled: boolean;
   customer_copy_enabled: boolean;
   contact_template: ContactNotificationTemplate;
   order_template: OrderNotificationTemplate;
   customer_order_template: CustomerOrderNotificationTemplate;
   remittance_template: RemittanceNotificationTemplate;
+  shipped_template: CustomerOrderNotificationTemplate;
 };
 
 type ContactNotificationTemplate = {
@@ -190,6 +193,21 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationMailSettings = {
     show_order_total: true,
     show_customer_name: true,
     show_customer_email: true,
+  },
+  shipped_template: {
+    admin_subject: "Sonpin 訂單已出貨：{{orderNumber}}",
+    admin_title: "訂單已出貨",
+    admin_intro: "您的訂單已完成出貨，以下是本次訂單與配送資訊。",
+    admin_note: "如有配送問題，歡迎聯繫客服中心。",
+    show_order_number: true,
+    show_customer_name: true,
+    show_customer_email: false,
+    show_address: true,
+    show_payment_method: false,
+    show_items: true,
+    show_totals: true,
+    show_shipping: true,
+    show_remittance_info: false,
   },
 };
 
@@ -367,6 +385,7 @@ function parseOrderEmail(data: Record<string, unknown>): OrderEmail {
     shipping: data.shipping === undefined || data.shipping === null ? undefined : requiredNumber(data.shipping, "data.shipping"),
     shippingMethod: optionalString(data.shippingMethod),
     shippingBreakdown,
+    trackingNumber: optionalString(data.trackingNumber),
     address: requiredString(data.address, "data.address"),
     paymentMethod: requiredString(data.paymentMethod, "data.paymentMethod"),
   };
@@ -397,11 +416,13 @@ function parseNotificationSettings(value: unknown): NotificationMailSettings {
     contact_enabled: settings.contact_enabled === undefined ? true : Boolean(settings.contact_enabled),
     order_enabled: settings.order_enabled === undefined ? true : Boolean(settings.order_enabled),
     remittance_enabled: settings.remittance_enabled === undefined ? true : Boolean(settings.remittance_enabled),
+    shipped_enabled: settings.shipped_enabled === undefined ? true : Boolean(settings.shipped_enabled),
     customer_copy_enabled: settings.customer_copy_enabled === undefined ? true : Boolean(settings.customer_copy_enabled),
     contact_template: parseTemplateObject(settings.contact_template, DEFAULT_NOTIFICATION_SETTINGS.contact_template),
     order_template: parseTemplateObject(settings.order_template, DEFAULT_NOTIFICATION_SETTINGS.order_template),
     customer_order_template: parseTemplateObject(settings.customer_order_template, DEFAULT_NOTIFICATION_SETTINGS.customer_order_template),
     remittance_template: parseTemplateObject(settings.remittance_template, DEFAULT_NOTIFICATION_SETTINGS.remittance_template),
+    shipped_template: parseTemplateObject(settings.shipped_template, DEFAULT_NOTIFICATION_SETTINGS.shipped_template),
   };
 }
 
@@ -585,6 +606,18 @@ function generateContactAutoReply(data: ContactEmail) {
   `);
 }
 
+function generateContactReply(data: { name: string; subject: string; message: string }) {
+  return wrapEmail(`
+    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">客服中心回覆</p>
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">您好，${escapeHtml(data.name)}</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">關於您的詢問：「${escapeHtml(data.subject)}」</p>
+    <div style="margin:0 0 16px 0;padding:16px 20px;border-radius:10px;background:#faf9f7;border:1px solid #eee7dc;">
+      <p style="margin:0;white-space:pre-wrap;color:#1c1917;line-height:1.8;">${escapeHtml(data.message)}</p>
+    </div>
+    <p style="color:#57534e;line-height:1.8;margin:0;">如需進一步協助，歡迎直接回覆此信或再次聯絡客服中心。</p>
+  `);
+}
+
 function generateContactAdminNotify(data: ContactEmail, template: ContactNotificationTemplate) {
   const fields = [
     template.show_name ? { label: "姓名", value: data.name, link: false } : null,
@@ -627,7 +660,7 @@ function generateContactAdminNotify(data: ContactEmail, template: ContactNotific
   `);
 }
 
-function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerOrderNotificationTemplate) {
+function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerOrderNotificationTemplate, sectionLabel = "客戶訂單通知") {
   const itemRows = data.items
     .map(
       (item) => `
@@ -644,7 +677,7 @@ function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerO
   const shippingMethod = data.shippingMethod || "銀行轉帳";
 
   return wrapEmail(`
-    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">客戶訂單通知</p>
+    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">${escapeHtml(sectionLabel)}</p>
     <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 4px 0;">${escapeHtml(template.admin_title)}</h2>
     <p style="color:#57534e;line-height:1.8;margin:0 0 16px 0;">${escapeHtml(template.admin_intro)}</p>
 
@@ -657,10 +690,14 @@ function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerO
 
     ${template.show_items ? `<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th><th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th><th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th></tr>${itemRows}<tr><td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td><td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td></tr><tr><td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td><td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td></tr><tr><td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td><td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td></tr></table>` : ""}
 
-    ${template.show_shipping ? `<p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p><p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>運費明細：</strong>${formatMoney(shipping)}</p>${renderShippingBreakdown(data.shippingBreakdown || [])}` : ""}
+    ${template.show_shipping ? `<p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p><p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>運費明細：</strong>${formatMoney(shipping)}</p>${data.trackingNumber ? `<p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>託運編號：</strong>${escapeHtml(data.trackingNumber)}</p>` : ''}${renderShippingBreakdown(data.shippingBreakdown || [])}` : ""}
     ${template.show_remittance_info ? renderRemittanceSection() : ""}
     ${template.admin_note ? `<p style="color:#78716c;line-height:1.8;margin:16px 0 0 0;font-size:13px;">${escapeHtml(template.admin_note)}</p>` : ""}
   `);
+}
+
+function generateShippedOrderNotification(data: OrderEmail, template: CustomerOrderNotificationTemplate) {
+  return generateCustomerOrderConfirmation(data, { ...template, show_remittance_info: false }, "已出貨通知");
 }
 
 function generateOrderAdminNotify(data: OrderEmail, template: OrderNotificationTemplate) {
@@ -814,6 +851,18 @@ Deno.serve(async (req: Request) => {
         ]);
         break;
       }
+      case "contact_reply": {
+        const email = requiredEmail(data.email, "data.email");
+        const name = requiredString(data.name, "data.name");
+        const subject = requiredString(data.subject, "data.subject");
+        const message = requiredString(data.message, "data.message");
+        await sendEmail({
+          to: email,
+          subject: `Sonpin 客服回覆：${subject}`,
+          html: generateContactReply({ name, subject, message }),
+        });
+        break;
+      }
       case "order_confirmation": {
         const order = parseOrderEmail(data);
         const adminSubject = renderTemplate(notificationSettings.order_template.admin_subject, {
@@ -848,6 +897,26 @@ Deno.serve(async (req: Request) => {
               })
             : Promise.resolve(),
         ]);
+        break;
+      }
+      case "order_shipped": {
+        const order = parseOrderEmail(data);
+        if (!notificationSettings.shipped_enabled) break;
+
+        const subject = renderTemplate(notificationSettings.shipped_template.admin_subject, {
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          address: order.address,
+          paymentMethod: paymentMethodLabel(order.paymentMethod),
+          total: formatMoney(order.total),
+        }).trim() || `Sonpin 訂單已出貨 ${order.orderNumber}`;
+
+        await sendEmail({
+          to: order.customerEmail,
+          subject,
+          html: generateShippedOrderNotification(order, notificationSettings.shipped_template),
+        });
         break;
       }
       case "welcome": {

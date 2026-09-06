@@ -29,19 +29,19 @@ const ABOUT_FALLBACK: StaticPageData = {
 };
 
 export default function AboutPage() {
-  const { currentLanguage } = useLanguage();
+  const { currentLanguage, t } = useLanguage();
   const [sourcePage, setSourcePage] = useState<StaticPageData | null>(null);
   const [page, setPage] = useState<StaticPageData>(ABOUT_FALLBACK);
   const [loading, setLoading] = useState(true);
   const [translating, setTranslating] = useState(false);
 
   useSEO({
-    title: page?.title || '關於淞品',
-    description: page?.meta_description || '認識淞品土雞專賣店的品牌理念、故事與堅持。',
-    keywords: '關於淞品,品牌故事,淞品土雞,土雞專賣店',
+    title: page?.title || t('about.title', '關於淞品'),
+    description: page?.meta_description || t('about.description', '認識淞品土雞專賣店的品牌理念、故事與堅持。'),
+    keywords: t('about.keywords', '關於淞品,品牌故事,淞品土雞,土雞專賣店'),
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '關於淞品', url: `${window.location.origin}/about` },
+      { name: t('common.home', '首頁'), url: window.location.origin },
+      { name: t('about.title', '關於淞品'), url: `${window.location.origin}/about` },
     ]),
   });
 
@@ -110,7 +110,7 @@ export default function AboutPage() {
       <div className="min-h-screen flex flex-col bg-[var(--sonpin-background)]">
         <SiteHeader />
         <main className="flex-1">
-          <section className="container mx-auto px-6 py-24 text-stone-500">載入中…</section>
+      <section className="container mx-auto px-6 py-24 text-stone-500">{t('common.loading', '載入中…')}</section>
         </main>
         <DeferredSiteFooter />
       </div>
@@ -126,17 +126,17 @@ export default function AboutPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <div className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">關於淞品</span>
+              <span className="text-stone-700">{t('about.title', '關於淞品')}</span>
             </div>
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">About</p>
+            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[var(--sonpin-primary)]/80">{t('about.eyebrow', 'About Sonpin')}</p>
             <h1 className="max-w-3xl text-4xl font-light leading-tight tracking-[0.16em] text-stone-900 md:text-6xl">
               {page.title}
             </h1>
             <p className="mt-7 max-w-2xl text-sm font-light leading-8 text-stone-500">{page.meta_description}</p>
-            {translating && <p className="mt-4 text-xs tracking-[0.18em] text-stone-400">翻譯中…</p>}
+            {translating && <p className="mt-4 text-xs tracking-[0.18em] text-stone-400">{t('common.translating', '翻譯中…')}</p>}
           </div>
         </section>
 
@@ -167,7 +167,7 @@ export default function AboutPage() {
               <div key={section.title} className="space-y-6">
                 <div className="relative overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-6 py-6 text-left shadow-[0_18px_45px_-30px_rgba(53,30,13,0.45)] md:px-8">
                   <span className="absolute left-0 top-6 h-10 w-1 rounded-r-full bg-[var(--sonpin-primary-warm)]" aria-hidden="true" />
-                  <p className="mb-2 pl-1 text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--sonpin-primary)]/70">About Sonpin</p>
+                  <p className="mb-2 pl-1 text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--sonpin-primary)]/70">{t('about.eyebrow', 'About Sonpin')}</p>
                   <h2 className="pl-1 text-lg font-medium leading-relaxed tracking-[0.05em] text-[var(--sonpin-ink)] md:text-xl">{section.title}</h2>
                 </div>
                 <StaticContent

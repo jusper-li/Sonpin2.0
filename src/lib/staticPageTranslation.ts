@@ -21,7 +21,7 @@ interface TranslateResponse {
   translation?: string;
 }
 
-const STATIC_PAGE_TRANSLATION_CACHE_KEY = 'ym-static-page-i18n-v1';
+const STATIC_PAGE_TRANSLATION_CACHE_KEY = 'ym-static-page-i18n-v2';
 
 const hasHtml = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
@@ -81,6 +81,29 @@ const translateText = async (
   return remoteTranslation || sourceText;
 };
 
+const translateHtmlContent = async (key: string, sourceText: string, targetLanguage: SupportedLanguage) => {
+  // Long imported pages can exceed the translation function's payload limit.
+  // Translate table rows and paragraph blocks independently while preserving HTML.
+  const blockPattern = /<(tr|p|li|h[1-6])\b[^>]*>[\s\S]*?<\/\1>/gi;
+  const blocks = [...sourceText.matchAll(blockPattern)];
+  if (blocks.length < 2) {
+    return translateText(key, sourceText, targetLanguage, true);
+  }
+
+  const translatedBlocks = await Promise.all(
+    blocks.map((match, index) => translateText(`${key}:block:${index}`, match[0], targetLanguage, true)),
+  );
+  let cursor = 0;
+  let output = '';
+  blocks.forEach((match, index) => {
+    const start = match.index ?? cursor;
+    output += sourceText.slice(cursor, start);
+    output += translatedBlocks[index];
+    cursor = start + match[0].length;
+  });
+  return output + sourceText.slice(cursor);
+};
+
 export const shouldTranslateStaticPage = (lang: string) =>
   pickByLang(normalizeLang(lang), false, true, true, true);
 
@@ -108,12 +131,9 @@ export const translateStaticPage = async (
     translateText(`${cacheKey}:meta_description`, page.meta_description || page.title, normalizedLang),
     ...page.sections.flatMap((section, index) => [
       translateText(`${cacheKey}:section:${index}:title`, section.title, normalizedLang),
-      translateText(
-        `${cacheKey}:section:${index}:content`,
-        section.content,
-        normalizedLang,
-        hasHtml(section.content),
-      ),
+      hasHtml(section.content)
+        ? translateHtmlContent(`${cacheKey}:section:${index}:content`, section.content, normalizedLang)
+        : translateText(`${cacheKey}:section:${index}:content`, section.content, normalizedLang),
     ]),
   ]);
 

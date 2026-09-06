@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, BadgeInfo, CalendarDays, CheckCircle2, Clock3, Copy, Search, ShieldCheck, Truck } from 'lucide-react';
 import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { REMITTANCE_INFO } from '../data/remittanceInfo';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type OrderItem = {
   product_name: string;
@@ -44,27 +45,6 @@ type TimelineStep = {
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
-const paymentStatusLabel: Record<string, string> = {
-  paid: '已付款',
-  pending: '待付款',
-  unpaid: '未付款',
-  failed: '付款失敗',
-};
-
-const orderStatusLabel: Record<string, string> = {
-  pending: '待處理',
-  processing: '處理中',
-  completed: '已完成',
-  cancelled: '已取消',
-};
-
-const shippingStatusLabel: Record<string, string> = {
-  ready_to_ship: '備貨中',
-  shipped: '已出貨',
-  delivered: '已送達',
-  returned: '已退回',
-};
-
 const statusTone = (value?: string | null) => {
   const normalized = (value || '').toLowerCase();
   if (normalized === 'paid' || normalized === 'completed' || normalized === 'shipped' || normalized === 'delivered') {
@@ -79,6 +59,7 @@ const statusTone = (value?: string | null) => {
 const copyButtonLabel = (state: 'idle' | 'copied') => (state === 'copied' ? '已複製訂單編號' : '複製訂單編號');
 
 export default function OrderInquiry() {
+  const { t, currentLanguage } = useLanguage();
   const [searchParams] = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order_number') || '');
   const [verifier, setVerifier] = useState(searchParams.get('contact') || '');
@@ -89,10 +70,11 @@ export default function OrderInquiry() {
     order: OrderLookupResult;
     items: OrderItem[];
   } | null>(null);
+  const autoLookupDone = useRef(false);
 
   useEffect(() => {
-    document.title = '訂單查詢｜淞品土雞專賣店';
-  }, []);
+    document.title = `${t('order.inquiry.title', '訂單查詢')}｜淞品土雞專賣店`;
+  }, [t]);
 
   const subtotal = Number(result?.order.subtotal || 0);
   const shipping = Number(result?.order.shipping || 0);
@@ -106,8 +88,9 @@ export default function OrderInquiry() {
   const timeline = useMemo<TimelineStep[]>(() => {
     if (!result) return [];
 
-    const createdAt = result.order.created_at ? new Date(result.order.created_at).toLocaleString('zh-TW') : '';
-    const completedAt = result.order.completed_at ? new Date(result.order.completed_at).toLocaleString('zh-TW') : '';
+    const locale = currentLanguage === 'zh-TW' ? 'zh-TW' : currentLanguage === 'ja' ? 'ja-JP' : currentLanguage === 'ko' ? 'ko-KR' : 'en-US';
+    const createdAt = result.order.created_at ? new Date(result.order.created_at).toLocaleString(locale) : '';
+    const completedAt = result.order.completed_at ? new Date(result.order.completed_at).toLocaleString(locale) : '';
     const paymentStatus = (result.order.payment_status || '').toLowerCase();
     const shippingStatus = (result.order.shipping_status || '').toLowerCase();
     const orderStatus = (result.order.status || '').toLowerCase();
@@ -118,30 +101,34 @@ export default function OrderInquiry() {
 
     return [
       {
-        title: '訂單已建立',
-        description: '系統已收到您的訂單資料。',
+        title: t('order.timeline.created', '訂單已建立'),
+        description: t('order.timeline.createdDescription', '系統已收到您的訂單資料。'),
         state: 'done',
         time: createdAt,
       },
       {
-        title: '付款確認',
-        description: paymentDone ? '已確認匯款或付款成功。' : '等待匯款通知或付款確認。',
+        title: t('order.timeline.payment', '付款確認'),
+        description: paymentDone ? t('order.timeline.paymentDone', '已確認匯款或付款成功。') : t('order.timeline.paymentPending', '等待匯款通知或付款確認。'),
         state: paymentDone ? 'done' : 'active',
         time: paymentDone ? completedAt || createdAt : undefined,
       },
       {
-        title: '出貨處理',
-        description: shippingDone ? '訂單已出貨，配送中。' : '備貨完成後將安排出貨。',
+        title: t('order.timeline.shipping', '出貨處理'),
+        description: shippingDone ? t('order.timeline.shippingDone', '訂單已出貨，配送中。') : t('order.timeline.shippingPending', '備貨完成後將安排出貨。'),
         state: shippingDone ? 'done' : paymentDone ? 'active' : 'pending',
       },
       {
-        title: '訂單完成',
-        description: orderDone ? '訂單已完成。' : '送達後將更新完成狀態。',
+        title: t('order.timeline.completed', '訂單完成'),
+        description: orderDone ? t('order.timeline.completedDone', '訂單已完成。') : t('order.timeline.completedPending', '送達後將更新完成狀態。'),
         state: orderDone ? 'done' : shippingDone ? 'active' : 'pending',
         time: completedAt || undefined,
       },
     ];
-  }, [result]);
+  }, [currentLanguage, result, t]);
+
+  const paymentStatusLabel = (status?: string | null) => t(`order.paymentStatus.${(status || '').toLowerCase()}`, status || t('common.unknown', '未知'));
+  const orderStatusLabel = (status?: string | null) => t(`order.status.${(status || '').toLowerCase()}`, status || '—');
+  const shippingStatusLabel = (status?: string | null) => t(`order.shippingStatus.${(status || '').toLowerCase()}`, status || '—');
 
   const copyOrderNumber = async () => {
     const text = result?.order.order_number || orderNumber;
@@ -179,6 +166,9 @@ export default function OrderInquiry() {
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
+        if (response.status === 404 && payload?.message === 'Requested function was not found') {
+          throw new Error('訂單查詢服務尚未部署，請聯絡管理員。');
+        }
         throw new Error(payload?.error || '查詢失敗');
       }
 
@@ -190,6 +180,12 @@ export default function OrderInquiry() {
     }
   };
 
+  useEffect(() => {
+    if (searchParams.get('auto') !== '1' || !canSearch || autoLookupDone.current) return;
+    autoLookupDone.current = true;
+    void handleSubmit({ preventDefault: () => undefined } as FormEvent<HTMLFormElement>);
+  }, [canSearch, searchParams]);
+
   return (
     <div className="min-h-screen flex flex-col bg-stone-50">
       <SiteHeader />
@@ -199,18 +195,18 @@ export default function OrderInquiry() {
             <div className="mb-6 flex items-center gap-3 text-sm text-stone-500">
               <Link to="/" className="inline-flex items-center gap-2 transition-colors hover:text-stone-700">
                 <ArrowLeft className="h-4 w-4" />
-                返回首頁
+                {t('common.backHome', '返回首頁')}
               </Link>
               <span className="text-stone-300">/</span>
-              <span>訂單查詢</span>
+              <span>{t('order.inquiry.title', '訂單查詢')}</span>
             </div>
 
             <section className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-white shadow-sm">
               <div className="border-b border-[var(--sonpin-primary-border)] bg-[linear-gradient(135deg,var(--sonpin-background)_0%,var(--sonpin-surface)_100%)] px-6 py-8 md:px-8">
                 <p className="mb-2 text-xs tracking-[0.28em] text-[var(--sonpin-primary)] uppercase">Order Lookup</p>
-                <h1 className="text-3xl font-light tracking-[0.08em] text-stone-800 md:text-4xl">訂單查詢</h1>
+                <h1 className="text-3xl font-light tracking-[0.08em] text-stone-800 md:text-4xl">{t('order.inquiry.title', '訂單查詢')}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
-                  非會員也可以查詢訂單。請輸入「訂單編號」與「下單時使用的 Email 或手機號碼」。
+                  {t('order.inquiry.description', '非會員也可以查詢訂單。請輸入「訂單編號」與「下單時使用的 Email 或手機號碼」。')}
                 </p>
               </div>
 
@@ -218,24 +214,24 @@ export default function OrderInquiry() {
                 <section className="space-y-6">
                   <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] p-6">
                     <div>
-                      <label className="mb-2 block text-xs tracking-[0.18em] text-stone-500 uppercase">訂單編號</label>
+                        <label className="mb-2 block text-xs tracking-[0.18em] text-stone-500 uppercase">{t('order.inquiry.orderNumber', '訂單編號')}</label>
                       <input
                         type="text"
                         value={orderNumber}
                         onChange={(event) => setOrderNumber(event.target.value)}
-                        placeholder="例如：ORD-1784014376030"
+                        placeholder={t('order.inquiry.orderNumberPlaceholder', '例如：ORD-1784014376030')}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[var(--sonpin-primary)] focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/50"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-xs tracking-[0.18em] text-stone-500 uppercase">驗證資料（Email 或手機）</label>
+                        <label className="mb-2 block text-xs tracking-[0.18em] text-stone-500 uppercase">{t('order.inquiry.verifier', '驗證資料（Email 或手機）')}</label>
                       <input
                         type="text"
                         value={verifier}
                         onChange={(event) => setVerifier(event.target.value)}
-                        placeholder="例如：k286336@gmail.com 或 0912345678"
+                        placeholder={t('order.inquiry.verifierPlaceholder', '例如：k286336@gmail.com 或 0912345678')}
                         className="w-full rounded-xl border border-[var(--sonpin-primary-border)] bg-white px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-[var(--sonpin-primary)] focus:ring-2 focus:ring-[var(--sonpin-primary-border)]/50"
                         required
                       />
@@ -255,12 +251,12 @@ export default function OrderInquiry() {
                       {loading ? (
                         <>
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          查詢中...
+                          {t('order.inquiry.loading', '查詢中...')}
                         </>
                       ) : (
                         <>
                           <Search className="h-4 w-4" />
-                          查詢訂單
+                          {t('order.inquiry.search', '查詢訂單')}
                         </>
                       )}
                     </button>
@@ -271,12 +267,12 @@ export default function OrderInquiry() {
                       <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <p className="text-xs tracking-[0.18em] text-stone-400 uppercase">查詢結果</p>
-                            <h2 className="mt-1 text-2xl font-light text-stone-900">訂單 {result.order.order_number}</h2>
+                            <p className="text-xs tracking-[0.18em] text-stone-400 uppercase">{t('order.inquiry.result', '查詢結果')}</p>
+                            <h2 className="mt-1 text-2xl font-light text-stone-900">{t('order.inquiry.orderPrefix', '訂單')} {result.order.order_number}</h2>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${statusTone(result.order.payment_status)}`}>
-                              {paymentStatusLabel[(result.order.payment_status || '').toLowerCase()] || result.order.payment_status || '未知'}
+                              {paymentStatusLabel(result.order.payment_status)}
                             </span>
                             <button
                               type="button"
@@ -284,21 +280,21 @@ export default function OrderInquiry() {
                               className="inline-flex items-center gap-2 rounded-full border border-[var(--sonpin-primary-border)] px-3 py-1 text-xs font-medium text-[var(--sonpin-primary)] transition hover:bg-[var(--sonpin-background)]"
                             >
                               <Copy className="h-3.5 w-3.5" />
-                              {copyButtonLabel(copyState)}
+                              {copyState === 'copied' ? t('order.inquiry.copied', '已複製訂單編號') : t('order.inquiry.copy', '複製訂單編號')}
                             </button>
                           </div>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                          <InfoCard icon={<CalendarDays className="h-4 w-4" />} label="訂單日期" value={result.order.created_at ? new Date(result.order.created_at).toLocaleString('zh-TW') : '—'} />
-                          <InfoCard icon={<ShieldCheck className="h-4 w-4" />} label="訂單狀態" value={orderStatusLabel[(result.order.status || '').toLowerCase()] || result.order.status || '—'} />
-                          <InfoCard icon={<CheckCircle2 className="h-4 w-4" />} label="付款狀態" value={paymentStatusLabel[(result.order.payment_status || '').toLowerCase()] || result.order.payment_status || '—'} />
-                          <InfoCard icon={<Truck className="h-4 w-4" />} label="出貨狀態" value={shippingStatusLabel[(result.order.shipping_status || '').toLowerCase()] || result.order.shipping_status || '—'} />
+                          <InfoCard icon={<CalendarDays className="h-4 w-4" />} label={t('order.inquiry.orderDate', '訂單日期')} value={result.order.created_at ? new Date(result.order.created_at).toLocaleString(currentLanguage === 'zh-TW' ? 'zh-TW' : currentLanguage === 'ja' ? 'ja-JP' : currentLanguage === 'ko' ? 'ko-KR' : 'en-US') : '—'} />
+                          <InfoCard icon={<ShieldCheck className="h-4 w-4" />} label={t('order.inquiry.orderStatus', '訂單狀態')} value={orderStatusLabel(result.order.status)} />
+                          <InfoCard icon={<CheckCircle2 className="h-4 w-4" />} label={t('order.inquiry.paymentStatus', '付款狀態')} value={paymentStatusLabel(result.order.payment_status)} />
+                          <InfoCard icon={<Truck className="h-4 w-4" />} label={t('order.inquiry.shippingStatus', '出貨狀態')} value={shippingStatusLabel(result.order.shipping_status)} />
                         </div>
                       </section>
 
                       <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
-                        <h3 className="mb-4 text-lg font-semibold text-stone-900">訂單進度時間軸</h3>
+                        <h3 className="mb-4 text-lg font-semibold text-stone-900">{t('order.inquiry.timeline', '訂單進度時間軸')}</h3>
                         <div className="space-y-4">
                           {timeline.map((step, index) => (
                             <div key={step.title} className="flex gap-4">
@@ -327,7 +323,7 @@ export default function OrderInquiry() {
                       </section>
 
                       <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
-                        <h3 className="mb-4 text-lg font-semibold text-stone-900">訂單明細</h3>
+                        <h3 className="mb-4 text-lg font-semibold text-stone-900">{t('order.inquiry.details', '訂單明細')}</h3>
                         <div className="space-y-4">
                           {result.items.map((item, index) => (
                             <div key={`${item.product_name}-${index}`} className="flex flex-col gap-2 rounded-2xl bg-stone-50 p-4 sm:flex-row sm:items-start sm:justify-between">
@@ -344,37 +340,37 @@ export default function OrderInquiry() {
 
                         <div className="mt-6 grid gap-3 border-t border-stone-100 pt-5 text-sm text-stone-700 sm:grid-cols-2">
                           <div className="flex items-center justify-between">
-                            <span>商品小計</span>
+                            <span>{t('checkout.subtotal', '商品小計')}</span>
                             <span>{formatCurrency(subtotal)}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span>運費</span>
+                            <span>{t('checkout.shipping', '運費')}</span>
                             <span>{formatCurrency(shipping)}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span>配送方式</span>
+                            <span>{t('checkout.shipping_method', '配送方式')}</span>
                             <span className="text-right">{result.order.shipping_method || '—'}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-stone-900">訂單總額</span>
+                            <span className="font-medium text-stone-900">{t('checkout.total', '訂單總額')}</span>
                             <span className="font-semibold text-stone-900">{formatCurrency(total)}</span>
                           </div>
                         </div>
                       </section>
 
                       <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
-                        <h3 className="mb-4 text-lg font-semibold text-stone-900">收件與聯絡資訊</h3>
+                        <h3 className="mb-4 text-lg font-semibold text-stone-900">{t('order.inquiry.contactInfo', '收件與聯絡資訊')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
-                          <InfoCard label="訂購人" value={result.order.customer_name || '—'} />
+                          <InfoCard label={t('order.inquiry.customer', '訂購人')} value={result.order.customer_name || '—'} />
                           <InfoCard label="Email" value={result.order.customer_email || '—'} />
-                          <InfoCard label="電話" value={result.order.customer_phone || '—'} />
-                          <InfoCard label="收件人" value={result.order.recipient_name || '—'} />
-                          <InfoCard label="收件人電話" value={result.order.recipient_phone || '—'} />
-                          <InfoCard label="託運單號" value={result.order.tracking_number || '—'} />
+                          <InfoCard label={t('checkout.phone', '電話')} value={result.order.customer_phone || '—'} />
+                          <InfoCard label={t('order.inquiry.recipient', '收件人')} value={result.order.recipient_name || '—'} />
+                          <InfoCard label={t('order.inquiry.recipientPhone', '收件人電話')} value={result.order.recipient_phone || '—'} />
+                          <InfoCard label={t('order.inquiry.trackingNumber', '託運單號')} value={result.order.tracking_number || '—'} />
                         </div>
                         {result.order.notes ? (
                           <div className="mt-4 rounded-2xl bg-stone-50 p-4 text-sm leading-7 text-stone-600">
-                            <p className="mb-1 text-xs tracking-[0.18em] text-stone-400 uppercase">備註</p>
+                            <p className="mb-1 text-xs tracking-[0.18em] text-stone-400 uppercase">{t('checkout.notes', '備註')}</p>
                             <p>{result.order.notes}</p>
                           </div>
                         ) : null}
@@ -385,30 +381,30 @@ export default function OrderInquiry() {
 
                 <aside className="space-y-6">
                   <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-background)]/70 p-6">
-                    <p className="text-xs tracking-[0.2em] text-[var(--sonpin-primary)] uppercase">查詢說明</p>
+                    <p className="text-xs tracking-[0.2em] text-[var(--sonpin-primary)] uppercase">{t('order.inquiry.instructions', '查詢說明')}</p>
                     <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
-                      <li>1. 先找出訂單成立後收到的訂單編號。</li>
-                      <li>2. 輸入下單時使用的 Email 或手機號碼。</li>
-                      <li>3. 查詢成功後可看到訂單明細、付款與出貨進度。</li>
+                      <li>1. {t('order.inquiry.instruction1', '先找出訂單成立後收到的訂單編號。')}</li>
+                      <li>2. {t('order.inquiry.instruction2', '輸入下單時使用的 Email 或手機號碼。')}</li>
+                      <li>3. {t('order.inquiry.instruction3', '查詢成功後可看到訂單明細、付款與出貨進度。')}</li>
                     </ul>
                   </section>
 
                   <section className="rounded-2xl border border-[var(--sonpin-primary-border)] bg-white p-6 shadow-sm">
                     <div className="mb-4 flex items-center gap-2">
                       <BadgeInfo className="h-4 w-4 text-[var(--sonpin-primary)]" />
-                      <h3 className="text-base font-semibold text-stone-900">匯款資訊</h3>
+                      <h3 className="text-base font-semibold text-stone-900">{t('remittance.title', '匯款資訊')}</h3>
                     </div>
                     <div className="space-y-2 text-sm leading-7 text-stone-600">
-                      <p>銀行：{REMITTANCE_INFO.bankName}</p>
-                      <p>銀行代碼：{REMITTANCE_INFO.bankCode}</p>
-                      <p>帳號：{REMITTANCE_INFO.accountNumber}</p>
-                      <p>戶名：{REMITTANCE_INFO.accountName}</p>
+                      <p>{t('remittance.bank', '銀行')}：{REMITTANCE_INFO.bankName}</p>
+                      <p>{t('remittance.bankCode', '銀行代碼')}：{REMITTANCE_INFO.bankCode}</p>
+                      <p>{t('remittance.account', '帳號')}：{REMITTANCE_INFO.accountNumber}</p>
+                      <p>{t('remittance.accountName', '戶名')}：{REMITTANCE_INFO.accountName}</p>
                     </div>
                     <Link
                       to="/remittance-notice"
                       className="mt-4 inline-flex items-center justify-center rounded-full border border-[var(--sonpin-primary-border)] px-4 py-2 text-sm font-medium text-[var(--sonpin-primary)] transition hover:bg-[var(--sonpin-background)]"
                     >
-                      前往匯款通知
+                      {t('remittance.go', '前往匯款通知')}
                     </Link>
                   </section>
                 </aside>

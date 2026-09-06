@@ -22,6 +22,7 @@ import {
   normalizeHomepageHeroBlocks,
   ResolvedHomepageHeroBlock,
   resolveHomepageHeroBlock,
+  getDefaultHomepageCustomBanners,
 } from '../data/homepageHeroBlocks';
 
 interface HomepageSectionRow {
@@ -268,7 +269,7 @@ export default function Homepage() {
     if (!isSupabaseContentEnabled || isCancelled()) {
       setSections([]);
       setStoreSections([]);
-      setHeroBlocks([]);
+      setHeroBlocks(getDefaultHomepageCustomBanners());
       setHeroProducts([]);
       setLoading(false);
       return;
@@ -372,12 +373,16 @@ export default function Homepage() {
       if (error) throw error;
       if (isCancelled()) return;
       const nextBlocks = normalizeHomepageHeroBlocks(data?.setting_value);
+      if (nextBlocks.length === 0 && !data) {
+        setHeroBlocks(getDefaultHomepageCustomBanners());
+        return;
+      }
       setHeroBlocks(nextBlocks);
     } catch (error) {
       if (!isMissingSupabaseTableError(error) && !isHomepageTimeoutError(error)) {
         console.warn('Using fallback homepage hero blocks:', error);
       }
-      setHeroBlocks([]);
+      setHeroBlocks(getDefaultHomepageCustomBanners());
     }
   };
 

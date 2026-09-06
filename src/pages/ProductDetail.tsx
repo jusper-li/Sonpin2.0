@@ -51,6 +51,7 @@ interface Product {
   images: string[];
   specifications: Array<{ name: string; value?: string; options?: string[] }>;
   stock: number;
+  is_unlimited_stock: boolean;
   sku: string;
   category_id: string;
   seo_title: string | null;
@@ -657,7 +658,7 @@ export default function ProductDetail() {
     : product.sale_price
       ? t('product.detail.price.sale', '特價')
       : t('product.detail.price.regular', '一般售價');
-  const inStock = product.stock > 0;
+  const inStock = product.is_unlimited_stock || product.stock > 0;
   const storeOnly = isStoreOnlyProduct(product);
   const purchaseUnavailableLabel = t('product.detail.storeOnly', '僅供門市販售');
 
@@ -837,8 +838,8 @@ export default function ProductDetail() {
                       {quantity}
                     </span>
                     <button
-                      onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))}
-                      disabled={storeOnly || quantity >= product.stock}
+                      onClick={() => setQuantity((current) => product.is_unlimited_stock ? current + 1 : Math.min(product.stock, current + 1))}
+                      disabled={storeOnly || (!product.is_unlimited_stock && quantity >= product.stock)}
                       className="flex h-11 w-11 items-center justify-center text-stone-500 transition-colors hover:bg-stone-50 active:bg-stone-100 disabled:opacity-30"
                       aria-label={t('product.detail.increaseQty', '增加數量')}
                     >
@@ -1057,4 +1058,3 @@ export default function ProductDetail() {
     </div>
   );
 }
-

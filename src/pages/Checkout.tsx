@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 import { useShippingQuote } from '../hooks/useShippingQuote';
+import { useMemberAuth } from '../contexts/MemberAuthContext';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
@@ -16,6 +17,7 @@ export default function Checkout() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
+  const { user, profile, session } = useMemberAuth();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
   const submitLockRef = useRef(false);
@@ -23,9 +25,13 @@ export default function Checkout() {
     name: '',
     email: '',
     phone: '',
+    contactAddress: '',
+    contactCity: '',
+    contactPostalCode: '',
     address: '',
     city: '',
     postalCode: '',
+    sameAsContact: false,
     paymentMethod: 'bank_transfer',
     notes: '',
   });
@@ -35,6 +41,19 @@ export default function Checkout() {
       navigate('/cart');
     }
   }, [items, navigate]);
+
+  useEffect(() => {
+    const metadata = user?.user_metadata || {};
+    setFormData((current) => ({
+      ...current,
+      name: current.name || profile?.display_name || metadata.display_name || '',
+      email: current.email || user?.email || '',
+      phone: current.phone || profile?.phone || metadata.phone || '',
+      contactAddress: current.contactAddress || metadata.address || '',
+      contactCity: current.contactCity || metadata.city || '',
+      contactPostalCode: current.contactPostalCode || metadata.postal_code || metadata.postalCode || '',
+    }));
+  }, [user, profile]);
 
   const paymentOptions = [
     { value: 'bank_transfer', label: t('checkout.payment.transfer', '銀行轉帳（匯款後出貨）') },
@@ -47,9 +66,29 @@ export default function Checkout() {
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (prev.sameAsContact) {
+        if (name === 'contactAddress') next.address = value;
+        if (name === 'contactCity') next.city = value;
+        if (name === 'contactPostalCode') next.postalCode = value;
+      }
+      return next;
+    });
+  };
+
+  const handleSameAsContactChange = (checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      sameAsContact: checked,
+      ...(checked
+        ? {
+            address: prev.contactAddress,
+            city: prev.contactCity,
+            postalCode: prev.contactPostalCode,
+          }
+        : {}),
     }));
   };
 
@@ -78,7 +117,7 @@ export default function Checkout() {
           method: 'POST',
           headers: {
             apikey: supabaseAnonKey,
-            authorization: `Bearer ${supabaseAnonKey}`,
+            authorization: `Bearer ${session?.access_token || supabaseAnonKey}`,
             'content-type': 'application/json',
             Prefer: 'return=minimal',
           },
@@ -105,6 +144,7 @@ export default function Checkout() {
         shipping_method: shippingMethodSummary,
         customer_name: formData.name,
         customer_email: formData.email,
+        customer_account: user?.id || '',
         customer_phone: formData.phone,
         recipient_name: formData.name,
         recipient_phone: formData.phone,
@@ -249,6 +289,16 @@ export default function Checkout() {
                     <label className={labelCls}>電話 *</label>
                     <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className={inputCls} />
                   </div>
+                  <div className="sm:col-span-2 border-t border-stone-100 pt-4">
+                    <p className="mb-3 text-xs tracking-[0.12em] text-stone-400">聯絡地址（可作為配送地址）</p>
+                    <input type="text" name="contactAddress" value={formData.contactAddress} onChange={handleChange} placeholder="地址" className={inputCls} />
+                  </div>
+                  <div>
+                    <input type="text" name="contactCity" value={formData.contactCity} onChange={handleChange} placeholder="城市" className={inputCls} />
+                  </div>
+                  <div>
+                    <input type="text" name="contactPostalCode" value={formData.contactPostalCode} onChange={handleChange} placeholder="郵遞區號" className={inputCls} />
+                  </div>
                 </div>
               </section>
 
@@ -257,19 +307,28 @@ export default function Checkout() {
                   <MapPin className="h-4 w-4 text-amber-500" />
                   <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">配送地址</h2>
                 </div>
+                <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+                  <input
+                    type="checkbox"
+                    checked={formData.sameAsContact}
+                    onChange={(event) => handleSameAsContactChange(event.target.checked)}
+                    className="h-4 w-4 accent-amber-500"
+                  />
+                  配送地址同上
+                </label>
                 <div className="grid gap-4">
                   <div>
                     <label className={labelCls}>地址 *</label>
-                    <input type="text" name="address" value={formData.address} onChange={handleChange} required className={inputCls} />
+                    <input type="text" name="address" value={formData.address} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className={labelCls}>城市 *</label>
-                      <input type="text" name="city" value={formData.city} onChange={handleChange} required className={inputCls} />
+                      <input type="text" name="city" value={formData.city} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
                     </div>
                     <div>
                       <label className={labelCls}>郵遞區號 *</label>
-                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required className={inputCls} />
+                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
                     </div>
                   </div>
                 </div>

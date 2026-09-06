@@ -1,5 +1,6 @@
 ﻿import {
   BarChart3,
+  Bell,
   BookOpen,
   Brain,
   ChevronRight,
@@ -82,6 +83,8 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
         { id: 'common-layout', label: '共同頁首頁尾', icon: PanelTop },
         { id: 'product-detail-service', label: '商品頁配送與服務', icon: Truck },
         { id: 'contact-center', label: '客服中心管理', icon: Mail },
+        { id: 'remittance', label: '匯款通知管理', icon: CreditCard },
+        { id: 'cart-announcement', label: '購物車公告', icon: Bell },
         { id: 'service', label: t('admin.sidebar.service', '老饕分享'), icon: Share2 },
         { id: 'articles', label: t('admin.sidebar.articles', '文章管理'), icon: FileText },
         { id: 'faq', label: t('admin.sidebar.faq', 'Q&A 管理'), icon: HelpCircle },

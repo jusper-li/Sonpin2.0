@@ -66,17 +66,21 @@ interface RemittanceNotificationTemplate {
   show_customer_email: boolean;
 }
 
+type ShippedOrderNotificationTemplate = CustomerOrderNotificationTemplate;
+
 interface NotificationSettings {
   admin_email: string;
   admin_emails_text: string;
   contact_enabled: boolean;
   order_enabled: boolean;
   remittance_enabled: boolean;
+  shipped_enabled: boolean;
   customer_copy_enabled: boolean;
   contact_template: ContactNotificationTemplate;
   order_template: OrderNotificationTemplate;
   customer_order_template: CustomerOrderNotificationTemplate;
   remittance_template: RemittanceNotificationTemplate;
+  shipped_template: ShippedOrderNotificationTemplate;
 }
 
 const NOTIFICATION_SETTING_KEY = 'notification_mail';
@@ -138,17 +142,35 @@ const DEFAULT_REMITTANCE_TEMPLATE: RemittanceNotificationTemplate = {
   show_customer_email: true,
 };
 
+const DEFAULT_SHIPPED_TEMPLATE: ShippedOrderNotificationTemplate = {
+  admin_subject: 'Sonpin 訂單已出貨：{{orderNumber}}',
+  admin_title: '訂單已出貨',
+  admin_intro: '您的訂單已完成出貨，以下是本次訂單與配送資訊。',
+  admin_note: '如有配送問題，歡迎聯繫客服中心。',
+  show_order_number: true,
+  show_customer_name: true,
+  show_customer_email: false,
+  show_address: true,
+  show_payment_method: false,
+  show_items: true,
+  show_totals: true,
+  show_shipping: true,
+  show_remittance_info: false,
+};
+
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   admin_email: DEFAULT_FOOTER_SETTINGS.contact_email,
   admin_emails_text: DEFAULT_FOOTER_SETTINGS.contact_email,
   contact_enabled: true,
   order_enabled: true,
   remittance_enabled: true,
+  shipped_enabled: true,
   customer_copy_enabled: true,
   contact_template: DEFAULT_CONTACT_TEMPLATE,
   order_template: DEFAULT_ORDER_TEMPLATE,
   customer_order_template: DEFAULT_CUSTOMER_ORDER_TEMPLATE,
   remittance_template: DEFAULT_REMITTANCE_TEMPLATE,
+  shipped_template: DEFAULT_SHIPPED_TEMPLATE,
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -204,6 +226,7 @@ const templateTabs = [
   { id: 'order', label: '訂單通知信' },
   { id: 'customer-order', label: '客戶訂單通知信' },
   { id: 'remittance', label: '匯款通知信' },
+  { id: 'shipped', label: '已出貨通知信' },
 ] as const;
 
 type TemplateTabId = (typeof templateTabs)[number]['id'];
@@ -245,6 +268,15 @@ const templateFieldOptions = {
     { key: 'show_customer_name', label: '客戶姓名', description: '顯示客戶姓名' },
     { key: 'show_customer_email', label: '客戶 Email', description: '顯示客戶 Email' },
   ],
+  shipped: [
+    { key: 'show_order_number', label: '訂單編號', description: '顯示訂單編號' },
+    { key: 'show_customer_name', label: '客戶姓名', description: '顯示客戶姓名' },
+    { key: 'show_customer_email', label: '客戶 Email', description: '顯示客戶 Email' },
+    { key: 'show_address', label: '收件地址', description: '顯示收件地址' },
+    { key: 'show_items', label: '商品明細', description: '顯示商品明細' },
+    { key: 'show_totals', label: '金額合計', description: '顯示訂單總額' },
+    { key: 'show_shipping', label: '配送資訊', description: '顯示配送方式與運費' },
+  ],
 } as const;
 
 export default function NotificationManagement() {
@@ -257,8 +289,8 @@ export default function NotificationManagement() {
 
   const adminEmails = useMemo(() => parseEmailList(settings.admin_emails_text), [settings.admin_emails_text]);
   const notificationEnabledCount = useMemo(
-    () => Number(settings.contact_enabled) + Number(settings.order_enabled) + Number(settings.remittance_enabled),
-    [settings.contact_enabled, settings.order_enabled, settings.remittance_enabled],
+    () => Number(settings.contact_enabled) + Number(settings.order_enabled) + Number(settings.remittance_enabled) + Number(settings.shipped_enabled),
+    [settings.contact_enabled, settings.order_enabled, settings.remittance_enabled, settings.shipped_enabled],
   );
 
   const load = async () => {
@@ -290,11 +322,13 @@ export default function NotificationManagement() {
         contact_enabled: normalizeBoolean(notificationValue.contact_enabled, DEFAULT_NOTIFICATION_SETTINGS.contact_enabled),
         order_enabled: normalizeBoolean(notificationValue.order_enabled, DEFAULT_NOTIFICATION_SETTINGS.order_enabled),
         remittance_enabled: normalizeBoolean(notificationValue.remittance_enabled, DEFAULT_NOTIFICATION_SETTINGS.remittance_enabled),
+        shipped_enabled: normalizeBoolean(notificationValue.shipped_enabled, DEFAULT_NOTIFICATION_SETTINGS.shipped_enabled),
         customer_copy_enabled: normalizeBoolean(notificationValue.customer_copy_enabled, DEFAULT_NOTIFICATION_SETTINGS.customer_copy_enabled),
         contact_template: normalizeTemplate(notificationValue.contact_template, DEFAULT_CONTACT_TEMPLATE),
         order_template: normalizeTemplate(notificationValue.order_template, DEFAULT_ORDER_TEMPLATE),
         customer_order_template: normalizeTemplate(notificationValue.customer_order_template, DEFAULT_CUSTOMER_ORDER_TEMPLATE),
         remittance_template: normalizeTemplate(notificationValue.remittance_template, DEFAULT_REMITTANCE_TEMPLATE),
+        shipped_template: normalizeTemplate(notificationValue.shipped_template, DEFAULT_SHIPPED_TEMPLATE),
       });
 
       setFooterContactEmail(String(footerValue.contact_email || adminEmail).trim() || adminEmail);
@@ -342,6 +376,7 @@ export default function NotificationManagement() {
         contact_enabled: Boolean(settings.contact_enabled),
         order_enabled: Boolean(settings.order_enabled),
         remittance_enabled: Boolean(settings.remittance_enabled),
+        shipped_enabled: Boolean(settings.shipped_enabled),
         customer_copy_enabled: Boolean(settings.customer_copy_enabled),
         contact_template: {
           admin_subject: settings.contact_template.admin_subject.trim(),
@@ -394,6 +429,21 @@ export default function NotificationManagement() {
           show_order_total: Boolean(settings.remittance_template.show_order_total),
           show_customer_name: Boolean(settings.remittance_template.show_customer_name),
           show_customer_email: Boolean(settings.remittance_template.show_customer_email),
+        },
+        shipped_template: {
+          admin_subject: settings.shipped_template.admin_subject.trim(),
+          admin_title: settings.shipped_template.admin_title.trim(),
+          admin_intro: settings.shipped_template.admin_intro.trim(),
+          admin_note: settings.shipped_template.admin_note.trim(),
+          show_order_number: Boolean(settings.shipped_template.show_order_number),
+          show_customer_name: Boolean(settings.shipped_template.show_customer_name),
+          show_customer_email: Boolean(settings.shipped_template.show_customer_email),
+          show_address: Boolean(settings.shipped_template.show_address),
+          show_payment_method: Boolean(settings.shipped_template.show_payment_method),
+          show_items: Boolean(settings.shipped_template.show_items),
+          show_totals: Boolean(settings.shipped_template.show_totals),
+          show_shipping: Boolean(settings.shipped_template.show_shipping),
+          show_remittance_info: false,
         },
       };
 
@@ -517,7 +567,7 @@ export default function NotificationManagement() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <StatCard icon={<Mail className="h-4 w-4" />} label="通知信箱" value={adminEmails.length > 0 ? `${adminEmails.length} 個信箱` : '-'} />
-        <StatCard icon={<ShieldCheck className="h-4 w-4" />} label="啟用通知" value={`${notificationEnabledCount} / 3`} />
+        <StatCard icon={<ShieldCheck className="h-4 w-4" />} label="啟用通知" value={`${notificationEnabledCount} / 4`} />
         <StatCard icon={<ShoppingCart className="h-4 w-4" />} label="訂單通知" value={settings.order_enabled ? '啟用' : '停用'} />
         <StatCard icon={<MessageSquare className="h-4 w-4" />} label="顧客副本" value={settings.customer_copy_enabled ? '啟用' : '停用'} />
       </div>
@@ -568,6 +618,7 @@ export default function NotificationManagement() {
               <ToggleField title="客服中心通知" description="顧客從客服中心送出表單時，寄送通知信給管理員。" checked={settings.contact_enabled} onChange={(checked) => setSettings({ ...settings, contact_enabled: checked })} />
               <ToggleField title="訂單成立通知" description="顧客完成結帳後，寄送訂單通知信給管理員。" checked={settings.order_enabled} onChange={(checked) => setSettings({ ...settings, order_enabled: checked })} />
               <ToggleField title="匯款通知" description="顧客回報匯款資料後，寄送匯款通知信給管理員。" checked={settings.remittance_enabled} onChange={(checked) => setSettings({ ...settings, remittance_enabled: checked })} />
+              <ToggleField title="已出貨通知" description="管理員將訂單狀態改為已出貨時，允許寄送通知給顧客。" checked={settings.shipped_enabled} onChange={(checked) => setSettings({ ...settings, shipped_enabled: checked })} />
               <ToggleField title="寄送顧客副本" description="訂單與匯款通知同時寄送副本給顧客，方便留存。" checked={settings.customer_copy_enabled} onChange={(checked) => setSettings({ ...settings, customer_copy_enabled: checked })} />
             </div>
 
@@ -647,6 +698,16 @@ export default function NotificationManagement() {
           onChange={(template) => setSettings((prev) => ({ ...prev, remittance_template: template }))}
           fieldOptions={templateFieldOptions.remittance}
           preview={<RemittancePreview template={settings.remittance_template} />}
+        />
+      )}
+
+      {activeTab === 'shipped' && (
+        <TemplateEditor
+          title="已出貨通知信模板"
+          template={settings.shipped_template}
+          onChange={(template) => setSettings((prev) => ({ ...prev, shipped_template: template }))}
+          fieldOptions={templateFieldOptions.shipped}
+          preview={<CustomerOrderPreview template={settings.shipped_template} />}
         />
       )}
     </div>

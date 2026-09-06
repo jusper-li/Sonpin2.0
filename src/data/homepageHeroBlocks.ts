@@ -2,6 +2,13 @@
 
 export const HOMEPAGE_HERO_BLOCKS_SETTING_KEY = 'homepage_hero_blocks';
 
+export const DEFAULT_HOMEPAGE_CUSTOM_BANNERS: HomepageHeroBlock[] = [
+  { id: 'banner-gift-box', mode: 'custom', title: '淞品常溫滴雞精禮盒', image: '/sonpin-images/sonpin-room-temp-drip-gift-box.jpg', href: '/products', is_active: true, sort_order: 1 },
+  { id: 'banner-smoked-chicken', mode: 'custom', title: '淞品畜產 煙燻放山雞', image: '/sonpin-images/sonpin-smoked-whole-chicken.png', href: '/products', is_active: true, sort_order: 2 },
+  { id: 'banner-salted-chicken', mode: 'custom', title: '淞品鹹水雞，安心美味每一天', image: '/sonpin-images/sonpin-salted-whole-chicken.png', href: '/products', is_active: true, sort_order: 3 },
+  { id: 'banner-production', mode: 'custom', title: '從產地到餐桌的安心堅持', image: '/sonpin-images/20250701170434.jpg', href: '/process', is_active: true, sort_order: 4 },
+];
+
 export interface HomepageHeroProduct {
   id: string;
   name: string;
@@ -84,6 +91,10 @@ export function createDefaultHomepageHeroBlocks(products: HomepageHeroProduct[] 
     }));
 }
 
+export function getDefaultHomepageCustomBanners(): HomepageHeroBlock[] {
+  return DEFAULT_HOMEPAGE_CUSTOM_BANNERS.map((banner) => ({ ...banner }));
+}
+
 export function normalizeHomepageHeroBlocks(value: unknown): HomepageHeroBlock[] {
   if (!Array.isArray(value)) return [];
 
@@ -136,4 +147,3 @@ export function resolveHomepageHeroBlock(
     sort_order: block.sort_order,
   };
 }
-

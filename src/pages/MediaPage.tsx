@@ -6,6 +6,7 @@ import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import { useSEO } from '../hooks/useSEO';
 import { breadcrumbSchema } from '../utils/schemaMarkup';
 import { loadMediaArticles } from '../lib/media';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const defaultGroupSlug = '79';
 const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
@@ -15,17 +16,18 @@ const HIDDEN_MEDIA_LIST_ARTICLES: Record<string, Set<string>> = {
 export default function MediaPage() {
   const { categorySlug } = useParams();
   const { pathname } = useLocation();
+  const { t } = useLanguage();
   const isVideoPage = categorySlug === '78' || pathname.replace(/\/+$/, '') === '/media/78';
   const groupSlug = isVideoPage ? '78' : defaultGroupSlug;
   const [articles, setArticles] = useState<Awaited<ReturnType<typeof loadMediaArticles>>>([]);
 
   useSEO({
-    title: '相關報導',
-    description: '淞品土雞相關報導與新聞公告',
-    keywords: '相關報導,報章雜誌,影音報導,淞品土雞',
+    title: t('media.title', '相關報導'),
+    description: t('media.description', '淞品土雞相關報導與新聞公告'),
+    keywords: t('media.keywords', '相關報導,報章雜誌,影音報導,淞品土雞'),
     schema: breadcrumbSchema([
-      { name: '首頁', url: window.location.origin },
-      { name: '相關報導', url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
+      { name: t('common.home', '首頁'), url: window.location.origin },
+      { name: t('media.title', '相關報導'), url: `${window.location.origin}${isVideoPage ? '/media/78' : '/media'}` },
     ]),
   });
 
@@ -51,7 +53,14 @@ export default function MediaPage() {
     };
   }, [groupSlug]);
 
-  const pageArticles = useMemo(() => articles, [articles]);
+  const pageArticles = useMemo(
+    () => articles.map((article) => ({
+      ...article,
+      title: t(`media.item.${article.groupSlug}-${article.articleSlug}.title`, article.title),
+      excerpt: t(`media.item.${article.groupSlug}-${article.articleSlug}.excerpt`, article.excerpt),
+    })),
+    [articles, t],
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf6ee] text-stone-800">
@@ -62,19 +71,19 @@ export default function MediaPage() {
           <div className="container mx-auto px-6 py-16 md:py-24">
             <nav className="mb-8 flex items-center gap-2 text-xs tracking-[0.18em] text-stone-400">
               <Link to="/" className="transition-colors hover:text-stone-700">
-                首頁
+                {t('common.home', '首頁')}
               </Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-stone-700">相關報導</span>
+              <span className="text-stone-700">{t('media.title', '相關報導')}</span>
             </nav>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.36em] text-[#8e6448]/80">
-              相關報導
+              {t('media.title', '相關報導')}
             </p>
             <h1 className="max-w-3xl text-3xl font-light leading-tight tracking-[0.12em] text-stone-900 md:text-4xl">
-              相關報導
+              {t('media.title', '相關報導')}
             </h1>
             <p className="mt-5 max-w-2xl text-sm font-light leading-8 text-stone-500">
-              淞品土雞相關報導與新聞公告
+              {t('media.description', '淞品土雞相關報導與新聞公告')}
             </p>
           </div>
         </section>
@@ -89,7 +98,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              報章雜誌
+              {t('media.articlesTab', '報章雜誌')}
             </Link>
             <Link
               to="/media/78"
@@ -99,7 +108,7 @@ export default function MediaPage() {
                   : 'border-stone-200 text-stone-500 hover:border-stone-700 hover:text-stone-900'
               }`}
             >
-              影音報導
+              {t('media.videosTab', '影音報導')}
             </Link>
           </div>
 

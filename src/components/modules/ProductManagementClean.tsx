@@ -35,6 +35,7 @@ interface Product {
   cost_price: number;
   member_price: number | null;
   stock: number;
+  is_unlimited_stock: boolean;
   sku: string;
   images: string[];
   specifications: Specification[];
@@ -152,6 +153,7 @@ const toBackofficeProduct = (product: FallbackProduct): Product => ({
   cost_price: 0,
   member_price: product.member_price,
   stock: product.stock,
+  is_unlimited_stock: false,
   sku: product.sku || '',
   images: product.images || [],
   specifications: (product.specifications || []).map((specification) => ({
@@ -278,6 +280,7 @@ export default function ProductManagement() {
     cost_price: 0,
     member_price: null as number | null,
     stock: 0,
+    is_unlimited_stock: false,
     sku: '',
     images: [] as string[],
     specifications: [] as Specification[],
@@ -918,6 +921,14 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         published_at: productForm.published_at ? new Date(productForm.published_at).toISOString() : null,
         unpublished_at: productForm.unpublished_at ? new Date(productForm.unpublished_at).toISOString() : null,
       };
+      let unlimitedStockSkipped = false;
+      const isMissingUnlimitedStockColumn = (error: any) =>
+        error?.code === 'PGRST204' || error?.code === '42703' || error?.message?.includes('is_unlimited_stock');
+      const legacyProductData = () => {
+        const { is_unlimited_stock: _ignored, ...payload } = productData;
+        unlimitedStockSkipped = true;
+        return payload;
+      };
 
       if (editingProduct) {
         const uniqueSlug = await generateUniqueSlug(productForm.slug, editingProduct.id);
@@ -925,10 +936,17 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
           productData = { ...productData, slug: uniqueSlug };
         }
 
-        const { error } = await supabase
+        let { error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', editingProduct.id);
+
+        if (error && isMissingUnlimitedStockColumn(error)) {
+          ({ error } = await supabase
+            .from('products')
+            .update(legacyProductData())
+            .eq('id', editingProduct.id));
+        }
 
         if (error) {
           if (error.code === '23505' && error.message?.includes('sku')) {
@@ -947,9 +965,15 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
           productData = { ...productData, slug: uniqueSlug };
         }
 
-        const { error } = await supabase
+        let { error } = await supabase
           .from('products')
           .insert([productData]);
+
+        if (error && isMissingUnlimitedStockColumn(error)) {
+          ({ error } = await supabase
+            .from('products')
+            .insert([legacyProductData()]));
+        }
 
         if (error) {
           if (error.code === '23505' && error.message?.includes('sku')) {
@@ -966,6 +990,9 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
 
       await loadProducts();
       closeProductForm();
+      if (unlimitedStockSkipped) {
+        alert('商品已儲存，但目前資料庫尚未建立無限庫存欄位；請先套用 20260906140000_add_unlimited_stock_to_products.sql。');
+      }
     } catch (error: any) {
       console.error('Failed to save product:', error);
       alert('儲存失敗：' + (error?.message || '未知錯誤'));
@@ -1161,6 +1188,7 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         cost_price: product.cost_price || 0,
         member_price: product.member_price,
         stock: product.stock,
+        is_unlimited_stock: product.is_unlimited_stock,
         sku: product.sku || '',
         images: product.images || [],
         specifications: specs,
@@ -1191,6 +1219,7 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         cost_price: 0,
         member_price: null,
         stock: 0,
+        is_unlimited_stock: false,
         sku: '',
         images: [],
         specifications: [],
@@ -1401,8 +1430,8 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`${product.stock < 10 ? 'text-red-600' : 'text-slate-900'}`}>
-                        {product.stock}
+                      <span className={`${product.is_unlimited_stock ? 'text-emerald-600' : product.stock < 10 ? 'text-red-600' : 'text-slate-900'}`}>
+                        {product.is_unlimited_stock ? '無限' : product.stock}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -1787,8 +1816,18 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
                       type="number"
                       value={productForm.stock}
                       onChange={(e) => handleProductFormChange('stock', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      disabled={productForm.is_unlimited_stock}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-400"
                     />
+                    <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={productForm.is_unlimited_stock}
+                        onChange={(e) => handleProductFormChange('is_unlimited_stock', e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      無限數量
+                    </label>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">商品編號 (SKU)</label>

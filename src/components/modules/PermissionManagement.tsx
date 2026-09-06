@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCheck, CreditCard as Edit, Mail, Save, Search, ShieldCheck, Trash2, User, UserPlus, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../../lib/supabase';
 
 interface Role {
   id: string;
@@ -93,9 +93,10 @@ export default function PermissionManagement() {
   const [showRoleForm, setShowRoleForm] = useState(false);
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
 
   const [roleForm, setRoleForm] = useState({ name: '', description: '' });
-  const [adminForm, setAdminForm] = useState({ name: '', email: '', is_active: true, role_ids: [] as string[] });
+  const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '', is_active: true, role_ids: [] as string[] });
 
   const [savingRole, setSavingRole] = useState(false);
   const [savingAdmin, setSavingAdmin] = useState(false);
@@ -319,22 +320,50 @@ export default function PermissionManagement() {
       setAdminError('請填寫管理員名稱與 Email');
       return;
     }
+    if (!editingAdmin && !adminForm.password) {
+      setAdminError('新增管理員時必須設定密碼');
+      return;
+    }
+    if (adminForm.password && adminForm.password.length < 6) {
+      setAdminError('管理員密碼至少需要 6 碼');
+      return;
+    }
     setSavingAdmin(true);
     try {
-      const { error } = await supabase.rpc('create_admin_with_roles', {
-        p_email: adminForm.email.trim().toLowerCase(),
-        p_name: adminForm.name.trim(),
-        p_is_active: adminForm.is_active,
-        p_role_ids: adminForm.role_ids,
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('登入狀態已失效，請重新登入後再試。');
+
+      const response = await fetch(`${supabaseBaseUrl}/functions/v1/create-admin-user`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          authorization: `Bearer ${accessToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: editingAdmin ? 'update' : 'create',
+          admin_id: editingAdmin?.id,
+          email: adminForm.email.trim().toLowerCase(),
+          name: adminForm.name.trim(),
+          password: adminForm.password || undefined,
+          is_active: adminForm.is_active,
+          role_ids: adminForm.role_ids,
+        }),
       });
-      if (error) throw error;
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || data?.message || `伺服器回應失敗（${response.status}）`);
+      }
+      setAdminForm({ name: '', email: '', password: '', is_active: true, role_ids: [] });
       setShowAdminForm(false);
+      setEditingAdmin(null);
       await loadCoreData();
       await loadAdmins();
     } catch (error: any) {
       if (error?.code === '23505') setAdminError('此 Email 已存在');
       else if (error?.status === 403 || error?.code === '42501') setAdminError('權限不足，無法新增管理員');
-      else setAdminError(error?.message || '新增管理員失敗');
+      else setAdminError(error?.message || (editingAdmin ? '編輯管理員失敗' : '新增管理員失敗'));
     } finally {
       setSavingAdmin(false);
     }
@@ -505,7 +534,8 @@ export default function PermissionManagement() {
           </button>
           <button
             onClick={() => {
-              setAdminForm({ name: '', email: '', is_active: true, role_ids: [] });
+              setEditingAdmin(null);
+              setAdminForm({ name: '', email: '', password: '', is_active: true, role_ids: [] });
               setAdminError('');
               setShowAdminForm(true);
             }}
@@ -605,6 +635,18 @@ export default function PermissionManagement() {
                         <button onClick={() => void toggleAdminActive(admin)} className="rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100">
                           {admin.is_active ? '停用' : '啟用'}
                         </button>
+                        <button
+                          onClick={() => {
+                            setEditingAdmin(admin);
+                            setAdminForm({ name: admin.name, email: admin.email, password: '', is_active: admin.is_active, role_ids: [...roleIds] });
+                            setAdminError('');
+                            setShowAdminForm(true);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100"
+                        >
+                          <Edit className="h-3 w-3" />
+                          編輯
+                        </button>
                         <button onClick={() => void deleteAdmin(admin.id)} className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
                           刪除
                         </button>
@@ -662,7 +704,7 @@ export default function PermissionManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-6">
-              <h2 className="text-2xl font-bold text-slate-900">新增管理員</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{editingAdmin ? '編輯管理員' : '新增管理員'}</h2>
               <button onClick={() => setShowAdminForm(false)} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>
@@ -675,6 +717,11 @@ export default function PermissionManagement() {
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">管理員 Email *</label>
                 <input type="email" value={adminForm.email} onChange={(e) => setAdminForm((prev) => ({ ...prev, email: e.target.value }))} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">登入密碼 {editingAdmin ? '（留空表示不變更）' : '*'}</label>
+                <input type="password" minLength={6} autoComplete="new-password" value={adminForm.password} onChange={(e) => setAdminForm((prev) => ({ ...prev, password: e.target.value }))} placeholder={editingAdmin ? '留空表示維持原密碼' : '至少 6 碼'} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                <p className="mt-1 text-xs text-slate-500">密碼由 Supabase Auth 管理，不會儲存在管理員資料表。</p>
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">指派角色</label>
@@ -717,7 +764,7 @@ export default function PermissionManagement() {
               </button>
               <button onClick={() => void saveAdmin()} disabled={savingAdmin} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-60">
                 <Save className="h-4 w-4" />
-                {savingAdmin ? '儲存中...' : '儲存管理員'}
+                {savingAdmin ? '儲存中...' : editingAdmin ? '儲存變更' : '儲存管理員'}
               </button>
             </div>
           </div>
@@ -726,4 +773,3 @@ export default function PermissionManagement() {
     </div>
   );
 }
-

@@ -20,6 +20,7 @@ type ShopProduct = {
   description: string;
   price: number;
   sale_price: number | null;
+  is_unlimited_stock: boolean;
   images: string[];
   category_slug: string;
   category_name: string;
@@ -118,6 +119,7 @@ export default function Shop() {
             description: item.description || '',
             price: item.price,
             sale_price: item.sale_price,
+            is_unlimited_stock: item.is_unlimited_stock,
             images: item.images,
             category_slug: item.category_slug || item.categories?.slug || 'other-products',
             category_name: item.category_name || item.categories?.name || '',

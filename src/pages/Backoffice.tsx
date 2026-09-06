@@ -32,6 +32,8 @@ const VersionLogManagement = lazy(() => import('../components/modules/VersionLog
 const ProductDetailServiceManagement = lazy(() => import('../components/modules/ProductDetailServiceManagement'));
 const ThemeManagement = lazy(() => import('../components/modules/ThemeManagement'));
 const ContactCenterManagement = lazy(() => import('../components/modules/ContactCenterManagement'));
+const RemittanceManagement = lazy(() => import('../components/modules/RemittanceManagement'));
+const CartAnnouncementManagement = lazy(() => import('../components/modules/CartAnnouncementManagement'));
 
 function ModuleLoading() {
   return (
@@ -141,6 +143,10 @@ function AdminPanel() {
         return <ProductDetailServiceManagement />;
       case 'contact-center':
         return <ContactCenterManagement />;
+      case 'remittance':
+        return <RemittanceManagement />;
+      case 'cart-announcement':
+        return <CartAnnouncementManagement />;
       case 'theme':
         return <ThemeManagement />;
       case 'version-logs':

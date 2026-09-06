@@ -21,6 +21,7 @@ export interface CatalogProduct {
   sale_price: number | null;
   member_price: number | null;
   stock: number;
+  is_unlimited_stock: boolean;
   sku: string;
   images: string[];
   specifications: Array<{ name: string; value?: string; options?: string[] }>;
@@ -127,12 +128,21 @@ export const loadCatalogCategories = async (): Promise<CatalogCategory[]> => {
 };
 
 export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
-  const { data, error } = await supabase
+  const productFields = 'id, category_id, name, slug, description, summary, content, price, sale_price, stock, sku, images, is_active, is_featured, created_at, updated_at, member_price, specifications, seo_title, seo_description, seo_keywords, og_image, og_title, og_description, published_at, unpublished_at, is_hidden, categories(id, name, slug)';
+  const productFieldsWithUnlimitedStock = productFields.replace('stock,', 'stock, is_unlimited_stock,');
+
+  let { data, error } = await supabase
     .from('products')
-    .select(
-      'id, category_id, name, slug, description, summary, content, price, sale_price, stock, sku, images, is_active, is_featured, created_at, updated_at, member_price, specifications, seo_title, seo_description, seo_keywords, og_image, og_title, og_description, published_at, unpublished_at, is_hidden, categories(id, name, slug)',
-    )
+    .select(productFieldsWithUnlimitedStock)
     .order('created_at', { ascending: false });
+
+  // Keep older projects readable until the unlimited-stock migration is applied.
+  if (error && /is_unlimited_stock|42703|PGRST204/i.test(`${error.code || ''} ${error.message || ''}`)) {
+    ({ data, error } = await supabase
+      .from('products')
+      .select(productFields)
+      .order('created_at', { ascending: false }));
+  }
 
   if (error) {
     if (isMissingSupabaseTableError(error) || isSupabaseNetworkError(error)) {
@@ -152,6 +162,7 @@ export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
     price: number | string;
     sale_price: number | string | null;
     stock?: number | null;
+    is_unlimited_stock?: boolean | null;
     sku?: string | null;
     images?: unknown;
     is_active?: boolean | null;
@@ -187,6 +198,7 @@ export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
         sale_price: item.sale_price === null || item.sale_price === undefined ? null : Number(item.sale_price),
         member_price: item.member_price === null || item.member_price === undefined ? null : Number(item.member_price),
         stock: Number(item.stock || 0),
+        is_unlimited_stock: item.is_unlimited_stock === true,
         sku: item.sku || '',
         images: resolveSonpinProductImages({
           name: item.name,

@@ -65,6 +65,22 @@ export default function SiteHeader() {
   const mainNavigationHrefs = new Set(['/products', '/shipping', '/store', '/member']);
   const mainNavigation = primaryNavigation.filter((item) => mainNavigationHrefs.has(normalizeMenuHref(item.href)));
   const moreNavigation = primaryNavigation.filter((item) => !mainNavigationHrefs.has(normalizeMenuHref(item.href)) && normalizeMenuHref(item.href) !== '/');
+  const getNavigationLabel = (item: NavItem) => {
+    const keyByPath: Record<string, string> = {
+      '/about': 'header.nav.about',
+      '/products': 'header.nav.products',
+      '/shipping': 'header.nav.shipping',
+      '/service': 'header.nav.service',
+      '/store': 'header.nav.store',
+      '/process': 'header.nav.process',
+      '/media': 'header.nav.media',
+      '/member': 'header.nav.member',
+      '/contact': 'header.nav.contact',
+      '/order-query': 'header.nav.orderQuery',
+    };
+    const translationKey = keyByPath[normalizeMenuHref(item.href)];
+    return translationKey ? t(translationKey, item.label) : item.label;
+  };
   const isActiveMenuItem = (href: string) => {
     const target = normalizeMenuHref(href);
     const current = normalizeMenuHref(location.pathname);
@@ -166,7 +182,7 @@ export default function SiteHeader() {
                   onClick={() => handleNavigation(item.href)}
                   className={`relative text-xs font-medium tracking-[0.12em] uppercase transition-all duration-300 group py-2 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/80 hover:text-white'}`}
                 >
-                  <span className="relative z-10">{item.label}</span>
+                  <span className="relative z-10">{getNavigationLabel(item)}</span>
                   <span className={`absolute -bottom-0.5 left-0 w-0 h-px transition-all duration-400 group-hover:w-full ${isSolidHeader ? 'bg-[var(--sonpin-primary)]' : 'bg-[var(--sonpin-surface)]/60'}`}></span>
                 </button>
               ))}
@@ -179,10 +195,10 @@ export default function SiteHeader() {
                   aria-expanded={showMoreMenu}
                   aria-haspopup="menu"
                 >
-                  <span>更多...</span><ChevronDown size={14} className={`transition-transform ${showMoreMenu ? 'rotate-180' : ''}`} />
+                  <span>{t('header.nav.more', '更多...')}</span><ChevronDown size={14} className={`transition-transform ${showMoreMenu ? 'rotate-180' : ''}`} />
                 </button>
                 {showMoreMenu && <div className="absolute right-0 top-full z-[70] mt-2 min-w-[180px] overflow-hidden border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-[0_12px_30px_rgba(43,34,29,0.14)]" role="menu">
-                  {moreNavigation.map((item, index) => <button type="button" key={`${item.href}-${index}`} onClick={() => handleNavigation(item.href)} className="block w-full px-4 py-3 text-left text-xs tracking-[0.1em] text-[var(--sonpin-ink)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[var(--sonpin-primary-strong)]" role="menuitem">{item.label}</button>)}
+                  {moreNavigation.map((item, index) => <button type="button" key={`${item.href}-${index}`} onClick={() => handleNavigation(item.href)} className="block w-full px-4 py-3 text-left text-xs tracking-[0.1em] text-[var(--sonpin-ink)] transition-colors hover:bg-[var(--sonpin-background)] hover:text-[var(--sonpin-primary-strong)]" role="menuitem">{getNavigationLabel(item)}</button>)}
                 </div>}
               </div>}
 

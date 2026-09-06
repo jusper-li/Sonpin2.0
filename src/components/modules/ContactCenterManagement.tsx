@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, ExternalLink, Plus, RefreshCw, Save, Search, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { Bell, ExternalLink, Mail, Plus, RefreshCw, Save, Search, Send, Trash2, X } from 'lucide-react';
+import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../../lib/supabase';
 import BatchDocumentManagement from './BatchDocumentManagement';
 
 type PageSection = {
@@ -85,6 +85,8 @@ export default function ContactCenterManagement() {
   const [search, setSearch] = useState('');
   const [inquiries, setInquiries] = useState<ContactInquiryRow[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<ContactInquiryRow | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replying, setReplying] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   const load = async () => {
@@ -216,6 +218,47 @@ export default function ContactCenterManagement() {
     } catch (error) {
       console.error('Failed to update inquiry status:', error);
       alert('更新詢問狀態失敗');
+    }
+  };
+
+  const sendInquiryReply = async () => {
+    if (!selectedInquiry || !replyMessage.trim()) {
+      alert('請輸入回覆內容');
+      return;
+    }
+
+    setReplying(true);
+    try {
+      const response = await fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          authorization: `Bearer ${supabaseAnonKey}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'contact_reply',
+          data: {
+            email: selectedInquiry.email,
+            name: selectedInquiry.name,
+            subject: selectedInquiry.subject,
+            message: replyMessage.trim(),
+          },
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.error) {
+        throw new Error(payload?.message || payload?.error || '寄送回覆失敗');
+      }
+
+      await updateInquiryStatus(selectedInquiry.id, 'replied');
+      setReplyMessage('');
+      alert('回覆已寄出');
+    } catch (error) {
+      console.error('Failed to send contact inquiry reply:', error);
+      alert(`寄送回覆失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+    } finally {
+      setReplying(false);
     }
   };
 
@@ -435,7 +478,10 @@ export default function ContactCenterManagement() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setSelectedInquiry(item)}
+                      onClick={() => {
+                        setSelectedInquiry(item);
+                        setReplyMessage('');
+                      }}
                       className="block w-full bg-white p-4 text-left transition hover:bg-slate-50"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -495,59 +541,85 @@ export default function ContactCenterManagement() {
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-lg font-semibold text-slate-900">詢問詳情</h3>
-            {selectedInquiry ? (
-              <div className="space-y-3 text-sm text-slate-600">
-                <div>
-                  <div className="text-xs text-slate-400">姓名</div>
-                  <div className="font-medium text-slate-900">{selectedInquiry.name}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Email</div>
-                  <div className="font-medium text-slate-900">{selectedInquiry.email}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">電話</div>
-                  <div className="font-medium text-slate-900">{selectedInquiry.phone || '-'}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">主旨</div>
-                  <div className="font-medium text-slate-900">{selectedInquiry.subject}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">內容</div>
-                  <div className="whitespace-pre-line rounded-lg bg-slate-50 p-3 leading-7 text-slate-700">{selectedInquiry.message}</div>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => updateInquiryStatus(selectedInquiry.id, 'pending')}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                  >
-                    設為待處理
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateInquiryStatus(selectedInquiry.id, 'replied')}
-                    className="rounded-lg border border-emerald-300 px-3 py-2 text-xs text-emerald-700 hover:bg-emerald-50"
-                  >
-                    設為已回覆
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateInquiryStatus(selectedInquiry.id, 'closed')}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                  >
-                    設為已結案
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">點選左側一筆詢問即可查看詳情。</p>
-            )}
+            <h3 className="mb-3 text-lg font-semibold text-slate-900">客服詢問操作</h3>
+            <p className="text-sm leading-7 text-slate-500">
+              點選左側任一筆詢問，會開啟彈窗查看完整內容、回覆顧客或更新處理狀態。
+            </p>
           </section>
         </aside>
       </div>
+
+      {selectedInquiry && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedInquiry(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contact-inquiry-dialog-title"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-[var(--sonpin-surface)] p-6 shadow-2xl"
+          >
+            <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.2em] text-blue-600">CUSTOMER INQUIRY</p>
+                <h3 id="contact-inquiry-dialog-title" className="mt-1 text-2xl font-bold text-slate-900">{selectedInquiry.subject}</h3>
+                <p className="mt-1 text-sm text-slate-500">{selectedInquiry.created_at ? new Date(selectedInquiry.created_at).toLocaleString('zh-TW') : ''}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedInquiry(null)}
+                aria-label="關閉詢問詳情"
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-600">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div><div className="text-xs text-slate-400">姓名</div><div className="font-medium text-slate-900">{selectedInquiry.name}</div></div>
+                <div><div className="text-xs text-slate-400">Email</div><div className="font-medium text-slate-900 break-all">{selectedInquiry.email}</div></div>
+                <div><div className="text-xs text-slate-400">電話</div><div className="font-medium text-slate-900">{selectedInquiry.phone || '-'}</div></div>
+              </div>
+              <div>
+                <div className="mb-2 text-xs text-slate-400">問題內容</div>
+                <div className="whitespace-pre-line rounded-lg bg-slate-50 p-4 leading-7 text-slate-700">{selectedInquiry.message}</div>
+              </div>
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+                  <Mail className="h-3.5 w-3.5" /> 回覆內容
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(event) => setReplyMessage(event.target.value)}
+                  rows={5}
+                  placeholder="輸入回覆內容，寄出後會自動標記為已回覆"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 leading-7"
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendInquiryReply()}
+                  disabled={replying || !replyMessage.trim()}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" />
+                  {replying ? '寄送中...' : `直接回信至 ${selectedInquiry.email}`}
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+                <span className="mr-1 text-xs text-slate-400">更新狀態：</span>
+                <button type="button" onClick={() => updateInquiryStatus(selectedInquiry.id, 'pending')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50">設為待處理</button>
+                <button type="button" onClick={() => updateInquiryStatus(selectedInquiry.id, 'replied')} className="rounded-lg border border-emerald-300 px-3 py-2 text-xs text-emerald-700 hover:bg-emerald-50">設為已回覆</button>
+                <button type="button" onClick={() => updateInquiryStatus(selectedInquiry.id, 'closed')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50">設為已結案</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

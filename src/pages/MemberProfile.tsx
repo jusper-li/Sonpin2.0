@@ -18,8 +18,18 @@ import { useMemberAuth } from '../contexts/MemberAuthContext';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
 import { useLanguage } from '../contexts/LanguageContext';
+import { supabase } from '../lib/supabase';
 
 type EditSection = 'profile' | 'password' | null;
+
+interface MemberOrder {
+  id: string;
+  order_number: string;
+  status: string | null;
+  payment_status: string | null;
+  total: number | null;
+  created_at: string;
+}
 
 export default function MemberProfile() {
   const { t } = useLanguage();
@@ -34,6 +44,8 @@ export default function MemberProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [orders, setOrders] = useState<MemberOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) navigate('/member');
@@ -49,6 +61,32 @@ export default function MemberProfile() {
   useEffect(() => {
     if (user) void refreshProfile();
   }, [user, refreshProfile]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    let mounted = true;
+    setOrdersLoading(true);
+    void supabase
+      .from('orders')
+      .select('id,order_number,status,payment_status,total,created_at')
+      .or(`customer_account.eq.${user.id},customer_email.ilike.${user.email.trim().toLowerCase()}`)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) {
+          console.error('Failed to load member orders:', error);
+          setOrders([]);
+        } else {
+          setOrders((data || []) as MemberOrder[]);
+        }
+        setOrdersLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.email]);
 
   const cancelEdit = () => {
     setEditing(null);
@@ -125,6 +163,8 @@ export default function MemberProfile() {
     : user?.email?.charAt(0).toUpperCase() || '?';
   const displayedName = profile?.display_name || t('member.profile.placeholder.name', '未設定');
   const displayedPhone = profile?.phone || t('member.profile.placeholder.phone', '未設定');
+  const memberOrderCount = orders.length;
+  const memberTotalSpent = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
 
   return (
     <div className="min-h-screen bg-[var(--sonpin-background)]">
@@ -167,14 +207,14 @@ export default function MemberProfile() {
               <div className="p-5 text-center">
                 <div className="mb-1 flex items-center justify-center gap-2">
                   <ShoppingBag className="h-4 w-4 text-amber-500" />
-                  <span className="text-xl font-semibold text-stone-800">{profile?.order_count ?? 0}</span>
+                <span className="text-xl font-semibold text-stone-800">{memberOrderCount}</span>
                 </div>
                 <p className="text-xs text-stone-500">{t('member.profile.stats.orders', '訂單數')}</p>
               </div>
               <div className="p-5 text-center">
                 <div className="mb-1 flex items-center justify-center gap-2">
                   <Coffee className="h-4 w-4 text-amber-500" />
-                  <span className="text-xl font-semibold text-stone-800">NT$ {(profile?.total_spent ?? 0).toLocaleString()}</span>
+                  <span className="text-xl font-semibold text-stone-800">NT$ {memberTotalSpent.toLocaleString('zh-TW')}</span>
                 </div>
                 <p className="text-xs text-stone-500">{t('member.profile.stats.spent', '累積消費')}</p>
               </div>
@@ -350,6 +390,38 @@ export default function MemberProfile() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="mb-5 overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
+            <div className="border-b border-stone-50 px-6 py-4">
+              <h2 className="text-sm font-semibold tracking-wide text-stone-700">{t('member.profile.section.orders', '我的訂單')}</h2>
+            </div>
+            {ordersLoading ? (
+              <p className="px-6 py-8 text-sm text-stone-500">{t('member.profile.orders.loading', '載入訂單中...')}</p>
+            ) : orders.length === 0 ? (
+              <p className="px-6 py-8 text-sm text-stone-500">{t('member.profile.orders.empty', '目前沒有訂單紀錄。')}</p>
+            ) : (
+              <div className="divide-y divide-stone-100">
+                {orders.map((order) => (
+                  <Link
+                    key={order.id}
+                    to={`/checkout/result?order_id=${encodeURIComponent(order.id)}&order_number=${encodeURIComponent(order.order_number)}`}
+                    className="flex items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-stone-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-mono text-sm text-stone-800">{order.order_number}</p>
+                      <p className="mt-1 text-xs text-stone-500">
+                        {new Date(order.created_at).toLocaleDateString('zh-TW')} · {order.status || t('member.profile.orders.pending', '處理中')}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span className="text-sm font-medium text-stone-800">NT$ {Number(order.total || 0).toLocaleString('zh-TW')}</span>
+                      <ChevronRight className="h-4 w-4 text-stone-300" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">

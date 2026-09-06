@@ -21,6 +21,7 @@ import {
   mergeHomepageHeroProducts,
   normalizeHomepageHeroBlocks,
   resolveHomepageHeroBlock,
+  getDefaultHomepageCustomBanners,
 } from '../../data/homepageHeroBlocks';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -246,7 +247,7 @@ export default function HomepageManagement() {
 
       setSections(sectionRows);
       setHeroProducts(mergeHomepageHeroProducts(productRows));
-      setHeroBlocks(normalizeHomepageHeroBlocks(heroBlocksRow?.setting_value));
+      setHeroBlocks(heroBlocksRow ? normalizeHomepageHeroBlocks(heroBlocksRow.setting_value) : getDefaultHomepageCustomBanners());
       setArticles(articleRows);
       setStores(storeRows);
       setIsLocalContent(false);
@@ -261,7 +262,7 @@ export default function HomepageManagement() {
   const loadLocalContent = () => {
     setSections([]);
     setHeroProducts([]);
-    setHeroBlocks([]);
+    setHeroBlocks(getDefaultHomepageCustomBanners());
     setArticles([]);
     setStores([]);
     setIsLocalContent(false);
@@ -550,7 +551,7 @@ export default function HomepageManagement() {
 
   const saveHeroBlock = async () => {
     if (!form.title.trim()) {
-      alert('請輸入首頁商品標題。');
+      alert('請輸入首頁 Banner 標題。');
       return;
     }
     if (!form.image.trim()) {
@@ -584,28 +585,28 @@ export default function HomepageManagement() {
 
     setSaving(true);
     try {
-      await persistHeroBlocks(nextBlocks, '首頁商品已儲存。');
+      await persistHeroBlocks(nextBlocks, '首頁 Banner 已儲存。');
       closeEditor();
     } catch (error) {
       console.error('Failed to save homepage hero block:', error);
-      alert(`儲存首頁商品失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+      alert(`儲存首頁 Banner 失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
     } finally {
       setSaving(false);
     }
   };
 
   const deleteHeroBlock = async (id: string) => {
-    if (!confirm('確定要刪除這個首頁商品嗎？')) return;
+    if (!confirm('確定要刪除這個首頁 Banner 嗎？')) return;
 
     setSaving(true);
     try {
       await persistHeroBlocks(
         heroBlocks.filter((block) => block.id !== id),
-        '首頁商品已刪除。',
+        '首頁 Banner 已刪除。',
       );
     } catch (error) {
       console.error('Failed to delete homepage hero block:', error);
-      alert(`刪除首頁商品失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+      alert(`刪除首頁 Banner 失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
     } finally {
       setSaving(false);
     }
@@ -638,7 +639,7 @@ export default function HomepageManagement() {
     try {
       await persistHeroBlocks(
         nextBlocks.map((block, index) => ({ ...block, sort_order: index + 1 })),
-        '首頁商品排序已更新。',
+        '首頁 Banner 排序已更新。',
       );
     } catch (error) {
       console.error('Failed to move homepage hero block to end:', error);
@@ -669,7 +670,7 @@ export default function HomepageManagement() {
       <div className="mb-6 border-b border-slate-200">
         <div className="flex flex-wrap gap-6">
           <TabButton active={activeTab === 'sections'} icon={Layout} label={t('homepage_management.tab_sections', '首頁區塊')} onClick={() => setActiveTab('sections')} />
-          <TabButton active={activeTab === 'heroBlocks'} icon={Package} label={t('homepage_management.tab_hero_products', '首頁商品')} onClick={() => setActiveTab('heroBlocks')} />
+          <TabButton active={activeTab === 'heroBlocks'} icon={Package} label={t('homepage_management.tab_hero_products', '首頁 Banner')} onClick={() => setActiveTab('heroBlocks')} />
         </div>
       </div>
 
@@ -687,7 +688,7 @@ export default function HomepageManagement() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-slate-500">
-              共 {heroBlocks.length} 個首頁商品，啟用中 {heroBlocks.filter((item) => item.is_active !== false).length} 個
+              共 {heroBlocks.length} 張首頁 Banner，啟用中 {heroBlocks.filter((item) => item.is_active !== false).length} 張
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -704,13 +705,13 @@ export default function HomepageManagement() {
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
                 <Plus className="h-4 w-4" />
-                新增首頁商品
+                新增 Banner
               </button>
             </div>
           </div>
 
           {heroBlocks.length === 0 ? (
-            <EmptyState text={t('homepage_management.empty_hero_blocks', '尚未建立首頁商品。')} />
+            <EmptyState text={t('homepage_management.empty_hero_blocks', '尚未建立首頁 Banner。')} />
           ) : (
             <div
               className="space-y-4"
@@ -773,7 +774,7 @@ export default function HomepageManagement() {
                                 <span>區塊 {index + 1} ｜ 排序 {block.sort_order}</span>
                               </div>
                               <div className="mt-1 truncate text-lg font-semibold text-slate-900">
-                                {resolved?.title || block.title || '未命名首頁商品'}
+                                {resolved?.title || block.title || '未命名 Banner'}
                               </div>
                               <div className="mt-1 text-sm text-slate-600">
                                 {resolved?.href || block.href || '尚未設定連結'}
@@ -1156,8 +1157,8 @@ export default function HomepageManagement() {
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">{editingBlock ? '編輯首頁商品' : '新增首頁商品'}</h2>
-                <p className="text-sm text-slate-500">可建立商品模式或自訂模式的首頁輪播區塊。</p>
+                <h2 className="text-xl font-bold text-slate-900">{editingBlock ? '編輯首頁 Banner' : '新增首頁 Banner'}</h2>
+                <p className="text-sm text-slate-500">可建立商品模式或自訂模式的首頁 Banner。</p>
               </div>
               <button
                 type="button"
@@ -1271,7 +1272,7 @@ export default function HomepageManagement() {
                   disabled={saving}
                 >
                   <Save className="h-4 w-4" />
-                  {saving ? '儲存中...' : '儲存首頁商品'}
+                  {saving ? '儲存中...' : '儲存首頁 Banner'}
                 </button>
               </div>
             </div>

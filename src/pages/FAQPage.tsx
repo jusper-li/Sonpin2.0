@@ -83,12 +83,21 @@ export default function FAQPage() {
     return () => window.clearTimeout(loadingTimeout);
   }, []);
 
-  const categories = useMemo(
-    () => ['all', ...Array.from(new Set(faqs.map((faq) => faq.category)))],
-    [faqs],
+  const localizedFaqs = useMemo(
+    () => faqs.map((faq) => ({
+      ...faq,
+      question: t(`faq.item.${faq.id}.question`, faq.question),
+      answer: t(`faq.item.${faq.id}.answer`, faq.answer),
+    })),
+    [faqs, t],
   );
 
-  const filtered = faqs.filter((faq) => {
+  const categories = useMemo(
+    () => ['all', ...Array.from(new Set(localizedFaqs.map((faq) => faq.category)))],
+    [localizedFaqs],
+  );
+
+  const filtered = localizedFaqs.filter((faq) => {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
       !query ||

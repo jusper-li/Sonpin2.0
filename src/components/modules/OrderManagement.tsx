@@ -190,12 +190,14 @@ export default function OrderManagement() {
   const [shippingLine1Edit, setShippingLine1Edit] = useState('');
   const [shippingNotesEdit, setShippingNotesEdit] = useState('');
   const [subscribeNoticeEdit, setSubscribeNoticeEdit] = useState(false);
+  const [sendShippedNoticeEdit, setSendShippedNoticeEdit] = useState(true);
   const [communicationNotesEdit, setCommunicationNotesEdit] = useState('');
 
   const orderStatusOptions = useMemo(
     () => [
       { value: 'pending', label: t('order_management.status_pending', '待處理') },
       { value: 'processing', label: t('order_management.status_processing', '處理中') },
+      { value: 'shipped', label: t('order_management.status_shipped', '已出貨') },
       { value: 'completed', label: t('order_management.status_completed', '已完成') },
       { value: 'cancelled', label: t('order_management.status_cancelled', '已取消') },
     ],
@@ -240,7 +242,7 @@ export default function OrderManagement() {
 
   const statusTone = (status: string) => {
     if (['completed', 'paid', 'delivered'].includes(status)) return 'border-emerald-200 bg-emerald-100 text-emerald-700';
-    if (['processing', 'pending', 'ready_to_ship', 'preparing', 'packing', 'shipping', 'unpaid'].includes(status))
+    if (['processing', 'pending', 'shipped', 'ready_to_ship', 'preparing', 'packing', 'shipping', 'unpaid'].includes(status))
       return 'border-amber-200 bg-amber-100 text-amber-700';
     if (['failed', 'cancelled'].includes(status)) return 'border-rose-200 bg-rose-100 text-rose-700';
     return 'border-slate-200 bg-slate-100 text-slate-700';
@@ -350,6 +352,7 @@ export default function OrderManagement() {
     setShippingLine1Edit(order.shipping_line1 || getAddressField(order.shipping_address, ['address', 'line1', 'street']));
     setShippingNotesEdit(order.shipping_notes || '');
     setSubscribeNoticeEdit(Boolean(order.subscribed_order_notifications));
+    setSendShippedNoticeEdit(true);
     setCommunicationNotesEdit(order.communication_notes || '');
     setMessageDraft('');
     await loadOrderDetailData(order.id, hasExtendedOrderFields && supportsOrderTimeline);
@@ -369,7 +372,9 @@ export default function OrderManagement() {
   const saveOrder = async () => {
     if (!viewingOrder) return;
     setSaving(true);
+    let shippedNoticeWarning = '';
     try {
+      const shouldSendShippedNotice = viewingOrder.status !== 'shipped' && statusEdit === 'shipped' && sendShippedNoticeEdit;
       const completedAt = statusEdit === 'completed' ? viewingOrder.completed_at || new Date().toISOString() : null;
       const { error: updateError } = await supabase
         .from('orders')
@@ -403,13 +408,47 @@ export default function OrderManagement() {
         .eq('id', viewingOrder.id);
       if (updateError) throw updateError;
 
+      if (shouldSendShippedNotice && customerEmailEdit.trim()) {
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'order_shipped',
+            data: {
+              orderNumber: viewingOrder.order_number,
+              customerName: customerNameEdit.trim() || '顧客',
+              customerEmail: customerEmailEdit.trim(),
+              items: orderItems.map((item) => ({
+                product_name: item.product_name,
+                quantity: item.quantity,
+                price: item.price,
+                total: item.total,
+              })),
+              total: viewingOrder.total,
+              subtotal: viewingOrder.subtotal,
+              shipping: viewingOrder.shipping,
+              shippingMethod: shippingMethodEdit.trim(),
+              address: [shippingCountryEdit, shippingPostalCodeEdit, shippingCityEdit, shippingDistrictEdit, shippingLine1Edit]
+                .filter(Boolean)
+                .join(' '),
+              paymentMethod: payments[0]?.method || '銀行轉帳',
+              trackingNumber: trackingNumberEdit.trim(),
+            },
+          },
+        });
+        if (emailError) {
+          console.error('Failed to send shipped order notification:', emailError);
+          shippedNoticeWarning = '，但已出貨通知信寄送失敗';
+        }
+      } else if (shouldSendShippedNotice) {
+        shippedNoticeWarning = '，但此訂單沒有顧客 Email，未寄送通知信';
+      }
+
       await pushEvent(
         viewingOrder.id,
         t('order_management.event_status_updated', '更新訂單狀態為 {status}，付款狀態為 {payment}').replace('{status}', statusLabel(statusEdit)).replace('{payment}', paymentStatusLabel(paymentStatusEdit))
       );
       await loadData();
       await loadOrderDetailData(viewingOrder.id);
-      alert(t('order_management.save_success', '訂單已儲存'));
+      alert(`${t('order_management.save_success', '訂單已儲存')}${shippedNoticeWarning}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : t('order_management.save_failed', '儲存失敗'));
     } finally {
@@ -596,6 +635,16 @@ export default function OrderManagement() {
                   />
                   {t('order_management.subscribe_notifications', '訂閱訂單通知')}
                 </label>
+                {statusEdit === 'shipped' && viewingOrder.status !== 'shipped' && (
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={sendShippedNoticeEdit}
+                      onChange={(e) => setSendShippedNoticeEdit(e.target.checked)}
+                    />
+                    {t('order_management.send_shipped_notice', '寄出已出貨通知信')}
+                  </label>
+                )}
               </section>
 
               <section className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-2">

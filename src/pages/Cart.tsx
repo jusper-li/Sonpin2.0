@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { ShoppingBag, Trash2, Plus, Minus, ChevronLeft, Gift, Shield, Truck } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -7,6 +8,8 @@ import SiteHeader from '../components/SiteHeader';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import ProductImage from '../components/ProductImage';
 import ProductImagePlaceholder from '../components/ProductImagePlaceholder';
+import { supabase } from '../lib/supabase';
+import { CART_ANNOUNCEMENT_SETTING_KEY, normalizeCartAnnouncement, type CartAnnouncementSettings } from '../data/cartAnnouncement';
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
@@ -14,10 +17,48 @@ export default function Cart() {
   const { t } = useLanguage();
   const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
+  const [announcement, setAnnouncement] = useState<CartAnnouncementSettings | null>(null);
   const localizedItems = items.map((item) => ({
     ...item,
     translatedName: t(`product.${item.slug}.name`, item.name),
   }));
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadAnnouncement = async () => {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', CART_ANNOUNCEMENT_SETTING_KEY)
+        .maybeSingle();
+      if (!cancelled && !error) {
+        const settings = normalizeCartAnnouncement(data?.setting_value);
+        setAnnouncement(settings.enabled ? settings : null);
+      }
+    };
+    void loadAnnouncement();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const announcementBlock = announcement && (
+    <section className="container mx-auto px-6 pt-6">
+      <div className="grid overflow-hidden rounded-2xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] md:grid-cols-[minmax(0,1fr)_minmax(220px,0.42fr)]">
+        <div className="p-5 md:p-7">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--sonpin-primary)]">{t('cart.announcement', '公告')}</p>
+          <h2 className="text-xl font-medium tracking-wide text-stone-800">{announcement.title}</h2>
+          {announcement.content && <div className="prose prose-sm mt-3 max-w-none text-stone-600" dangerouslySetInnerHTML={{ __html: announcement.content }} />}
+          {announcement.link_url && (
+            <Link to={announcement.link_url} className="mt-4 inline-flex rounded-full bg-[var(--sonpin-ink)] px-4 py-2 text-xs font-medium tracking-wide text-white transition hover:bg-[var(--sonpin-primary-soft)]">
+              {announcement.link_label || t('common.learnMore', '了解更多')}
+            </Link>
+          )}
+        </div>
+        {announcement.image && <img src={announcement.image} alt={announcement.image_alt || announcement.title} className="h-48 w-full object-cover md:h-full" />}
+      </div>
+    </section>
+  );
 
   const cartPromises = [
     { icon: Truck, label: t('cart.promise.shipping.title', '運費自動計算'), text: t('cart.promise.shipping.desc', '依商品分類與數量自動套用運費') },
@@ -29,12 +70,13 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
         <SiteHeader />
-        <main className="flex-1 bg-[var(--sonpin-background)] flex items-center justify-center pt-20 pb-20">
+        <main className="flex-1 bg-[var(--sonpin-background)] flex flex-col items-center justify-center pt-20 pb-20">
+          {announcementBlock}
           <div className="text-center">
             <div className="w-20 h-20 bg-stone-100 flex items-center justify-center mx-auto mb-6">
               <ShoppingBag className="w-10 h-10 text-stone-300" />
             </div>
-            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-3">Cart</p>
+            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-3">{t('cart.eyebrow', '購物車')}</p>
             <h1 className="text-2xl font-light text-stone-700 mb-3 tracking-[0.15em]">
               {t('cart.empty.title', '購物車目前是空的')}
             </h1>
@@ -60,6 +102,7 @@ export default function Cart() {
     <div className="min-h-screen flex flex-col" style={{ scrollSnapType: 'none' }}>
       <SiteHeader />
       <main className="flex-1 bg-[var(--sonpin-background)] pt-20 pb-20">
+        {announcementBlock}
         <div className="bg-[var(--sonpin-background)] border-b border-[var(--sonpin-primary-border)]">
           <div className="container mx-auto px-6 py-14 md:py-20">
             <Link
@@ -69,7 +112,7 @@ export default function Cart() {
               <ChevronLeft className="w-3.5 h-3.5" />
               {t('cart.continue', '繼續購物')}
             </Link>
-            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-4">Cart</p>
+            <p className="text-[10px] font-medium tracking-[0.35em] uppercase text-[var(--sonpin-primary)]/70 mb-4">{t('cart.eyebrow', '購物車')}</p>
             <h1 className="text-4xl md:text-5xl font-light text-stone-700 tracking-[0.15em] mb-5">
               {t('cart.title', '購物車')}
             </h1>
@@ -190,7 +233,7 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between text-sm text-stone-500 tracking-wide font-light">
                     <span>{t('cart.shipping', '運費')}</span>
-                    <span>{shippingLoading ? '計算中...' : formatCurrency(shippingTotal)}</span>
+                    <span>{shippingLoading ? t('cart.shipping.loading', '計算中...') : formatCurrency(shippingTotal)}</span>
                   </div>
                   {shippingBreakdown.length > 0 && (
                     <div className="space-y-2 rounded-lg bg-[var(--sonpin-surface)] px-3 py-3 text-xs text-stone-500">
@@ -217,7 +260,7 @@ export default function Cart() {
 
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-6 h-px bg-[var(--sonpin-primary-warm)]/50" />
-                  <p className="text-xs text-stone-400 tracking-wide font-light">運費依商品分類與數量自動計算</p>
+                  <p className="text-xs text-stone-400 tracking-wide font-light">{t('cart.shipping.note', '運費依商品分類與數量自動計算')}</p>
                 </div>
 
                 <div className="space-y-2.5 mb-6">
@@ -236,14 +279,14 @@ export default function Cart() {
                   to="/checkout"
                   className="w-full block py-3.5 bg-[var(--sonpin-ink)] hover:bg-[var(--sonpin-primary-soft)] text-[var(--sonpin-surface)] text-center transition-all duration-300 text-xs font-medium tracking-[0.2em] uppercase"
                 >
-                  前往結帳
+                  {t('cart.checkout', '前往結帳')}
                 </Link>
 
                 <Link
                   to="/shop"
                   className="w-full block mt-3 py-3.5 text-stone-500 hover:text-stone-700 text-center transition-all duration-300 border border-[var(--sonpin-primary-border)] hover:border-[var(--sonpin-primary)] text-xs tracking-[0.15em] uppercase font-light"
                 >
-                  繼續購物
+                  {t('cart.continue_shopping', '繼續購物')}
                 </Link>
               </div>
             </div>

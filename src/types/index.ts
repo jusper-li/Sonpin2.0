@@ -59,6 +59,7 @@ export interface Product {
   price: number;
   sale_price?: number;
   stock: number;
+  is_unlimited_stock?: boolean;
   sku?: string;
   images: string[];
   is_active: boolean;
