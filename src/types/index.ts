@@ -87,6 +87,8 @@ export interface Order {
 export interface Store {
   id: string;
   name: string;
+  category?: 'store' | 'factory';
+  description?: string;
   address: string;
   city: string;
   phone?: string;

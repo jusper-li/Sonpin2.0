@@ -370,7 +370,7 @@ export default function MemberAuth() {
             {error && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
             {successMsg && (
               <div className="mb-5 flex items-center gap-2 rounded-xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-primary-border)] px-4 py-3 text-sm text-[var(--sonpin-primary)]">
-                <Coffee className="h-4 w-4 flex-shrink-0" />
+                <Egg className="h-4 w-4 flex-shrink-0" />
                 {successMsg}
               </div>
             )}

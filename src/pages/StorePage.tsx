@@ -11,6 +11,8 @@ import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetwor
 type StoreRow = {
   id: string;
   name: string;
+  category?: 'store' | 'factory' | string | null;
+  description?: string | null;
   city: string;
   address: string;
   phone: string;
@@ -24,6 +26,8 @@ type StoreRow = {
 type StoreView = {
   id: string;
   name: string;
+  category: 'store' | 'factory';
+  description: string;
   city: string;
   address: string;
   phone: string;
@@ -108,7 +112,7 @@ export default function StorePage() {
       try {
         const { data, error } = await supabase
           .from('stores')
-          .select('id, name, city, address, phone, email, opening_hours, is_active, location, images')
+          .select('id, name, category, description, city, address, phone, email, opening_hours, is_active, location, images')
           .eq('is_active', true)
           .order('city', { ascending: true })
           .order('name', { ascending: true });
@@ -139,6 +143,8 @@ export default function StorePage() {
       stores.map((row) => ({
         id: row.id,
         name: row.name,
+        category: row.category === 'factory' || row.city === 'factory' ? 'factory' : 'store',
+        description: row.description || '',
         city: row.city,
         address: row.address,
         phone: row.phone,
@@ -150,11 +156,11 @@ export default function StorePage() {
   );
 
   const northStores = useMemo<StoreView[]>(
-    () => sortStores(normalizedStores.filter((store) => store.city !== 'factory')),
+    () => sortStores(normalizedStores.filter((store) => store.category !== 'factory')),
     [normalizedStores],
   );
   const factoryStores = useMemo<StoreView[]>(
-    () => normalizedStores.filter((store) => store.city === 'factory'),
+    () => normalizedStores.filter((store) => store.category === 'factory'),
     [normalizedStores],
   );
 
@@ -209,6 +215,7 @@ export default function StorePage() {
                           <p className="mt-2 text-sm text-[var(--sonpin-primary-muted)]">
                             {store.city === 'factory' ? t('store.section.factory', '工廠') : t(`store.city.${store.city}`, store.city)}
                           </p>
+                          {store.description && <p className="mt-4 whitespace-pre-line text-sm leading-7 text-[var(--sonpin-primary-soft)]">{store.description}</p>}
                           <div className="mt-5 space-y-3 text-sm text-[var(--sonpin-primary-soft)]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
@@ -234,15 +241,18 @@ export default function StorePage() {
               )}
 
               {factoryStores.length > 0 && (
-                <div className="space-y-6">
-                  <div className="inline-flex rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
+                <div className="mb-10">
+                  <div className="mb-4 inline-flex rounded-full border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] px-3 py-1 text-[11px] tracking-[0.18em] text-[var(--sonpin-primary)]">
                     {t('store.section.factory', '工廠')}
                   </div>
-                  {factoryStores.map((store) => (
-                    <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
-                      <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8">
-                        <div>
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    {factoryStores.map((store) => (
+                      <article key={store.id} className="overflow-hidden rounded-3xl border border-[var(--sonpin-primary-border)] bg-[var(--sonpin-surface)] shadow-sm">
+                        <StoreImage src={store.images[0]} alt={t(`store.items.${store.id}.name`, store.name)} />
+                        <div className="p-6">
                           <h2 className="text-xl font-medium text-[var(--sonpin-ink)]">{t(`store.items.${store.id}.name`, store.name)}</h2>
+                          <p className="mt-2 text-sm text-[var(--sonpin-primary-muted)]">{t('store.section.factory', '工廠')}</p>
+                          {store.description && <p className="mt-4 whitespace-pre-line text-sm leading-7 text-[var(--sonpin-primary-soft)]">{store.description}</p>}
                           <div className="mt-5 space-y-3 text-sm text-[var(--sonpin-primary-soft)]">
                             <p className="flex items-start gap-3">
                               <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--sonpin-primary)]" />
@@ -261,29 +271,9 @@ export default function StorePage() {
                             {store.email && <p className="text-sm text-[var(--sonpin-primary-muted)]">{store.email}</p>}
                           </div>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {store.images.length > 0 ? (
-                            store.images.slice(0, 4).map((image) => (
-                              <img
-                                key={image}
-                                src={image}
-                                alt={t(`store.items.${store.id}.name`, store.name)}
-                                className="h-full w-full rounded-2xl object-cover"
-                                loading="lazy"
-                                onError={(event) => {
-                                  event.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            ))
-                          ) : (
-                            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--sonpin-background)] to-[var(--sonpin-primary-border)]">
-                              <MapPin className="h-10 w-10 text-[var(--sonpin-primary)]/70" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    ))}
+                  </div>
                 </div>
               )}
             </>

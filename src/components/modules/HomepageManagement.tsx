@@ -60,6 +60,7 @@ type ArticleRow = {
 type StoreRow = {
   id: string;
   name: string;
+  category?: 'store' | 'factory' | string | null;
   city: string;
   address: string;
   phone: string;
@@ -227,8 +228,9 @@ export default function HomepageManagement() {
           .order('published_at', { ascending: false }),
         supabase
           .from('stores')
-          .select('id,name,city,address,phone,images,is_active')
+          .select('id,name,category,city,address,phone,images,is_active')
           .eq('is_active', true)
+          .eq('category', 'store')
           .order('city', { ascending: true })
           .order('name', { ascending: true }),
       ]);

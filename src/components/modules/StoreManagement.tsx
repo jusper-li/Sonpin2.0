@@ -7,6 +7,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 interface Store {
   id: string;
   name: string;
+  category: 'store' | 'factory';
+  description: string;
   city: string;
   address: string;
   phone: string;
@@ -27,6 +29,8 @@ export default function StoreManagement() {
 
   const [storeForm, setStoreForm] = useState({
     name: '',
+    category: 'store' as 'store' | 'factory',
+    description: '',
     city: '',
     address: '',
     phone: '',
@@ -112,6 +116,8 @@ export default function StoreManagement() {
       setEditingStore(store);
       setStoreForm({
         name: store.name,
+        category: store.category === 'factory' ? 'factory' : 'store',
+        description: store.description || '',
         city: store.city,
         address: store.address,
         phone: store.phone,
@@ -125,6 +131,8 @@ export default function StoreManagement() {
       setEditingStore(null);
       setStoreForm({
         name: '',
+        category: 'store',
+        description: '',
         city: '',
         address: '',
         phone: '',
@@ -209,6 +217,7 @@ export default function StoreManagement() {
                 </div>
 
                 <div className="mb-4 space-y-2 text-sm text-slate-600">
+                  <p>{store.category === 'factory' ? t('store_management.category_factory', '工廠') : t('store_management.category_store', '門市')}</p>
                   <p>{store.city}</p>
                   <p>{store.address}</p>
                   <p>{store.phone}</p>
@@ -281,6 +290,29 @@ export default function StoreManagement() {
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">{t('store_management.category', '分類')} *</label>
+                <select
+                  value={storeForm.category}
+                  onChange={(e) => setStoreForm({ ...storeForm, category: e.target.value as 'store' | 'factory' })}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                >
+                  <option value="store">{t('store_management.category_store', '門市')}</option>
+                  <option value="factory">{t('store_management.category_factory', '工廠')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">{t('store_management.description', '介紹')}</label>
+                <textarea
+                  value={storeForm.description}
+                  onChange={(e) => setStoreForm({ ...storeForm, description: e.target.value })}
+                  rows={4}
+                  placeholder={t('store_management.description_placeholder', '輸入門市或工廠介紹，可分行顯示')}
+                  className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2"
+                />
               </div>
 
               <div>

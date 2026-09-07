@@ -43,6 +43,7 @@ interface HomepageProductRow {
 interface HomepageStoreRow {
   id: string;
   name: string;
+  category?: 'store' | 'factory' | string | null;
   city: string;
   address: string;
   phone: string;
@@ -288,8 +289,9 @@ export default function Homepage() {
       const { data, error } = await withRequestTimeout(
         supabase
           .from('stores')
-          .select('id,name,city,address,phone,images,is_active')
+          .select('id,name,category,city,address,phone,images,is_active')
           .eq('is_active', true)
+          .eq('category', 'store')
           .order('name', { ascending: true })
           .limit(3)
       );
