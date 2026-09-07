@@ -1218,11 +1218,12 @@ export default function HomepageManagement() {
               )}
 
               <Field label="標題">
-                <input
-                  type="text"
+                <textarea
+                  rows={3}
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+                  placeholder="可輸入多行標題"
+                  className="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
                 />
               </Field>
 

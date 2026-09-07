@@ -129,9 +129,9 @@ export function resolveHomepageHeroBlock(
     return Boolean(block.product_slug && item.slug === block.product_slug);
   });
 
-  const title = block.mode === 'product'
-    ? product?.name || block.title || ''
-    : block.title || product?.name || '';
+  // Product banners may still override the product name with an editorial title.
+  // Only fall back to the product name when the banner title is empty.
+  const title = block.title || product?.name || '';
   const image = block.image || product?.images?.[0] || '';
   const href = block.href || (product?.slug ? `/product/${product.slug}` : '');
 
