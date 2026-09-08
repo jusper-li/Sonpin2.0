@@ -153,9 +153,9 @@ export default function SiteHeader() {
         className="site-header-shared fixed top-0 left-0 right-0 z-50 backdrop-blur-md transition-all duration-500"
         style={{ backgroundColor: '#fbf6ee', color: '#351e0d' }}
       >
-        <nav className="container mx-auto px-5 py-2 md:py-3">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="group relative block flex-shrink-0" aria-label="淞品土雞專賣店首頁">
+        <nav className="site-header-nav container mx-auto px-5 py-2 md:py-3">
+          <div className="site-header-inner flex items-center justify-between">
+            <Link to="/" className="site-header-logo group relative block flex-shrink-0" aria-label="淞品土雞專賣店首頁">
               {settings.logo_image ? (
                 <img
                   src={settings.logo_image}
@@ -265,7 +265,7 @@ export default function SiteHeader() {
               )}
             </div>
 
-            <div className="md:hidden flex items-center gap-1">
+            <div className="site-header-mobile-actions md:hidden flex items-center gap-1">
               <Link
                 to={user ? '/member/profile' : '/member'}
                 className={`relative p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
@@ -331,7 +331,7 @@ export default function SiteHeader() {
               )}
 
               <button
-                className={`p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
+                className={`site-header-menu-button p-2 transition-all duration-200 ${isSolidHeader ? 'text-[var(--sonpin-primary)] hover:text-[var(--sonpin-ink)]' : 'text-white/70 hover:text-white'}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
                 aria-expanded={isMenuOpen}
