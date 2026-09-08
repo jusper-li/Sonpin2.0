@@ -13,13 +13,13 @@ interface SEOSetting {
   og_image: string | null;
   canonical_url: string | null;
   robots: string | null;
-  schema_markup: any;
+  schema_markup: unknown;
 }
 
 interface SiteSettingRow {
   id: string | number;
   setting_key: string;
-  setting_value: any;
+  setting_value: unknown;
 }
 
 interface GoogleAnalyticsSetting {
@@ -60,7 +60,7 @@ export default function SEOManagement() {
     og_image: '',
     canonical_url: '',
     robots: 'index, follow',
-    schema_markup: null as any,
+    schema_markup: null as unknown,
   });
 
   useEffect(() => {

@@ -25,7 +25,7 @@ const clearLegacyAuthState = () => {
   localStorage.removeItem(LEGACY_ADMIN_STORAGE_KEY);
 };
 
-const toAdminData = (adminRecord: any): Admin => ({
+const toAdminData = (adminRecord: Pick<Admin, 'id' | 'email' | 'name' | 'avatar_url' | 'is_active' | 'created_at' | 'updated_at' | 'last_login_at'>): Admin => ({
   id: adminRecord.id,
   email: adminRecord.email,
   name: adminRecord.name,

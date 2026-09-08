@@ -13,9 +13,9 @@ interface Store {
   address: string;
   phone: string;
   email: string | null;
-  opening_hours: any;
+  opening_hours: unknown;
   is_active: boolean;
-  location: any;
+  location: unknown;
   images: string[];
 }
 

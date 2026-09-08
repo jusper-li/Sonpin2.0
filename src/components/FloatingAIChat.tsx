@@ -231,12 +231,13 @@ function FloatingAIChatContent() {
           }
         }
       }
-    } catch (error: any) {
-      if (error.name !== 'AbortError' || !streamStarted) {
+    } catch (error: unknown) {
+      const errorName = error instanceof Error ? error.name : '';
+      if (errorName !== 'AbortError' || !streamStarted) {
         fullReply = fallbackReply;
         setMessages((prev) => prev.map((m) => (m.id === streamingId ? { ...m, message: fullReply, failed: true } : m)));
         setStatusMessage(
-          error.name === 'AbortError'
+          errorName === 'AbortError'
             ? t('floating_ai_chat.status.timeout', 'AI 回覆逾時，已切換到備援模式。')
             : t('floating_ai_chat.status.error', 'AI 服務發生錯誤，已切換到備援模式。')
         );

@@ -6,7 +6,7 @@ import { DEFAULT_FOOTER_SETTINGS } from '../../data/homepageContent';
 interface SiteSettingRow {
   id: string | number;
   setting_key: string;
-  setting_value: any;
+  setting_value: unknown;
   updated_at?: string | null;
 }
 

@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Globe, Instagram, Youtube, Mail, Settings } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { isMissingSupabaseTableError, isSupabaseContentEnabled, isSupabaseNetworkError, supabase } from '../lib/supabase';
 import { DEFAULT_FOOTER_SETTINGS } from '../data/homepageContent';
 import { openCookieConsentSettings } from '../lib/cookieConsent';
@@ -40,7 +41,7 @@ interface FooterSettings {
   link_groups: LinkGroup[];
 }
 
-const SOCIAL_ICON_MAP: Record<string, any> = {
+const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
   facebook: Facebook,
   instagram: Instagram,
   youtube: Youtube,
@@ -261,6 +262,5 @@ export default function SiteFooter() {
     </footer>
   );
 }
-
 
 

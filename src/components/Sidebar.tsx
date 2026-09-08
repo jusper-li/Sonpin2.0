@@ -28,6 +28,7 @@
   PanelTop,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {
@@ -38,7 +39,7 @@ interface SidebarProps {
 interface MenuItem {
   id: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   badge?: string | number;
 }
 

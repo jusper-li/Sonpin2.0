@@ -110,6 +110,40 @@ const applyProductOrder = async (products: CatalogProduct[]) => {
   }
 };
 
+type ProductCategoryRow = { id: string; name: string; slug: string };
+
+type ProductQueryRow = {
+  id: string;
+  category_id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  summary?: string | null;
+  content?: string | null;
+  price: number | string;
+  sale_price: number | string | null;
+  stock?: number | null;
+  is_unlimited_stock?: boolean | null;
+  sku?: string | null;
+  images?: unknown;
+  is_active?: boolean | null;
+  is_featured?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
+  member_price?: number | string | null;
+  specifications?: unknown;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string | null;
+  og_image?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  published_at?: string | null;
+  unpublished_at?: string | null;
+  is_hidden?: boolean | null;
+  categories?: ProductCategoryRow | ProductCategoryRow[] | null;
+};
+
 export const loadCatalogCategories = async (): Promise<CatalogCategory[]> => {
   const { data, error } = await supabase
     .from('categories')
@@ -128,19 +162,19 @@ export const loadCatalogCategories = async (): Promise<CatalogCategory[]> => {
 };
 
 export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
-  const productFields = 'id, category_id, name, slug, description, summary, content, price, sale_price, stock, sku, images, is_active, is_featured, created_at, updated_at, member_price, specifications, seo_title, seo_description, seo_keywords, og_image, og_title, og_description, published_at, unpublished_at, is_hidden, categories(id, name, slug)';
-  const productFieldsWithUnlimitedStock = productFields.replace('stock,', 'stock, is_unlimited_stock,');
+  const productFields = 'id, category_id, name, slug, description, summary, content, price, sale_price, stock, sku, images, is_active, is_featured, created_at, updated_at, member_price, specifications, seo_title, seo_description, seo_keywords, og_image, og_title, og_description, published_at, unpublished_at, is_hidden, categories(id, name, slug)' as const;
+  const productFieldsWithUnlimitedStock = 'id, category_id, name, slug, description, summary, content, price, sale_price, stock, is_unlimited_stock, sku, images, is_active, is_featured, created_at, updated_at, member_price, specifications, seo_title, seo_description, seo_keywords, og_image, og_title, og_description, published_at, unpublished_at, is_hidden, categories(id, name, slug)' as const;
 
   let { data, error } = await supabase
     .from('products')
-    .select(productFieldsWithUnlimitedStock)
+    .select<typeof productFieldsWithUnlimitedStock, ProductQueryRow>(productFieldsWithUnlimitedStock)
     .order('created_at', { ascending: false });
 
   // Keep older projects readable until the unlimited-stock migration is applied.
   if (error && /is_unlimited_stock|42703|PGRST204/i.test(`${error.code || ''} ${error.message || ''}`)) {
     ({ data, error } = await supabase
       .from('products')
-      .select(productFields)
+      .select<typeof productFields, ProductQueryRow>(productFields)
       .order('created_at', { ascending: false }));
   }
 
@@ -151,37 +185,7 @@ export const loadCatalogProducts = async (): Promise<CatalogProduct[]> => {
     throw error;
   }
 
-  const loaded = ((data || []) as Array<{
-    id: string;
-    category_id: string;
-    name: string;
-    slug: string;
-    description?: string | null;
-    summary?: string | null;
-    content?: string | null;
-    price: number | string;
-    sale_price: number | string | null;
-    stock?: number | null;
-    is_unlimited_stock?: boolean | null;
-    sku?: string | null;
-    images?: unknown;
-    is_active?: boolean | null;
-    is_featured?: boolean | null;
-    created_at?: string;
-    updated_at?: string;
-    member_price?: number | string | null;
-    specifications?: unknown;
-    seo_title?: string | null;
-    seo_description?: string | null;
-    seo_keywords?: string | null;
-    og_image?: string | null;
-    og_title?: string | null;
-    og_description?: string | null;
-    published_at?: string | null;
-    unpublished_at?: string | null;
-    is_hidden?: boolean | null;
-    categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null;
-  }>)
+  const loaded = (data ?? [])
     .filter((item) => item.is_active !== false && item.is_hidden !== true)
     .map((item) => {
       const category = resolveCategory(item.categories);

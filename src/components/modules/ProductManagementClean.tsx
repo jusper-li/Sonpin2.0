@@ -10,6 +10,7 @@ import {
   generateProductPageDocumentFromText,
   renderProductPageDocumentAsHtml,
   serializeProductPageDocument,
+  type ProductPageDocument,
 } from '../../lib/productPageCards';
 
 interface Category {
@@ -70,6 +71,8 @@ interface ShippingCategoryOption {
 type FallbackProduct = (typeof FALLBACK_PRODUCTS)[number];
 
 const PRODUCT_ORDER_SETTING_KEY = 'product_order';
+
+const errorMessage = (error: unknown) => error instanceof Error ? error.message : '未知錯誤';
 
 const stripHtmlTags = (value: string) =>
   value
@@ -342,10 +345,13 @@ export default function ProductManagement() {
         shipping_category_id: product.shipping_category_id || null,
         images: Array.isArray(product.images) ? product.images : [],
         specifications: Array.isArray(product.specifications)
-          ? product.specifications.map((spec: any) => ({
-              name: spec?.name || '',
-              options: Array.isArray(spec?.options) ? spec.options : []
-            }))
+          ? product.specifications.map((spec: unknown) => {
+              const record = spec && typeof spec === 'object' ? spec as { name?: unknown; options?: unknown } : {};
+              return {
+              name: typeof record.name === 'string' ? record.name : '',
+              options: Array.isArray(record.options) ? record.options.filter((option): option is string => typeof option === 'string') : []
+              };
+            })
           : []
       }));
 
@@ -497,7 +503,7 @@ export default function ProductManagement() {
     }
   };
 
-  const handleProductFormChange = (field: string, value: any) => {
+  const handleProductFormChange = (field: keyof typeof productForm, value: (typeof productForm)[keyof typeof productForm]) => {
     setProductForm((prev) => {
       const next = { ...prev, [field]: value };
 
@@ -524,10 +530,11 @@ export default function ProductManagement() {
     });
   };
 
-  const handleCategoryFormChange = (field: string, value: any) => {
+  const handleCategoryFormChange = (field: keyof typeof categoryForm, value: (typeof categoryForm)[keyof typeof categoryForm]) => {
     setCategoryForm({ ...categoryForm, [field]: value });
     if (field === 'name' && !editingCategory) {
-      setCategoryForm({ ...categoryForm, name: value, slug: generateSlug(value) });
+      const name = typeof value === 'string' ? value : '';
+      setCategoryForm({ ...categoryForm, name, slug: generateSlug(name) });
     }
   };
 
@@ -548,7 +555,7 @@ export default function ProductManagement() {
     });
   };
 
-  const updateSpecification = (index: number, field: 'name' | 'options', value: any) => {
+  const updateSpecification = (index: number, field: 'name' | 'options', value: string | string[]) => {
     const newSpecs = [...productForm.specifications];
     newSpecs[index] = { ...newSpecs[index], [field]: value };
     setProductForm({ ...productForm, specifications: newSpecs });
@@ -632,7 +639,7 @@ const parseStructuredProductText = (text: string) => {
   };
 };
 
-const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
+const rebuildDocWithStructuredText = (doc: ProductPageDocument, sourceText: string): ProductPageDocument => {
   const parsed = parseStructuredProductText(sourceText);
   if (!doc?.blocks || !Array.isArray(doc.blocks)) return doc;
 
@@ -922,10 +929,13 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
         unpublished_at: productForm.unpublished_at ? new Date(productForm.unpublished_at).toISOString() : null,
       };
       let unlimitedStockSkipped = false;
-      const isMissingUnlimitedStockColumn = (error: any) =>
-        error?.code === 'PGRST204' || error?.code === '42703' || error?.message?.includes('is_unlimited_stock');
+      const isMissingUnlimitedStockColumn = (error: unknown) => {
+        const details = error && typeof error === 'object' ? error as { code?: string; message?: string } : {};
+        return details.code === 'PGRST204' || details.code === '42703' || details.message?.includes('is_unlimited_stock');
+      };
       const legacyProductData = () => {
-        const { is_unlimited_stock: _ignored, ...payload } = productData;
+        const { is_unlimited_stock, ...payload } = productData;
+        void is_unlimited_stock;
         unlimitedStockSkipped = true;
         return payload;
       };
@@ -993,9 +1003,9 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
       if (unlimitedStockSkipped) {
         alert('商品已儲存，但目前資料庫尚未建立無限庫存欄位；請先套用 20260906140000_add_unlimited_stock_to_products.sql。');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save product:', error);
-      alert('儲存失敗：' + (error?.message || '未知錯誤'));
+      alert('儲存失敗：' + errorMessage(error));
     }
   };
 
@@ -1056,9 +1066,9 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
 
       await loadCategories();
       closeCategoryForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save category:', error);
-      alert('儲存失敗：' + (error?.message || '未知錯誤'));
+      alert('儲存失敗：' + errorMessage(error));
     }
   };
 
@@ -1123,10 +1133,10 @@ const rebuildDocWithStructuredText = (doc: any, sourceText: string) => {
 
     try {
       await saveProductOrder(nextOrder);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setProductOrder(previousOrder);
       console.error('Failed to save product order:', error);
-      alert('商品排序儲存失敗：' + (error?.message || '未知錯誤'));
+      alert('商品排序儲存失敗：' + errorMessage(error));
     } finally {
       setReorderingProductId(null);
     }

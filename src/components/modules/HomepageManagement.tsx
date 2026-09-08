@@ -29,14 +29,14 @@ type HomepageSection = {
   id: string;
   section_type: string;
   title: string;
-  content: any;
+  content: Record<string, string | undefined>;
   sort_order: number;
   is_active: boolean;
 };
 
 type SettingsRow = {
   setting_key: string;
-  setting_value: any;
+  setting_value: unknown;
 };
 
 type ProductRow = {

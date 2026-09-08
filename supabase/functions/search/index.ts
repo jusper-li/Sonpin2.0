@@ -7,6 +7,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+type SearchProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  summary: string | null;
+  price: number | null;
+  sale_price: number | null;
+  stock: number | null;
+  images: unknown;
+  category_id: string | null;
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -52,7 +64,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const productList = products.map((p: any, i: number) =>
+    const typedProducts = products as SearchProduct[];
+    const productList = typedProducts.map((p, i: number) =>
       `${i}. ID:${p.id} | ${p.name} | ${p.summary || ""}`
     ).join("\n");
 
@@ -91,8 +104,8 @@ Deno.serve(async (req: Request) => {
     const ids: string[] = parsed.ids || [];
     const suggestion: string = parsed.suggestion || "";
 
-    const idToProduct: Record<string, any> = {};
-    for (const p of products) {
+    const idToProduct: Record<string, SearchProduct> = {};
+    for (const p of typedProducts) {
       idToProduct[p.id] = p;
     }
 

@@ -78,7 +78,7 @@ export function productSchema({
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
 
-  const schema: any = {
+  const schema: Record<string, unknown> & { offers: Record<string, unknown> } = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name,

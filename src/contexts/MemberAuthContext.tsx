@@ -73,6 +73,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       setProfile(data);
     } catch {
+      // A missing profile is valid for newly registered members.
     } finally {
       setIsLoading(false);
     }

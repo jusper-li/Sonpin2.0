@@ -145,7 +145,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         if (!translations[targetLanguage]) {
           translations[targetLanguage] = {};
         }
-        let nextTranslation = String(data.translation || sourceText).trim();
+        const nextTranslation = String(data.translation || sourceText).trim();
         translations[targetLanguage][key] = nextTranslation;
         setTranslationRevision((value) => value + 1);
         return nextTranslation || sourceText;

@@ -19,6 +19,10 @@ type PaymentRow = {
   } | null;
 };
 
+type PaymentQueryRow = Omit<PaymentRow, 'order'> & {
+  orders?: PaymentRow['order'] | PaymentRow['order'][];
+};
+
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 const statusStyle = (status: string) => {
@@ -52,11 +56,11 @@ export default function PaymentManagement() {
         .limit(100);
 
       if (error) throw error;
-      const normalized = (data || []).map((item: any) => ({
+      const normalized: PaymentRow[] = ((data || []) as PaymentQueryRow[]).map((item) => ({
         ...item,
         order: Array.isArray(item.orders) ? item.orders[0] : item.orders,
       }));
-      setRows(normalized as PaymentRow[]);
+      setRows(normalized);
     } catch (error) {
       console.error('Failed to load payments:', error);
       setRows([]);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Facebook, Globe, Instagram, Link as LinkIcon, Save, Search, Trash2, Twitter, X, Youtube } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -13,7 +14,7 @@ interface Social {
   created_at?: string;
 }
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, LucideIcon> = {
   Facebook,
   Instagram,
   Twitter,
@@ -159,9 +160,9 @@ export default function SocialManagement() {
       }
       await loadSocials();
       closeForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save social link:', error);
-      setFormError(error?.message || t('social_management.save_failed', '儲存失敗'));
+      setFormError(error instanceof Error ? error.message : t('social_management.save_failed', '儲存失敗'));
     } finally {
       setSaving(false);
     }

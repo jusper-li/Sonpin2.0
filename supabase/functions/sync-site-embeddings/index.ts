@@ -159,15 +159,6 @@ function buildStoreText(row: RawRecord) {
   ].filter(Boolean).join("\n"));
 }
 
-function buildStaticPageText(row: RawRecord) {
-  return truncate([
-    `頁面標題：${asText(row.title)}`,
-    row.meta_description ? `Meta 描述：${asText(row.meta_description)}` : "",
-    row.slug ? `Slug：${asText(row.slug)}` : "",
-    row.sections ? `內容區塊：${jsonToText(row.sections)}` : "",
-  ].filter(Boolean).join("\n"));
-}
-
 function buildHomepageSectionText(row: RawRecord) {
   return truncate([
     `區塊類型：${asText(row.section_type)}`,

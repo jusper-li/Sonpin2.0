@@ -78,7 +78,7 @@ export interface Order {
   shipping: number;
   total: number;
   payment_status: string;
-  shipping_address?: any;
+  shipping_address?: unknown;
   notes: string;
   created_at: string;
   updated_at: string;
@@ -93,8 +93,8 @@ export interface Store {
   city: string;
   phone?: string;
   email?: string;
-  opening_hours: any;
-  location?: any;
+  opening_hours: unknown;
+  location?: unknown;
   is_active: boolean;
   created_at: string;
   updated_at: string;

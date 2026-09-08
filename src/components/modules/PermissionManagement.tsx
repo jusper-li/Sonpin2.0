@@ -63,11 +63,15 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ROLE_TEMPLATES = [
-  { key: 'super', label: '超級管理員', matcher: (_m: string, _a: string) => true },
+  { key: 'super', label: '超級管理員', matcher: () => true },
   { key: 'editor', label: '內容編輯', matcher: (m: string, a: string) => ['articles', 'faq', 'homepage', 'seo', 'social', 'static-pages'].includes(m) && a !== 'delete' },
-  { key: 'sales', label: '客服銷售', matcher: (m: string, _a: string) => ['orders', 'members', 'products', 'ai-chat', 'knowledge-base'].includes(m) },
-  { key: 'viewer', label: '唯讀監看', matcher: (_m: string, a: string) => ['read', 'view', 'list'].includes(a) },
+  { key: 'sales', label: '客服銷售', matcher: (m: string) => ['orders', 'members', 'products', 'ai-chat', 'knowledge-base'].includes(m) },
+  { key: 'viewer', label: '唯讀監看', matcher: (...[, a]: [string, string]) => ['read', 'view', 'list'].includes(a) },
 ];
+
+type AdminRoleRow = { admin_id: string; role_id: string };
+type RolePermissionRow = { role_id: string; permission_id: string };
+type PermissionError = { status?: number; code?: string; message?: string };
 
 const moduleToZh = (value: string) => MODULE_LABELS[value] || value;
 const actionToZh = (value: string) => ACTION_LABELS[value] || value;
@@ -120,23 +124,23 @@ export default function PermissionManagement() {
       if (rolesRes.error) throw rolesRes.error;
       if (permsRes.error) throw permsRes.error;
 
-      const rolePermissions = rolePermsRes.data || [];
-      const adminRoles = adminRolesRes.data || [];
+      const rolePermissions = (rolePermsRes.data || []) as RolePermissionRow[];
+      const adminRoles = (adminRolesRes.data || []) as AdminRoleRow[];
 
-      const roleCounts = adminRoles.reduce((acc: Record<string, number>, row: any) => {
+      const roleCounts = adminRoles.reduce((acc: Record<string, number>, row) => {
         acc[row.role_id] = (acc[row.role_id] || 0) + 1;
         return acc;
       }, {});
 
-      const nextRoleMap = adminRoles.reduce((acc: Record<string, string[]>, row: any) => {
+      const nextRoleMap = adminRoles.reduce((acc: Record<string, string[]>, row) => {
         if (!acc[row.admin_id]) acc[row.admin_id] = [];
         acc[row.admin_id].push(row.role_id);
         return acc;
       }, {});
 
-      const nextRoles: RoleWithPermissions[] = (rolesRes.data || []).map((role: any) => ({
+      const nextRoles: RoleWithPermissions[] = (rolesRes.data || []).map((role: Role) => ({
         ...role,
-        permissions: rolePermissions.filter((rp: any) => rp.role_id === role.id).map((rp: any) => rp.permission_id),
+        permissions: rolePermissions.filter((rp) => rp.role_id === role.id).map((rp) => rp.permission_id),
         userCount: roleCounts[role.id] || 0,
       }));
 
@@ -173,11 +177,12 @@ export default function PermissionManagement() {
       });
       setAdminRoleMap((prev) => ({ ...prev, ...nextMap }));
       setAdminsLoaded(true);
-    } catch (error: any) {
-      if (error?.status === 401 || error?.status === 403 || error?.code === '42501') {
+    } catch (error: unknown) {
+      const details = (error && typeof error === 'object' ? error : {}) as PermissionError;
+      if (details.status === 401 || details.status === 403 || details.code === '42501') {
         setAdminsWarning('目前帳號無法讀取管理員清單，請先確認 Supabase RLS 與 RPC 權限。');
       } else {
-        setAdminsWarning(`載入管理員失敗：${error?.message || '未知錯誤'}`);
+        setAdminsWarning(`載入管理員失敗：${details.message || '未知錯誤'}`);
       }
       setAdminsLoaded(false);
     } finally {
@@ -233,10 +238,11 @@ export default function PermissionManagement() {
       await loadCoreData();
       setShowRoleForm(false);
       setEditingRole(null);
-    } catch (error: any) {
-      if (error?.code === '23505') setRoleError('角色名稱已存在');
-      else if (error?.status === 403 || error?.code === '42501') setRoleError('權限不足，無法建立/更新角色');
-      else setRoleError(error?.message || '儲存角色失敗');
+    } catch (error: unknown) {
+      const details = (error && typeof error === 'object' ? error : {}) as PermissionError;
+      if (details.code === '23505') setRoleError('角色名稱已存在');
+      else if (details.status === 403 || details.code === '42501') setRoleError('權限不足，無法建立/更新角色');
+      else setRoleError(details.message || '儲存角色失敗');
     } finally {
       setSavingRole(false);
     }
@@ -360,10 +366,11 @@ export default function PermissionManagement() {
       setEditingAdmin(null);
       await loadCoreData();
       await loadAdmins();
-    } catch (error: any) {
-      if (error?.code === '23505') setAdminError('此 Email 已存在');
-      else if (error?.status === 403 || error?.code === '42501') setAdminError('權限不足，無法新增管理員');
-      else setAdminError(error?.message || (editingAdmin ? '編輯管理員失敗' : '新增管理員失敗'));
+    } catch (error: unknown) {
+      const details = (error && typeof error === 'object' ? error : {}) as PermissionError;
+      if (details.code === '23505') setAdminError('此 Email 已存在');
+      else if (details.status === 403 || details.code === '42501') setAdminError('權限不足，無法新增管理員');
+      else setAdminError(details.message || (editingAdmin ? '編輯管理員失敗' : '新增管理員失敗'));
     } finally {
       setSavingAdmin(false);
     }

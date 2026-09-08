@@ -21,6 +21,46 @@ interface Knowledge {
   created_at: string;
 }
 
+interface SyncProduct {
+  name: string;
+  slug?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  content?: string | null;
+  price?: number | null;
+  sale_price?: number | null;
+  stock?: number | null;
+  is_active?: boolean | null;
+}
+
+interface SyncArticle {
+  title: string;
+  slug?: string | null;
+  excerpt?: string | null;
+  content?: string | null;
+  status?: string | null;
+}
+
+interface SyncFaq {
+  question: string;
+  answer?: string | null;
+  category?: string | null;
+  is_active?: boolean | null;
+}
+
+interface SyncPageSection {
+  title?: string | null;
+  content?: string | null;
+}
+
+interface SyncPage {
+  title: string;
+  slug: string;
+  meta_description?: string | null;
+  sections?: unknown;
+  is_published?: boolean | null;
+}
+
 export default function KnowledgeBaseManagement() {
   const AUTO_SYNC_KEYWORD = '__auto_sync__';
   const [categories, setCategories] = useState<Category[]>([]);
@@ -100,7 +140,7 @@ export default function KnowledgeBaseManagement() {
       if (categoriesRes.error) throw categoriesRes.error;
       if (knowledgeRes.error) throw knowledgeRes.error;
 
-      let categoryMap = new Map((categoriesRes.data || []).map((item) => [item.name, item.id]));
+      const categoryMap = new Map((categoriesRes.data || []).map((item) => [item.name, item.id]));
 
       const ensureCategory = async (name: string, description: string) => {
         const existingId = categoryMap.get(name);
@@ -138,7 +178,7 @@ export default function KnowledgeBaseManagement() {
         is_active: boolean;
       }> = [];
 
-      (productsRes.data || []).forEach((item: any) => {
+      (productsRes.data || []).forEach((item: SyncProduct) => {
         rows.push({
           category_id: productCategoryId,
           question: `商品資訊｜${item.name}`,
@@ -149,7 +189,7 @@ export default function KnowledgeBaseManagement() {
         });
       });
 
-      (articlesRes.data || []).forEach((item: any) => {
+      (articlesRes.data || []).forEach((item: SyncArticle) => {
         rows.push({
           category_id: articleCategoryId,
           question: `文章內容｜${item.title}`,
@@ -160,7 +200,7 @@ export default function KnowledgeBaseManagement() {
         });
       });
 
-      (faqsRes.data || []).forEach((item: any) => {
+      (faqsRes.data || []).forEach((item: SyncFaq) => {
         rows.push({
           category_id: faqCategoryId,
           question: `FAQ｜${item.question}`,
@@ -171,10 +211,10 @@ export default function KnowledgeBaseManagement() {
         });
       });
 
-      (pagesRes.data || []).forEach((item: any) => {
+      (pagesRes.data || []).forEach((item: SyncPage) => {
         const sections = Array.isArray(item.sections)
           ? item.sections
-              .map((section: any) => `${section?.title || ''}\n${section?.content || ''}`)
+              .map((section: SyncPageSection) => `${section?.title || ''}\n${section?.content || ''}`)
               .filter(Boolean)
               .join('\n\n')
           : '';

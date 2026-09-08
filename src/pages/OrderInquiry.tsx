@@ -56,8 +56,6 @@ const statusTone = (value?: string | null) => {
   return 'border-amber-200 bg-amber-50 text-amber-700';
 };
 
-const copyButtonLabel = (state: 'idle' | 'copied') => (state === 'copied' ? '已複製訂單編號' : '複製訂單編號');
-
 export default function OrderInquiry() {
   const { t, currentLanguage } = useLanguage();
   const [searchParams] = useSearchParams();
