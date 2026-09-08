@@ -23,6 +23,7 @@ interface ArticleFormState {
   featured_image: string;
   status: 'draft' | 'published';
   published_at: string;
+  unpublished_at: string;
   category_slug: string;
 }
 
@@ -42,6 +43,7 @@ const emptyArticleForm = (categorySlug = ''): ArticleFormState => ({
   featured_image: '',
   status: 'draft',
   published_at: '',
+  unpublished_at: '',
   category_slug: categorySlug,
 });
 
@@ -129,6 +131,7 @@ export default function ArticleManagement() {
         featured_image: article.featured_image || '',
         status: article.status,
         published_at: toDatetimeLocal(article.published_at),
+        unpublished_at: toDatetimeLocal(article.unpublished_at),
         category_slug: getArticleCategorySlug(article),
       });
     } else {
@@ -173,6 +176,7 @@ export default function ArticleManagement() {
         featured_image: articleForm.featured_image || null,
         status: articleForm.status,
         published_at: articleForm.published_at ? new Date(articleForm.published_at).toISOString() : null,
+        unpublished_at: articleForm.unpublished_at ? new Date(articleForm.unpublished_at).toISOString() : null,
       };
 
       if (editingArticle?.id) {
@@ -521,6 +525,10 @@ export default function ArticleManagement() {
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">{t('article_management.published_at', '發布時間')}</label>
                   <input type="datetime-local" value={articleForm.published_at} onChange={(e) => setArticleForm({ ...articleForm, published_at: e.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">{t('article_management.unpublished_at', '下架時間')}</label>
+                  <input type="datetime-local" value={articleForm.unpublished_at} onChange={(e) => setArticleForm({ ...articleForm, unpublished_at: e.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
                 </div>
               </div>
             </div>

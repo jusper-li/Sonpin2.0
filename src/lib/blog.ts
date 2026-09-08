@@ -19,6 +19,7 @@ interface DbArticle {
   featured_image: string | null;
   status: 'draft' | 'published';
   published_at: string | null;
+  unpublished_at: string | null;
   views: number | null;
   created_at?: string;
   updated_at?: string;
@@ -101,11 +102,16 @@ const mergeDbArticles = (
   categoryMap: BlogArticleCategoryMap,
   publishedOnly: boolean,
 ): LoadedBlogArticle[] => {
+  const isUnpublished = (article: { unpublished_at?: string | null }) => {
+    if (!article.unpublished_at) return false;
+    const timestamp = new Date(article.unpublished_at).getTime();
+    return Number.isFinite(timestamp) && timestamp <= Date.now();
+  };
   const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]));
   const localBySlug = new Map(BLOG_ARTICLES.map((article) => [article.slug, article]));
   const merged = new Map<string, LoadedBlogArticle>(
     BLOG_ARTICLES
-      .filter((article) => !publishedOnly || article.status === 'published')
+      .filter((article) => !publishedOnly || (article.status === 'published' && !isUnpublished(article)))
       .map((article) => [
         article.slug,
         {
@@ -117,7 +123,7 @@ const mergeDbArticles = (
   );
 
   dbArticles.forEach((article, index) => {
-    if (publishedOnly && article.status !== 'published') return;
+    if (publishedOnly && (article.status !== 'published' || isUnpublished(article))) return;
 
     const local = localBySlug.get(article.slug);
     const categorySlug = categoryMap[article.slug] || local?.category_slug || categories[0]?.slug || '';
@@ -131,6 +137,7 @@ const mergeDbArticles = (
       featured_image: article.featured_image || local?.featured_image || '',
       status: article.status || local?.status || 'draft',
       published_at: article.published_at || local?.published_at || article.created_at || new Date().toISOString(),
+      unpublished_at: article.unpublished_at,
       category_slug: categorySlug,
       category_name: category?.name || local?.category_name || '',
       source_url: local?.source_url || '',
@@ -173,7 +180,7 @@ export const loadBlogData = async (options: { publishedOnly?: boolean } = {}) =>
       withRequestTimeout(
         supabase
           .from('articles')
-          .select('id, title, slug, content, excerpt, featured_image, status, published_at, views, created_at, updated_at')
+          .select('id, title, slug, content, excerpt, featured_image, status, published_at, unpublished_at, views, created_at, updated_at')
           .order('published_at', { ascending: false, nullsFirst: false }),
       ),
     ]);

@@ -15,6 +15,7 @@ export interface BlogArticle {
   featured_image: string;
   status: 'draft' | 'published';
   published_at: string;
+  unpublished_at?: string | null;
   category_slug: string;
   category_name: string;
   source_url: string;
