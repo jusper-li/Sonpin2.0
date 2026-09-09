@@ -305,7 +305,7 @@ export default function SiteHeader() {
                     aria-expanded={showLanguageMenu}
                   >
                     <Globe className="w-4 h-4" />
-                    <span className="ml-1 text-[10px] font-medium tracking-[0.12em]">
+                    <span className="site-header-language-label ml-1 text-[10px] font-medium tracking-[0.12em]">
                       {normalizedLanguage === 'zh-TW' ? 'ZH' : normalizedLanguage.toUpperCase()}
                     </span>
                   </button>

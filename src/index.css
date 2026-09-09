@@ -227,6 +227,35 @@
     }
   }
 
+  @media (max-width: 400px) {
+    .site-header-nav {
+      padding-left: 0.625rem;
+      padding-right: 0.625rem;
+    }
+
+    .site-header-logo {
+      max-width: 46%;
+    }
+
+    .site-header-logo img {
+      height: 2.25rem;
+    }
+
+    .site-header-mobile-actions {
+      gap: 0.125rem;
+    }
+
+    .site-header-language-label {
+      display: none;
+    }
+
+    .site-header-mobile-actions > div > button {
+      min-width: 2.25rem;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+  }
+
   .site-header-desktop-menu > button,
   .site-header-desktop-menu > a,
   .site-header-desktop-menu > div > button {
