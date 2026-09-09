@@ -25,9 +25,8 @@ export default function Checkout() {
     name: '',
     email: '',
     phone: '',
-    contactAddress: '',
-    contactCity: '',
-    contactPostalCode: '',
+    recipientName: '',
+    recipientPhone: '',
     address: '',
     city: '',
     postalCode: '',
@@ -49,9 +48,8 @@ export default function Checkout() {
       name: current.name || profile?.display_name || metadata.display_name || '',
       email: current.email || user?.email || '',
       phone: current.phone || profile?.phone || metadata.phone || '',
-      contactAddress: current.contactAddress || profile?.address || metadata.address || '',
-      contactCity: current.contactCity || metadata.city || '',
-      contactPostalCode: current.contactPostalCode || metadata.postal_code || metadata.postalCode || '',
+      recipientName: current.recipientName || profile?.display_name || metadata.display_name || '',
+      recipientPhone: current.recipientPhone || profile?.phone || metadata.phone || '',
     }));
   }, [user, profile]);
 
@@ -70,9 +68,8 @@ export default function Checkout() {
     setFormData((prev) => {
       const next = { ...prev, [name]: value };
       if (prev.sameAsContact) {
-        if (name === 'contactAddress') next.address = value;
-        if (name === 'contactCity') next.city = value;
-        if (name === 'contactPostalCode') next.postalCode = value;
+        if (name === 'name') next.recipientName = value;
+        if (name === 'phone') next.recipientPhone = value;
       }
       return next;
     });
@@ -84,9 +81,8 @@ export default function Checkout() {
       sameAsContact: checked,
       ...(checked
         ? {
-            address: prev.contactAddress,
-            city: prev.contactCity,
-            postalCode: prev.contactPostalCode,
+            recipientName: prev.name,
+            recipientPhone: prev.phone,
           }
         : {}),
     }));
@@ -146,18 +142,17 @@ export default function Checkout() {
         customer_email: formData.email,
         customer_account: user?.id || '',
         customer_phone: formData.phone,
-        recipient_name: formData.name,
-        recipient_phone: formData.phone,
+        recipient_name: formData.recipientName,
+        recipient_phone: formData.recipientPhone,
         shipping_country: '台灣',
         shipping_postal_code: formData.postalCode,
         shipping_city: formData.city,
         shipping_line1: formData.address,
         shipping_address: {
-          name: formData.name,
-          recipient_name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          recipient_phone: formData.phone,
+          name: formData.recipientName,
+          recipient_name: formData.recipientName,
+          phone: formData.recipientPhone,
+          recipient_phone: formData.recipientPhone,
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
@@ -274,7 +269,7 @@ export default function Checkout() {
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <User className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">聯絡資料</h2>
+                    <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">購買人聯絡資訊</h2>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -289,23 +284,13 @@ export default function Checkout() {
                     <label className={labelCls}>電話 *</label>
                     <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className={inputCls} />
                   </div>
-                  <div className="sm:col-span-2 border-t border-stone-100 pt-4">
-                    <p className="mb-3 text-xs tracking-[0.12em] text-stone-400">聯絡地址（可作為配送地址）</p>
-                    <input type="text" name="contactAddress" value={formData.contactAddress} onChange={handleChange} placeholder="地址" className={inputCls} />
-                  </div>
-                  <div>
-                    <input type="text" name="contactCity" value={formData.contactCity} onChange={handleChange} placeholder="城市" className={inputCls} />
-                  </div>
-                  <div>
-                    <input type="text" name="contactPostalCode" value={formData.contactPostalCode} onChange={handleChange} placeholder="郵遞區號" className={inputCls} />
-                  </div>
                 </div>
               </section>
 
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">配送地址</h2>
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">配送聯絡資訊</h2>
                 </div>
                 <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-stone-700">
                   <input
@@ -314,9 +299,19 @@ export default function Checkout() {
                     onChange={(event) => handleSameAsContactChange(event.target.checked)}
                     className="h-4 w-4 accent-amber-500"
                   />
-                  配送地址同上
+                  配送聯絡資訊同上
                 </label>
                 <div className="grid gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className={labelCls}>收件人姓名 *</label>
+                      <input type="text" name="recipientName" value={formData.recipientName} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>收件人電話 *</label>
+                      <input type="tel" name="recipientPhone" value={formData.recipientPhone} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
+                    </div>
+                  </div>
                   <div>
                     <label className={labelCls}>地址 *</label>
                     <input type="text" name="address" value={formData.address} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
