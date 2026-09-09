@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -35,6 +35,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const profileRequestRef = useRef(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,17 +67,19 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
   const loadProfile = async (userId: string) => {
+    const requestId = ++profileRequestRef.current;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('member_profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      setProfile(data);
+      if (error) throw error;
+      if (requestId === profileRequestRef.current) setProfile(data);
     } catch {
       // A missing profile is valid for newly registered members.
     } finally {
-      setIsLoading(false);
+      if (requestId === profileRequestRef.current) setIsLoading(false);
     }
   };
 

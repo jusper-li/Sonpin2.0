@@ -34,7 +34,7 @@ interface MemberOrder {
 
 export default function MemberProfile() {
   const { t } = useLanguage();
-  const { user, profile, isLoading, signOut, updateProfile, updatePassword, refreshProfile } = useMemberAuth();
+  const { user, profile, isLoading, signOut, updateProfile, updatePassword } = useMemberAuth();
   const navigate = useNavigate();
 
   const [editing, setEditing] = useState<EditSection>(null);
@@ -60,10 +60,6 @@ export default function MemberProfile() {
       setAddress(profile.address || '');
     }
   }, [profile]);
-
-  useEffect(() => {
-    if (user) void refreshProfile();
-  }, [user, refreshProfile]);
 
   useEffect(() => {
     if (!user?.email) return;
