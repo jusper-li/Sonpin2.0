@@ -49,7 +49,7 @@ export default function Checkout() {
       name: current.name || profile?.display_name || metadata.display_name || '',
       email: current.email || user?.email || '',
       phone: current.phone || profile?.phone || metadata.phone || '',
-      contactAddress: current.contactAddress || metadata.address || '',
+      contactAddress: current.contactAddress || profile?.address || metadata.address || '',
       contactCity: current.contactCity || metadata.city || '',
       contactPostalCode: current.contactPostalCode || metadata.postal_code || metadata.postalCode || '',
     }));

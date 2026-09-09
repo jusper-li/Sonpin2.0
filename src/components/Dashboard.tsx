@@ -89,13 +89,14 @@ export default function Dashboard() {
     setError(null);
 
     try {
-      const [ordersRes, productsRes, membersRes] = await Promise.all([
+      const [ordersRes, productsRes, membersRes, membersCountRes] = await Promise.all([
         supabase.from('orders').select('id, order_number, status, payment_status, total, created_at').order('created_at', { ascending: false }),
         supabase.from('products').select('id, name, stock, is_active, created_at').order('created_at', { ascending: false }),
-        supabase.from('members').select('id, name, email, created_at').order('created_at', { ascending: false }),
+        supabase.from('members').select('id, name, email, created_at').order('created_at', { ascending: false }).limit(6),
+        supabase.from('members').select('id', { count: 'exact', head: true }),
       ]);
 
-      const maybeErrors = [ordersRes.error, productsRes.error, membersRes.error].filter(Boolean);
+      const maybeErrors = [ordersRes.error, productsRes.error, membersRes.error, membersCountRes.error].filter(Boolean);
       const blockingError = maybeErrors.find((item) => item && !isMissingSupabaseTableError(item));
       if (blockingError) throw blockingError;
 
@@ -114,7 +115,7 @@ export default function Dashboard() {
         .slice(0, 6);
 
       setMetrics({
-        totalMembers: members.length,
+        totalMembers: membersCountRes.count ?? members.length,
         totalProducts: products.length,
         activeProducts: products.filter((product) => product.is_active).length,
         totalOrders: orders.length,

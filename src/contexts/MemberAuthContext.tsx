@@ -6,6 +6,7 @@ export interface MemberProfile {
   id: string;
   display_name: string;
   phone: string;
+  address: string;
   avatar_url: string;
   is_active: boolean;
   total_spent: number;
@@ -22,7 +23,7 @@ interface MemberAuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<{ user: User | null; session: Session | null }>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Pick<MemberProfile, 'display_name' | 'phone' | 'avatar_url'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<MemberProfile, 'display_name' | 'phone' | 'address' | 'avatar_url'>>) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -99,7 +100,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const updateProfile = async (updates: Partial<Pick<MemberProfile, 'display_name' | 'phone' | 'avatar_url'>>) => {
+  const updateProfile = async (updates: Partial<Pick<MemberProfile, 'display_name' | 'phone' | 'address' | 'avatar_url'>>) => {
     if (!user) throw new Error('Not authenticated');
     const { error } = await supabase
       .from('member_profiles')

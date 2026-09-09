@@ -9,6 +9,7 @@ import {
   Lock,
   LogOut,
   Mail,
+  MapPin,
   Phone,
   ShoppingBag,
   User,
@@ -39,6 +40,7 @@ export default function MemberProfile() {
   const [editing, setEditing] = useState<EditSection>(null);
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +57,7 @@ export default function MemberProfile() {
     if (profile) {
       setDisplayName(profile.display_name || '');
       setPhone(profile.phone || '');
+      setAddress(profile.address || '');
     }
   }, [profile]);
 
@@ -94,6 +97,7 @@ export default function MemberProfile() {
     if (profile) {
       setDisplayName(profile.display_name || '');
       setPhone(profile.phone || '');
+      setAddress(profile.address || '');
     }
     setNewPassword('');
     setConfirmPassword('');
@@ -108,7 +112,7 @@ export default function MemberProfile() {
 
     setIsSaving(true);
     try {
-      await updateProfile({ display_name: displayName.trim(), phone: phone.trim() });
+      await updateProfile({ display_name: displayName.trim(), phone: phone.trim(), address: address.trim() });
       setEditing(null);
       setSuccessMsg(t('member.profile.success.profileSaved', '會員資料已更新。'));
       window.setTimeout(() => setSuccessMsg(''), 3000);
@@ -280,6 +284,24 @@ export default function MemberProfile() {
                   />
                 ) : (
                   <p className="text-sm text-stone-800">{displayedName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-stone-500">
+                  <MapPin className="h-3.5 w-3.5" />
+                  配送地址
+                </label>
+                {editing === 'profile' ? (
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="請輸入配送地址"
+                    className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                  />
+                ) : (
+                  <p className="text-sm text-stone-800">{profile?.address || '未設定'}</p>
                 )}
               </div>
 

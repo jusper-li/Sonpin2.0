@@ -4,6 +4,7 @@ import {
   Edit,
   Eye,
   Mail,
+  MapPin,
   Phone,
   Plus,
   RefreshCw,
@@ -23,6 +24,7 @@ interface Member {
   name: string;
   email: string;
   phone: string | null;
+  address: string | null;
   avatar_url: string | null;
   is_active: boolean;
   total_spent?: number | null;
@@ -61,7 +63,7 @@ export default function MemberManagement() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [members, setMembers] = useState<Member[]>([]);
   const [orders, setOrders] = useState<OrderLite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -71,27 +73,69 @@ export default function MemberManagement() {
     name: '',
     email: '',
     phone: '',
+    address: '',
     is_active: true,
   });
+  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, totalRevenue: 0 });
 
   useEffect(() => {
-    void loadData();
-  }, []);
+    const timer = window.setTimeout(() => void loadData(), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm, statusFilter]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [membersRes, ordersRes] = await Promise.all([
-        supabase.from('members').select('*').order('created_at', { ascending: false }),
-        supabase.from('orders').select('id, member_id, total, status, created_at'),
+      const [totalRes, activeRes, inactiveRes, totalsRes] = await Promise.all([
+        supabase.from('members').select('id', { count: 'exact', head: true }),
+        supabase.from('members').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('members').select('id', { count: 'exact', head: true }).eq('is_active', false),
+        supabase.from('members').select('total_spent').range(0, 9999),
       ]);
 
+      const summaryError = [totalRes.error, activeRes.error, inactiveRes.error, totalsRes.error].find(Boolean);
+      if (summaryError) throw summaryError;
+
+      setSummary({
+        total: totalRes.count || 0,
+        active: activeRes.count || 0,
+        inactive: inactiveRes.count || 0,
+        totalRevenue: (totalsRes.data || []).reduce((total, member) => total + Number(member.total_spent || 0), 0),
+      });
+
+      const query = searchTerm.trim().replace(/[(),]/g, '');
+      const hasSearch = Boolean(query) || statusFilter !== 'all';
+      if (!hasSearch) {
+        setMembers([]);
+        setOrders([]);
+        return;
+      }
+
+      let membersQuery = supabase.from('members').select('*').order('created_at', { ascending: false });
+      if (query) {
+        membersQuery = membersQuery.or(`name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,address.ilike.%${query}%`);
+      }
+      if (statusFilter === 'active') membersQuery = membersQuery.eq('is_active', true);
+      if (statusFilter === 'inactive') membersQuery = membersQuery.eq('is_active', false);
+
+      const membersRes = await membersQuery;
       if (membersRes.error) throw membersRes.error;
+
+      const loadedMembers = (membersRes.data || []) as Member[];
+      setMembers(loadedMembers);
+
+      if (!loadedMembers.length) {
+        setOrders([]);
+        return;
+      }
+
+      const ordersRes = await supabase
+        .from('orders')
+        .select('id, member_id, total, status, created_at')
+        .in('member_id', loadedMembers.map((member) => member.id));
       if (ordersRes.error) {
         console.warn('Orders unavailable in member module:', ordersRes.error.message);
       }
-
-      setMembers((membersRes.data || []) as Member[]);
       setOrders((ordersRes.data || []) as OrderLite[]);
     } catch (error) {
       console.error('Failed to load members:', error);
@@ -144,14 +188,6 @@ export default function MemberManagement() {
     });
   }, [enrichedMembers, searchTerm, statusFilter]);
 
-  const summary = useMemo(() => {
-    const total = enrichedMembers.length;
-    const active = enrichedMembers.filter((m) => m.is_active).length;
-    const inactive = total - active;
-    const totalRevenue = enrichedMembers.reduce((acc, cur) => acc + Number(cur.total_spent || 0), 0);
-    return { total, active, inactive, totalRevenue };
-  }, [enrichedMembers]);
-
   const saveMember = async () => {
     if (!memberForm.name.trim() || !memberForm.email.trim()) {
       alert(t('member_management.require_name_email', '請輸入會員姓名與 Email。'));
@@ -167,6 +203,7 @@ export default function MemberManagement() {
             name: memberForm.name.trim(),
             email: memberForm.email.trim(),
             phone: memberForm.phone.trim() || null,
+            address: memberForm.address.trim() || null,
             is_active: memberForm.is_active,
           })
           .eq('id', editingMember.id);
@@ -177,6 +214,7 @@ export default function MemberManagement() {
             name: memberForm.name.trim(),
             email: memberForm.email.trim(),
             phone: memberForm.phone.trim() || null,
+            address: memberForm.address.trim() || null,
             is_active: memberForm.is_active,
             total_spent: 0,
             order_count: 0,
@@ -228,6 +266,7 @@ export default function MemberManagement() {
         name: member.name,
         email: member.email,
         phone: member.phone || '',
+        address: member.address || '',
         is_active: member.is_active,
       });
     } else {
@@ -236,6 +275,7 @@ export default function MemberManagement() {
         name: '',
         email: '',
         phone: '',
+        address: '',
         is_active: true,
       });
     }
@@ -252,6 +292,7 @@ export default function MemberManagement() {
       t('member_management.csv_name', '姓名'),
       'Email',
       t('member_management.csv_phone', '電話'),
+      t('member_management.csv_address', '地址'),
       t('member_management.csv_status', '狀態'),
       t('member_management.csv_orders', '訂單數'),
       t('member_management.csv_spent', '累積消費'),
@@ -261,6 +302,7 @@ export default function MemberManagement() {
       member.name,
       member.email,
       member.phone || '',
+      member.address || '',
       member.is_active ? t('member_management.active', '活躍') : t('member_management.inactive', '停用'),
       String(member.order_count || 0),
       String(member.total_spent || 0),
@@ -344,7 +386,7 @@ export default function MemberManagement() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder={t('member_management.search_placeholder', '搜尋姓名 / Email / 電話')}
+              placeholder={t('member_management.search_placeholder', '搜尋姓名 / Email / 電話 / 地址')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-slate-900 focus:outline-none"
@@ -402,6 +444,10 @@ export default function MemberManagement() {
                         <Phone className="h-4 w-4 text-slate-400" />
                         {member.phone || '-'}
                       </p>
+                      <p className="inline-flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-slate-400" />
+                        {member.address || '-'}
+                      </p>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-slate-900">{member.order_count || 0}</td>
@@ -453,7 +499,9 @@ export default function MemberManagement() {
               {filteredMembers.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
-                    {t('member_management.empty_state', '沒有符合條件的會員資料。')}
+                    {searchTerm.trim() || statusFilter !== 'all'
+                      ? t('member_management.empty_state', '沒有符合條件的會員資料。')
+                      : t('member_management.search_to_show', '請輸入姓名、Email 或電話搜尋會員資料。')}
                   </td>
                 </tr>
               )}
@@ -498,6 +546,15 @@ export default function MemberManagement() {
                   type="tel"
                   value={memberForm.phone}
                   onChange={(e) => setMemberForm({ ...memberForm, phone: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">{t('member_management.address', '地址')}</label>
+                <input
+                  type="text"
+                  value={memberForm.address}
+                  onChange={(e) => setMemberForm({ ...memberForm, address: e.target.value })}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
                 />
               </div>
@@ -550,6 +607,7 @@ export default function MemberManagement() {
                 />
                 <InfoCard label={t('member_management.created_at', '建立時間')} value={dateTime(viewingMember.created_at)} />
                 <InfoCard label={t('member_management.updated_at', '更新時間')} value={dateTime(viewingMember.updated_at || null)} />
+                <InfoCard label={t('member_management.address', '地址')} value={viewingMember.address || '-'} />
               </div>
 
               <div className="rounded-xl border border-slate-200">
