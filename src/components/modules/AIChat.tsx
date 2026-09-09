@@ -150,7 +150,7 @@ export default function AIChat() {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('ai_chat.title', 'AI 客服對話')}</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{t('ai_chat.title', 'AI ONE 對話')}</h1>
           <p className="mt-2 text-slate-600">{t('ai_chat.subtitle', '管理客服對話、查看歷史訊息與人工轉接狀態。')}</p>
         </div>
         <button onClick={loadSessions} className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100">

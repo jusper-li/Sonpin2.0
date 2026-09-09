@@ -60,7 +60,7 @@ export default function Sidebar({ activeModule, onModuleChange }: SidebarProps) 
     {
       title: t('admin.sidebar.group.ai', 'AI 功能'),
       items: [
-        { id: 'ai-chat', label: t('admin.sidebar.aiChat', 'AI 客服聊天'), icon: MessageSquare, badge: 'AI' },
+        { id: 'ai-chat', label: t('admin.sidebar.aiChat', 'AI ONE 客服聊天'), icon: MessageSquare, badge: 'AI' },
         { id: 'knowledge-base', label: t('admin.sidebar.knowledgeBase', '知識庫管理'), icon: BookOpen },
         { id: 'ai-training', label: t('admin.sidebar.aiTraining', 'AI 學習訓練'), icon: Brain },
         { id: 'ai-analytics', label: t('admin.sidebar.aiAnalytics', 'AI 用量分析'), icon: BarChart3 },

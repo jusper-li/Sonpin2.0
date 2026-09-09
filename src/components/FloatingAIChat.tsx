@@ -119,7 +119,7 @@ function FloatingAIChatContent() {
         .insert([
           {
             session_id: sid,
-            message: t('floating_ai_chat.greeting', '您好，我是 AI 客服助理「小 M」。有需要我可以幫您推薦商品、查詢配送、付款或退換貨資訊。'),
+            message: t('floating_ai_chat.greeting', '您好，我是 AI 客服助理「AI ONE」。有需要我可以幫您推薦商品、查詢配送、付款或退換貨資訊。'),
             sender_type: 'bot',
           },
         ])
@@ -201,7 +201,7 @@ function FloatingAIChatContent() {
         const payload = await res.json().catch(() => ({}));
         fullReply = payload.reply || fallbackReply;
         setMessages((prev) => prev.map((m) => (m.id === streamingId ? { ...m, message: fullReply, failed: true } : m)));
-        setStatusMessage(t('floating_ai_chat.status.ai_busy', 'AI 客服目前暫時忙碌，已改用備援回覆。'));
+        setStatusMessage(t('floating_ai_chat.status.ai_busy', 'AI ONE 目前暫時忙碌，已改用備援回覆。'));
         return;
       }
 
@@ -272,7 +272,7 @@ function FloatingAIChatContent() {
     const { error } = await supabase.from('chat_feedback').insert({
       session_id: sessionId,
       message_id: messageId,
-      rating: rating === 'up' ? 'positive' : 'negative',
+      rating: rating === 'up' ? 5 : 1,
     });
     if (!error) {
       setRatedMessageIds((prev) => ({ ...prev, [messageId]: rating }));
@@ -317,7 +317,7 @@ function FloatingAIChatContent() {
       <button
         onClick={handleOpen}
         className={`floating-ai-chat-button fixed bottom-6 right-6 z-50 rounded-full bg-stone-700 p-4 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:bg-stone-600 group ${floatingContextClass}`}
-        aria-label={t('floating_ai_chat.open', '開啟 AI 客服')}
+        aria-label={t('floating_ai_chat.open', '開啟 AI ONE')}
       >
         <MessageCircle className="h-6 w-6" />
         <span className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-amber-400" />
@@ -336,7 +336,7 @@ function FloatingAIChatContent() {
           className="flex items-center gap-2 rounded-xl bg-stone-700 px-4 py-3 text-white shadow-lg transition-all hover:bg-stone-600"
         >
           <Bot className="h-5 w-5 text-amber-400" />
-          <span className="text-sm font-medium">{t('floating_ai_chat.title', 'AI 客服')}</span>
+          <span className="text-sm font-medium">{t('floating_ai_chat.title', 'AI ONE')}</span>
           <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">{messages.length}</span>
         </button>
       </div>
@@ -355,7 +355,7 @@ function FloatingAIChatContent() {
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-stone-700 bg-green-400" />
             </div>
             <div>
-              <div className="text-sm font-semibold">{t('floating_ai_chat.header_title', '小 M AI 客服')}</div>
+              <div className="text-sm font-semibold">{t('floating_ai_chat.header_title', 'AI ONE')}</div>
               <div className="mt-0.5 flex items-center gap-1 text-xs text-white/60">
                 <Sparkles className="h-3 w-3 text-amber-300" />
                 {t('floating_ai_chat.header_subtitle', 'GPT-4o mini 智能客服')}
@@ -487,7 +487,7 @@ function FloatingAIChatContent() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder={isStreaming ? t('floating_ai_chat.placeholder.waiting', '小 M 回覆中...') : t('floating_ai_chat.placeholder.input', '請輸入您的問題...')}
+              placeholder={isStreaming ? t('floating_ai_chat.placeholder.waiting', 'AI ONE 回覆中...') : t('floating_ai_chat.placeholder.input', '請輸入您的問題...')}
               disabled={isStreaming}
               className="flex-1 rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2 text-sm text-stone-800 placeholder-stone-300 transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:outline-none disabled:opacity-50"
             />

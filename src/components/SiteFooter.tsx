@@ -186,9 +186,12 @@ export default function SiteFooter() {
               })}
               {settings.contact_email && (
                 <a
-                  href={`mailto:${settings.contact_email}`}
+                  href={`mailto:${settings.contact_email.trim()}`}
+                  target="_blank"
+                  rel="noreferrer"
                   className="w-9 h-9 flex items-center justify-center border border-[var(--sonpin-primary-border)] text-stone-400 hover:border-[var(--sonpin-primary)] hover:text-[var(--sonpin-primary)] transition-all duration-300 hover:-translate-y-0.5"
-                  aria-label="Email"
+                  aria-label={`寄信至 ${settings.contact_email.trim()}`}
+                  title={`寄信至 ${settings.contact_email.trim()}`}
                 >
                   <Mail size={16} />
                 </a>
@@ -262,5 +265,4 @@ export default function SiteFooter() {
     </footer>
   );
 }
-
 

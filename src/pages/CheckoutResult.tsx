@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, Copy, CreditCard, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import DeferredSiteFooter from '../components/DeferredSiteFooter';
 import SiteHeader from '../components/SiteHeader';
+import ProductImage from '../components/ProductImage';
 import { REMITTANCE_INFO, remittanceLines } from '../data/remittanceInfo';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -20,6 +21,19 @@ interface OrderSummary {
   customer_email: string | null;
 }
 
+interface OrderItemSummary {
+  id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  price: number;
+  total: number;
+  product: {
+    images: string[] | null;
+    og_image: string | null;
+  } | null;
+}
+
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
 export default function CheckoutResult() {
@@ -31,6 +45,7 @@ export default function CheckoutResult() {
   const [status, setStatus] = useState<PaymentState>('pending');
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
+  const [orderItems, setOrderItems] = useState<OrderItemSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [orderCopyState, setOrderCopyState] = useState<'idle' | 'copied'>('idle');
@@ -89,6 +104,14 @@ export default function CheckoutResult() {
       const order = data as OrderSummary;
       setOrderSummary(order);
       setOrderNumber(order.order_number || orderNumberParam || '');
+
+      const { data: itemData } = await supabase
+        .from('order_items')
+        .select('id,product_id,product_name,quantity,price,total,product:products(images,og_image)')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true });
+      if (!mounted) return;
+      setOrderItems((itemData || []) as OrderItemSummary[]);
 
       const paymentStatus = (order.payment_status || '').toLowerCase();
       if (paymentStatus === 'paid') {
@@ -215,6 +238,27 @@ export default function CheckoutResult() {
           <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold text-stone-900">{t('checkout.result.summary', '訂單摘要')}</h2>
             <div className="space-y-3 text-sm text-stone-700">
+              {orderItems.length > 0 && (
+                <div className="mb-2 space-y-3 border-b border-stone-100 pb-3">
+                  {orderItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <ProductImage
+                          src={item.product?.og_image || item.product?.images?.[0] || null}
+                          alt={item.product_name}
+                          className="h-14 w-14 shrink-0 rounded-lg bg-stone-100 object-cover"
+                          compactPlaceholder
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-stone-900">{item.product_name}</p>
+                          <p className="mt-1 text-xs text-stone-500">{t('checkout.quantity', '數量')} x {item.quantity}</p>
+                        </div>
+                      </div>
+                      <span className="shrink-0">{formatCurrency(Number(item.total || item.price * item.quantity))}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                 <span>{t('checkout.subtotal', '商品小計')}</span>
                 <span>{formatCurrency(subtotal)}</span>
