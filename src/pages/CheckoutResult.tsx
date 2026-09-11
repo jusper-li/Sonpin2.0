@@ -56,9 +56,9 @@ export default function CheckoutResult() {
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [orderCopyState, setOrderCopyState] = useState<'idle' | 'copied'>('idle');
   const stateConfig: Record<PaymentState, { title: string; description: string; tone: string }> = {
-    paid: { title: t('checkout.result.paid.title', '您的訂單已完成'), description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排處理與出貨。'), tone: 'text-emerald-700' },
+    paid: { title: t('checkout.result.paid.title', '訂單已送出'), description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排處理與出貨。'), tone: 'text-emerald-700' },
     failed: { title: t('checkout.result.failed.title', '付款失敗'), description: t('checkout.result.failed.description', '目前付款狀態顯示失敗，若您已完成匯款，請重新通知我們進行確認。'), tone: 'text-rose-700' },
-    pending: { title: t('checkout.result.pending.title', '您的訂單已完成'), description: t('checkout.result.pending.description', '您的訂單已建立，若您選擇匯款付款，請完成匯款後再通知我們對帳。'), tone: 'text-amber-700' },
+    pending: { title: t('checkout.result.pending.title', '訂單已送出'), description: t('checkout.result.pending.description', '您的訂單已建立，若您選擇匯款付款，請完成匯款後再通知我們對帳。'), tone: 'text-amber-700' },
     unknown: { title: t('checkout.result.unknown.title', '查無訂單資訊'), description: t('checkout.result.unknown.description', '我們目前無法取得這筆訂單的狀態，請確認連結是否正確，或直接聯繫客服中心。'), tone: 'text-slate-700' },
   };
   const remittanceHref = useMemo(() => {
@@ -297,13 +297,13 @@ export default function CheckoutResult() {
               to="/shop"
               className="rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
             >
-              {t('cart.continue_shopping', '繼續購物')}
+              {t('cart.continue_shopping', '前往購物')}
             </Link>
             <Link
               to={orderQueryHref}
               className="rounded-xl border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
             >
-              {t('order.inquiry.title', '訂單查詢')}
+              {t('order.inquiry.title', '查詢訂單')}
             </Link>
             <Link
               to={remittanceHref}
