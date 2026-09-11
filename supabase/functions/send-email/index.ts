@@ -872,7 +872,7 @@ Deno.serve(async (req: Request) => {
           subject: contact.subject,
           message: contact.message,
         }).trim() || `Sonpin 聯絡表單：${contact.subject}`;
-        await Promise.all([
+        const [adminResult, customerResult] = await Promise.allSettled([
           notificationSettings.contact_enabled
             ? sendEmailToRecipients(adminRecipients, {
                 subject,
@@ -886,6 +886,10 @@ Deno.serve(async (req: Request) => {
             html: generateContactAutoReply(contact),
           }),
         ]);
+        if (adminResult.status === "rejected") throw adminResult.reason;
+        if (adminResult.status === "fulfilled") emailIds.push(...adminResult.value);
+        if (customerResult.status === "fulfilled") emailIds.push(customerResult.value);
+        else console.warn("send-email: customer contact auto-reply was not sent", customerResult.reason);
         break;
       }
       case "contact_reply": {
@@ -938,7 +942,6 @@ Deno.serve(async (req: Request) => {
       }
       case "order_shipped": {
         const order = parseOrderEmail(data);
-        if (!notificationSettings.shipped_enabled) break;
 
         const subject = renderTemplate(notificationSettings.shipped_template.admin_subject, {
           orderNumber: order.orderNumber,

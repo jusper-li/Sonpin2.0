@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, RefreshCw, Save, Search, Star, X } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Save, Search, Star, Trash2, X } from 'lucide-react';
 import { isMissingSupabaseTableError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ProductImage from '../ProductImage';
@@ -359,6 +359,25 @@ export default function OrderManagement() {
     await loadOrderDetailData(order.id, hasExtendedOrderFields && supportsOrderTimeline);
   };
 
+  const deleteOrder = async (order: Order) => {
+    const confirmed = window.confirm(`確定要刪除訂單「${order.order_number}」嗎？\n訂單商品、付款、訊息與事件紀錄也會一併刪除，且無法復原。`);
+    if (!confirmed) return;
+
+    try {
+      const orderResult = await supabase.from('orders').delete().eq('id', order.id);
+      if (orderResult.error) throw orderResult.error;
+      const remittanceResult = await supabase.from('remittance_notifications').delete().eq('order_number', order.order_number);
+      if (remittanceResult.error && !isMissingSupabaseTableError(remittanceResult.error)) throw remittanceResult.error;
+
+      if (viewingOrder?.id === order.id) setViewingOrder(null);
+      setOrders((current) => current.filter((item) => item.id !== order.id));
+      alert('訂單已刪除');
+    } catch (err) {
+      console.error('Failed to delete order:', err);
+      alert(`刪除訂單失敗：${err instanceof Error ? err.message : '未知錯誤'}`);
+    }
+  };
+
   const pushEvent = async (orderId: string, description: string) => {
     if (!supportsOrderTimeline) return;
     await supabase.from('order_events').insert({
@@ -543,6 +562,7 @@ export default function OrderManagement() {
                   <th className="px-4 py-3">{t('order_management.column_shipping', '送貨狀態')}</th>
                   <th className="px-4 py-3">{t('order_management.column_customer', '訂購人')}</th>
                   <th className="px-4 py-3 text-right">{t('order_management.column_amount', '合計')}</th>
+                  <th className="px-4 py-3 text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -589,6 +609,19 @@ export default function OrderManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-800">{formatCurrency(order.total)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          aria-label={`刪除訂單 ${order.order_number}`}
+                          className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void deleteOrder(order);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
