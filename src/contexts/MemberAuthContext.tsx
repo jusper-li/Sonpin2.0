@@ -38,15 +38,27 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const profileRequestRef = useRef(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
+    let mounted = true;
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          void loadProfile(session.user.id);
+        } else {
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        // Treat an initial session read failure as an anonymous session.
+        if (!mounted) return;
+        setSession(null);
+        setUser(null);
+        setProfile(null);
         setIsLoading(false);
-      }
-    });
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
@@ -61,7 +73,10 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      void subscription.unsubscribe();
+    };
   }, []);
 
   const normalizeEmail = (value: string) => value.trim().toLowerCase();

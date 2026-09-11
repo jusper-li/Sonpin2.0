@@ -31,7 +31,7 @@ interface OrderItemSummary {
   product: {
     images: string[] | null;
     og_image: string | null;
-  } | null;
+  }[] | null;
 }
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
@@ -244,7 +244,7 @@ export default function CheckoutResult() {
                     <div key={item.id} className="flex items-center justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-3">
                         <ProductImage
-                          src={item.product?.og_image || item.product?.images?.[0] || null}
+                          src={item.product?.[0]?.og_image || item.product?.[0]?.images?.[0] || null}
                           alt={item.product_name}
                           className="h-14 w-14 shrink-0 rounded-lg bg-stone-100 object-cover"
                           compactPlaceholder

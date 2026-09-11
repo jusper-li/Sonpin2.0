@@ -299,7 +299,7 @@ export default function Checkout() {
                     onChange={(event) => handleSameAsContactChange(event.target.checked)}
                     className="h-4 w-4 accent-amber-500"
                   />
-                  配送聯絡資訊同上
+                  配送聯絡資訊同上（姓名與電話）
                 </label>
                 <div className="grid gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -314,16 +314,16 @@ export default function Checkout() {
                   </div>
                   <div>
                     <label className={labelCls}>地址 *</label>
-                    <input type="text" name="address" value={formData.address} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
+                    <input type="text" name="address" value={formData.address} onChange={handleChange} required className={inputCls} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className={labelCls}>城市 *</label>
-                      <input type="text" name="city" value={formData.city} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
+                      <input type="text" name="city" value={formData.city} onChange={handleChange} required className={inputCls} />
                     </div>
                     <div>
                       <label className={labelCls}>郵遞區號 *</label>
-                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required readOnly={formData.sameAsContact} className={`${inputCls} ${formData.sameAsContact ? 'bg-stone-50 text-stone-500' : ''}`} />
+                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required className={inputCls} />
                     </div>
                   </div>
                 </div>
