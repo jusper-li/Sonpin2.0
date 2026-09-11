@@ -50,6 +50,7 @@ export default function Checkout() {
       phone: current.phone || profile?.phone || metadata.phone || '',
       recipientName: current.recipientName || profile?.display_name || metadata.display_name || '',
       recipientPhone: current.recipientPhone || profile?.phone || metadata.phone || '',
+      address: current.address || profile?.address || metadata.address || '',
     }));
   }, [user, profile]);
 
