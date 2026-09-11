@@ -32,6 +32,17 @@ interface MemberOrder {
   created_at: string;
 }
 
+const MEMBER_ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: '待處理',
+  processing: '處理中',
+  shipped: '已出貨',
+  completed: '已完成',
+  cancelled: '已取消',
+};
+
+const formatMemberOrderStatus = (status: string | null) =>
+  status ? MEMBER_ORDER_STATUS_LABELS[status] || status : '處理中';
+
 export default function MemberProfile() {
   const { t } = useLanguage();
   const { user, profile, isLoading, signOut, updateProfile, updatePassword } = useMemberAuth();
@@ -429,7 +440,7 @@ export default function MemberProfile() {
                     <div className="min-w-0">
                       <p className="font-mono text-sm text-stone-800">{order.order_number}</p>
                       <p className="mt-1 text-xs text-stone-500">
-                        {new Date(order.created_at).toLocaleDateString('zh-TW')} · {order.status || t('member.profile.orders.pending', '處理中')}
+                        {new Date(order.created_at).toLocaleDateString('zh-TW')} · {formatMemberOrderStatus(order.status)}
                       </p>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-2">

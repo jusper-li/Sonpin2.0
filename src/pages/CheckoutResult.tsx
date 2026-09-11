@@ -7,6 +7,7 @@ import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
 import { REMITTANCE_INFO, remittanceLines } from '../data/remittanceInfo';
 import { useLanguage } from '../contexts/LanguageContext';
+import { resolveSonpinProductImages } from '../lib/productImages';
 
 type PaymentState = 'paid' | 'failed' | 'pending' | 'unknown';
 
@@ -36,6 +37,11 @@ interface OrderItemSummary {
 
 const formatCurrency = (amount: number) => `NT$ ${Number(amount || 0).toLocaleString('zh-TW')}`;
 
+const getOrderItemImage = (item: OrderItemSummary) => {
+  const linkedProduct = item.product?.[0];
+  return linkedProduct?.og_image || linkedProduct?.images?.[0] || resolveSonpinProductImages({ name: item.product_name })[0] || null;
+};
+
 export default function CheckoutResult() {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
@@ -50,9 +56,9 @@ export default function CheckoutResult() {
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [orderCopyState, setOrderCopyState] = useState<'idle' | 'copied'>('idle');
   const stateConfig: Record<PaymentState, { title: string; description: string; tone: string }> = {
-    paid: { title: t('checkout.result.paid.title', '付款完成'), description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排處理與出貨。'), tone: 'text-emerald-700' },
+    paid: { title: t('checkout.result.paid.title', '您的訂單已完成'), description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排處理與出貨。'), tone: 'text-emerald-700' },
     failed: { title: t('checkout.result.failed.title', '付款失敗'), description: t('checkout.result.failed.description', '目前付款狀態顯示失敗，若您已完成匯款，請重新通知我們進行確認。'), tone: 'text-rose-700' },
-    pending: { title: t('checkout.result.pending.title', '訂單已送出，等待付款'), description: t('checkout.result.pending.description', '您的訂單已建立，若您選擇匯款付款，請完成匯款後再通知我們對帳。'), tone: 'text-amber-700' },
+    pending: { title: t('checkout.result.pending.title', '您的訂單已完成'), description: t('checkout.result.pending.description', '您的訂單已建立，若您選擇匯款付款，請完成匯款後再通知我們對帳。'), tone: 'text-amber-700' },
     unknown: { title: t('checkout.result.unknown.title', '查無訂單資訊'), description: t('checkout.result.unknown.description', '我們目前無法取得這筆訂單的狀態，請確認連結是否正確，或直接聯繫客服中心。'), tone: 'text-slate-700' },
   };
   const remittanceHref = useMemo(() => {
@@ -244,7 +250,7 @@ export default function CheckoutResult() {
                     <div key={item.id} className="flex items-center justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-3">
                         <ProductImage
-                          src={item.product?.[0]?.og_image || item.product?.[0]?.images?.[0] || null}
+                          src={getOrderItemImage(item)}
                           alt={item.product_name}
                           className="h-14 w-14 shrink-0 rounded-lg bg-stone-100 object-cover"
                           compactPlaceholder
