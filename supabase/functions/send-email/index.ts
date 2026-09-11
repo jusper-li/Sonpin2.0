@@ -5,6 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "onboarding@resend.dev";
 const FROM_NAME = Deno.env.get("RESEND_FROM_NAME")?.trim() || "Sonpin";
 const FALLBACK_ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL")?.trim() || FROM_EMAIL;
+const SITE_URL = (Deno.env.get("PUBLIC_SITE_URL")?.trim() || "https://sonpin.tw").replace(/\/$/, "");
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const secretCache = new Map<string, string>();
 
@@ -499,7 +500,7 @@ async function getNotificationSettings() {
   }
 }
 
-async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
+async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }): Promise<string> {
   const resendApiKey = await getSecret("RESEND_API_KEY");
   const fromEmail = await getSecret("RESEND_FROM_EMAIL").catch(() => FROM_EMAIL);
   const fromName = await getSecret("RESEND_FROM_NAME").catch(() => FROM_NAME);
@@ -528,6 +529,12 @@ async function sendEmail(params: { to: string; subject: string; html: string; re
     const text = await res.text();
     throw new Error(`Resend request failed (${res.status}): ${text.slice(0, 500)}`);
   }
+
+  const result = await res.json().catch(() => null) as { id?: unknown } | null;
+  if (typeof result?.id !== "string" || !result.id.trim()) {
+    throw new Error("Resend response did not include an email ID");
+  }
+  return result.id;
 }
 
 async function getSecret(name: string): Promise<string> {
@@ -562,9 +569,9 @@ async function getSecret(name: string): Promise<string> {
 async function sendEmailToRecipients(
   recipients: string[],
   params: { subject: string; html: string; replyTo?: string },
-) {
+): Promise<string[]> {
   const uniqueRecipients = Array.from(new Set(recipients.filter((recipient) => isEmail(recipient))));
-  await Promise.all(uniqueRecipients.map((to) => sendEmail({ to, ...params })));
+  return Promise.all(uniqueRecipients.map((to) => sendEmail({ to, ...params })));
 }
 
 function wrapEmail(content: string) {
@@ -703,6 +710,7 @@ function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerO
   const subtotal = data.subtotal ?? data.items.reduce((sum, item) => sum + item.total, 0);
   const shipping = data.shipping ?? 0;
   const shippingMethod = data.shippingMethod || "銀行轉帳";
+  const remittanceUrl = `${SITE_URL}/remittance-notice?order_number=${encodeURIComponent(data.orderNumber)}&amount=${encodeURIComponent(String(data.total))}&contact=${encodeURIComponent(data.customerEmail)}`;
 
   return wrapEmail(`
     <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">${escapeHtml(sectionLabel)}</p>
@@ -719,7 +727,7 @@ function generateCustomerOrderConfirmation(data: OrderEmail, template: CustomerO
     ${template.show_items ? `<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr><th style="text-align:left;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">商品</th><th style="text-align:center;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">數量</th><th style="text-align:right;color:#a8a29e;font-size:11px;font-weight:400;text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid #e7e5e4;">小計</th></tr>${itemRows}<tr><td colspan="2" style="padding:14px 0 0 0;color:#57534e;font-size:14px;">商品小計</td><td style="padding:14px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(subtotal)}</td></tr><tr><td colspan="2" style="padding:8px 0 0 0;color:#57534e;font-size:14px;">運費</td><td style="padding:8px 0 0 0;color:#1c1917;font-size:14px;text-align:right;">${formatMoney(shipping)}</td></tr><tr><td colspan="2" style="padding:14px 0 0 0;color:#1c1917;font-size:15px;font-weight:600;">訂單總額</td><td style="padding:14px 0 0 0;color:#d6a96a;font-size:18px;font-weight:700;text-align:right;">${formatMoney(data.total)}</td></tr></table>` : ""}
 
     ${template.show_shipping ? `<p style="color:#57534e;line-height:1.8;margin:16px 0 0 0;"><strong>配送方式：</strong>${escapeHtml(shippingMethod)}</p><p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>運費明細：</strong>${formatMoney(shipping)}</p>${data.trackingNumber ? `<p style="color:#57534e;line-height:1.8;margin:8px 0 0 0;"><strong>託運編號：</strong>${escapeHtml(data.trackingNumber)}</p>` : ''}${renderShippingBreakdown(data.shippingBreakdown || [])}` : ""}
-    ${template.show_remittance_info ? renderRemittanceSection() : ""}
+    ${template.show_remittance_info ? `${renderRemittanceSection()}<div style="margin-top:24px;text-align:center;"><a href="${escapeHtml(remittanceUrl)}" style="display:inline-block;padding:12px 22px;border-radius:8px;background:#1c1917;color:#fff;text-decoration:none;font-size:14px;">填寫匯款通知</a><p style="margin:10px 0 0 0;color:#78716c;font-size:12px;line-height:1.7;">完成匯款後，點擊此按鈕提交匯款資訊</p></div>` : ""}
     ${template.admin_note ? `<p style="color:#78716c;line-height:1.8;margin:16px 0 0 0;font-size:13px;">${escapeHtml(template.admin_note)}</p>` : ""}
   `);
 }
@@ -852,6 +860,7 @@ Deno.serve(async (req: Request) => {
     const data = asRecord(body.data, "data");
     const notificationSettings = await getNotificationSettings();
     const adminRecipients = notificationSettings.admin_emails.length > 0 ? notificationSettings.admin_emails : [notificationSettings.admin_email];
+    const emailIds: string[] = [];
 
     switch (type) {
       case "contact": {
@@ -940,11 +949,11 @@ Deno.serve(async (req: Request) => {
           total: formatMoney(order.total),
         }).trim() || `Sonpin 訂單已出貨 ${order.orderNumber}`;
 
-        await sendEmail({
+        emailIds.push(await sendEmail({
           to: order.customerEmail,
           subject,
           html: generateShippedOrderNotification(order, notificationSettings.shipped_template),
-        });
+        }));
         break;
       }
       case "welcome": {
@@ -1016,7 +1025,7 @@ Deno.serve(async (req: Request) => {
         throw new HttpError(400, "unknown_email_type", `Unknown email type: ${type}`);
     }
 
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, emailIds });
   } catch (error) {
     if (error instanceof HttpError) {
       console.warn(`send-email skipped (${error.code}): ${error.message}`);

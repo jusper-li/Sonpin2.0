@@ -374,6 +374,7 @@ export default function OrderManagement() {
     if (!viewingOrder) return;
     setSaving(true);
     let shippedNoticeWarning = '';
+    let shippedNoticeSuccess = '';
     try {
       const shouldSendShippedNotice = isShipped && sendShippedNoticeEdit;
       const completedAt = statusEdit === 'completed' ? viewingOrder.completed_at || new Date().toISOString() : null;
@@ -410,7 +411,7 @@ export default function OrderManagement() {
       if (updateError) throw updateError;
 
       if (shouldSendShippedNotice && customerEmailEdit.trim()) {
-        const { error: emailError } = await supabase.functions.invoke('send-email', {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
           body: {
             type: 'order_shipped',
             data: {
@@ -438,6 +439,8 @@ export default function OrderManagement() {
         if (emailError) {
           console.error('Failed to send shipped order notification:', emailError);
           shippedNoticeWarning = '，但已出貨通知信寄送失敗';
+        } else if (emailData?.emailIds?.length) {
+          shippedNoticeSuccess = '，已出貨通知信已送出';
         }
       } else if (shouldSendShippedNotice) {
         shippedNoticeWarning = '，但此訂單沒有顧客 Email，未寄送通知信';
@@ -449,7 +452,7 @@ export default function OrderManagement() {
       );
       await loadData();
       await loadOrderDetailData(viewingOrder.id);
-      alert(`${t('order_management.save_success', '訂單已儲存')}${shippedNoticeWarning}`);
+      alert(`${t('order_management.save_success', '訂單已儲存')}${shippedNoticeSuccess}${shippedNoticeWarning}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : t('order_management.save_failed', '儲存失敗'));
     } finally {
