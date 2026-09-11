@@ -21,6 +21,7 @@ export default function Checkout() {
   const { loading: shippingLoading, shippingTotal, breakdown: shippingBreakdown } = useShippingQuote(items);
   const [loading, setLoading] = useState(false);
   const submitLockRef = useRef(false);
+  const orderSubmittedRef = useRef(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,7 +37,7 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !orderSubmittedRef.current) {
       navigate('/cart');
     }
   }, [items, navigate]);
@@ -220,6 +221,7 @@ export default function Checkout() {
         }
       })();
 
+      orderSubmittedRef.current = true;
       clearCart();
       navigate('/checkout/result?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNumber), { replace: true });
     } catch (error) {
