@@ -185,11 +185,13 @@ export default function Checkout() {
         },
       });
 
-      try {
-        const emailResponse = await fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
+      void (async () => {
+        try {
+          const emailResponse = await fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${supabaseAnonKey}`,
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${session?.access_token || supabaseAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -208,14 +210,15 @@ export default function Checkout() {
               paymentMethod: formData.paymentMethod,
             },
           }),
-        });
+          });
 
-        if (!emailResponse.ok) {
-          console.warn('Order created but notification email was not accepted:', await emailResponse.text());
+          if (!emailResponse.ok) {
+            console.warn('Order created but notification email was not accepted:', await emailResponse.text());
+          }
+        } catch (emailError) {
+          console.warn('Order created but notification email could not be sent:', emailError);
         }
-      } catch (emailError) {
-        console.warn('Order created but notification email could not be sent:', emailError);
-      }
+      })();
 
       clearCart();
       navigate('/checkout/result?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNumber), { replace: true });
