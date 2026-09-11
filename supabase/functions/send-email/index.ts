@@ -60,6 +60,11 @@ type WelcomeEmail = {
   displayName: string;
 };
 
+type PasswordResetEmail = {
+  email: string;
+  redirectTo?: string;
+};
+
 type RemittanceNotificationEmail = {
   orderNumber: string;
   remittanceAmount: number;
@@ -397,6 +402,13 @@ function parseWelcomeEmail(data: Record<string, unknown>): WelcomeEmail {
   return {
     email: requiredEmail(data.email, "data.email"),
     displayName: requiredString(data.displayName, "data.displayName"),
+  };
+}
+
+function parsePasswordResetEmail(data: Record<string, unknown>): PasswordResetEmail {
+  return {
+    email: requiredEmail(data.email, "data.email"),
+    redirectTo: optionalString(data.redirectTo),
   };
 }
 
@@ -806,6 +818,19 @@ function generateWelcomeEmail(data: WelcomeEmail) {
   `);
 }
 
+function generatePasswordResetEmail(email: string, actionLink: string) {
+  return wrapEmail(`
+    <p style="margin:0 0 8px 0;color:#a16207;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">會員服務</p>
+    <h2 style="color:#1c1917;font-size:22px;font-weight:300;margin:0 0 8px 0;">重設您的會員密碼</h2>
+    <p style="color:#57534e;line-height:1.8;margin:0 0 20px 0;">我們收到您的密碼重設申請。請點擊下方按鈕設定新的登入密碼。</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${escapeHtml(actionLink)}" style="display:inline-block;padding:12px 24px;border-radius:8px;background:#1c1917;color:#fff;text-decoration:none;font-size:14px;">重設密碼</a>
+    </div>
+    <p style="color:#78716c;line-height:1.8;margin:0;font-size:13px;">此連結將導向會員密碼設定頁面。若您沒有提出申請，請忽略此信件。</p>
+    <p style="color:#a8a29e;line-height:1.8;margin:12px 0 0 0;font-size:12px;">寄送至：${escapeHtml(email)}</p>
+  `);
+}
+
 
 type OrderLookup = {
   id: string;
@@ -966,6 +991,32 @@ Deno.serve(async (req: Request) => {
           subject: "Sonpin 歡迎加入",
           html: generateWelcomeEmail(welcome),
         });
+        break;
+      }
+      case "password_reset": {
+        const reset = parsePasswordResetEmail(data);
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+        if (!supabaseUrl || !serviceRoleKey) {
+          throw new HttpError(503, "supabase_not_configured", "Supabase service credentials are not configured");
+        }
+
+        const supabase = createClient(supabaseUrl, serviceRoleKey);
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: "recovery",
+          email: reset.email,
+          options: { redirectTo: reset.redirectTo || `${SITE_URL}/member/reset` },
+        });
+        if (linkError || !linkData?.properties?.action_link) {
+          throw linkError || new Error("Supabase did not return a password reset link");
+        }
+
+        const subject = "淞品會員密碼重設";
+        emailIds.push(await sendEmail({
+          to: reset.email,
+          subject,
+          html: generatePasswordResetEmail(reset.email, linkData.properties.action_link),
+        }));
         break;
       }
       case "remittance_notification": {

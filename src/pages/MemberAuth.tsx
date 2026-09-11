@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Egg, Eye, EyeOff, KeyRound, Lock, Mail, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMemberAuth } from '../contexts/MemberAuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
 
 type TabType = 'login' | 'register' | 'verify' | 'forgot';
 
@@ -254,10 +254,25 @@ export default function MemberAuth() {
     setError('');
     setIsSubmitting(true);
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmedForgotEmail, {
-        redirectTo: `${window.location.origin}/member/reset`,
+      const response = await fetch(`${supabaseBaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          authorization: `Bearer ${supabaseAnonKey}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'password_reset',
+          data: {
+            email: trimmedForgotEmail,
+            redirectTo: `${window.location.origin}/member/reset`,
+          },
+        }),
       });
-      if (resetError) throw resetError;
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.error) {
+        throw new Error(payload?.message || payload?.error || '重設密碼信寄送失敗');
+      }
       setForgotSent(true);
     } catch (err) {
       setError(formatAuthError(err, '重設密碼信寄送失敗，請稍後再試。'));
