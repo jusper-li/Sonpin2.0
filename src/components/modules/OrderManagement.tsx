@@ -239,8 +239,9 @@ export default function OrderManagement() {
   const statusLabel = (status: string) => orderStatusOptions.find((item) => item.value === status)?.label ?? status;
   const paymentStatusLabel = (status: string) => paymentStatusOptions.find((item) => item.value === status)?.label ?? status;
   const shippingStatusLabel = (status: string) => shippingStatusOptions.find((item) => item.value === status)?.label ?? status;
-  const wasShipped = viewingOrder?.status === 'shipped' || viewingOrder?.shipping_status === 'shipped';
-  const isShipped = statusEdit === 'shipped' || shippingStatusEdit === 'shipped';
+  const changedToShipped =
+    (statusEdit === 'shipped' && viewingOrder?.status !== 'shipped') ||
+    (shippingStatusEdit === 'shipped' && viewingOrder?.shipping_status !== 'shipped');
 
   const statusTone = (status: string) => {
     if (['completed', 'paid', 'delivered'].includes(status)) return 'border-emerald-200 bg-emerald-100 text-emerald-700';
@@ -376,7 +377,7 @@ export default function OrderManagement() {
     setSaving(true);
     let shippedNoticeWarning = '';
     try {
-      const shouldSendShippedNotice = !wasShipped && isShipped && sendShippedNoticeEdit;
+      const shouldSendShippedNotice = changedToShipped && sendShippedNoticeEdit;
       const completedAt = statusEdit === 'completed' ? viewingOrder.completed_at || new Date().toISOString() : null;
       const { error: updateError } = await supabase
         .from('orders')
@@ -637,7 +638,7 @@ export default function OrderManagement() {
                   />
                   {t('order_management.subscribe_notifications', '訂閱訂單通知')}
                 </label>
-                {isShipped && !wasShipped && (
+                {changedToShipped && (
                   <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                     <input
                       type="checkbox"
