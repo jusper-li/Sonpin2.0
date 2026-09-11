@@ -6,6 +6,7 @@ const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "onboarding@rese
 const FROM_NAME = Deno.env.get("RESEND_FROM_NAME")?.trim() || "Sonpin";
 const FALLBACK_ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL")?.trim() || FROM_EMAIL;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const secretCache = new Map<string, string>();
 
 const REMITTANCE_INFO = {
   bankName: "永豐銀行 萬華分行",
@@ -499,14 +500,12 @@ async function getNotificationSettings() {
 }
 
 async function sendEmail(params: { to: string; subject: string; html: string; replyTo?: string }) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
-  if (!resendApiKey) {
-    console.warn("send-email: skipped mail send because RESEND_API_KEY is not configured");
-    return;
-  }
+  const resendApiKey = await getSecret("RESEND_API_KEY");
+  const fromEmail = await getSecret("RESEND_FROM_EMAIL").catch(() => FROM_EMAIL);
+  const fromName = await getSecret("RESEND_FROM_NAME").catch(() => FROM_NAME);
 
   const payload: Record<string, unknown> = {
-    from: `${FROM_NAME} <${FROM_EMAIL}>`,
+    from: `${fromName} <${fromEmail}>`,
     to: [params.to],
     subject: params.subject,
     html: params.html,
@@ -527,8 +526,37 @@ async function sendEmail(params: { to: string; subject: string; html: string; re
 
   if (!res.ok) {
     const text = await res.text();
-    console.warn(`send-email: Resend request failed (${res.status}): ${text.slice(0, 500)}`);
+    throw new Error(`Resend request failed (${res.status}): ${text.slice(0, 500)}`);
   }
+}
+
+async function getSecret(name: string): Promise<string> {
+  const envValue = Deno.env.get(name)?.trim();
+  if (envValue) return envValue;
+
+  const cached = secretCache.get(name);
+  if (cached) return cached;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+  if (!supabaseUrl || !serviceRoleKey) throw new Error(`${name} is not configured`);
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/app_secrets?key=eq.${encodeURIComponent(name)}&select=value&limit=1`,
+    {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    },
+  );
+
+  if (!response.ok) throw new Error(`${name} is not configured`);
+  const rows = await response.json();
+  const value = typeof rows?.[0]?.value === "string" ? rows[0].value.trim() : "";
+  if (!value) throw new Error(`${name} is not configured`);
+  secretCache.set(name, value);
+  return value;
 }
 
 async function sendEmailToRecipients(
@@ -536,7 +564,7 @@ async function sendEmailToRecipients(
   params: { subject: string; html: string; replyTo?: string },
 ) {
   const uniqueRecipients = Array.from(new Set(recipients.filter((recipient) => isEmail(recipient))));
-  await Promise.allSettled(uniqueRecipients.map((to) => sendEmail({ to, ...params })));
+  await Promise.all(uniqueRecipients.map((to) => sendEmail({ to, ...params })));
 }
 
 function wrapEmail(content: string) {
@@ -873,7 +901,7 @@ Deno.serve(async (req: Request) => {
           paymentMethod: paymentMethodLabel(order.paymentMethod),
           total: formatMoney(order.total),
         }).trim() || `Sonpin 新訂單通知 ${order.orderNumber}`;
-        await Promise.allSettled([
+        await Promise.all([
           notificationSettings.customer_copy_enabled && order.customerEmail
             ? sendEmail({
                 to: order.customerEmail,
