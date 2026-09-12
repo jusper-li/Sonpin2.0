@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, CreditCard, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
+import { ChevronRight, CreditCard, FileText, Gift, Lock, MapPin, Truck, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { supabaseAnonKey, supabaseBaseUrl } from '../lib/supabase';
@@ -32,6 +32,9 @@ export default function Checkout() {
     city: '',
     postalCode: '',
     sameAsContact: false,
+    invoiceType: 'personal' as 'personal' | 'company',
+    companyTaxId: '',
+    companyName: '',
     paymentMethod: 'bank_transfer',
     notes: '',
   });
@@ -145,6 +148,9 @@ export default function Checkout() {
         customer_name: formData.name,
         customer_email: formData.email,
         customer_account: user?.id || '',
+        invoice_type: formData.invoiceType,
+        company_tax_id: formData.invoiceType === 'company' ? formData.companyTaxId.trim() : null,
+        company_name: formData.invoiceType === 'company' ? formData.companyName.trim() : null,
         customer_phone: formData.phone,
         recipient_name: formData.recipientName,
         recipient_phone: formData.recipientPhone,
@@ -294,6 +300,43 @@ export default function Checkout() {
                     <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className={inputCls} />
                   </div>
                 </div>
+              </section>
+
+              <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-500" />
+                  <h2 className="text-sm font-medium tracking-[0.1em] text-stone-800">發票開立</h2>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    { value: 'personal', label: '個人' },
+                    { value: 'company', label: '公司' },
+                  ].map((option) => (
+                    <label key={option.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.invoiceType === option.value ? 'border-amber-300 bg-amber-50' : 'border-stone-200'}`}>
+                      <input
+                        type="radio"
+                        name="invoiceType"
+                        value={option.value}
+                        checked={formData.invoiceType === option.value}
+                        onChange={handleChange}
+                        className="h-4 w-4 accent-amber-500"
+                      />
+                      <span className="text-sm text-stone-700">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.invoiceType === 'company' && (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className={labelCls}>統一編號 *</label>
+                      <input type="text" name="companyTaxId" value={formData.companyTaxId} onChange={handleChange} required className={inputCls} inputMode="numeric" maxLength={8} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>公司名稱 *</label>
+                      <input type="text" name="companyName" value={formData.companyName} onChange={handleChange} required className={inputCls} />
+                    </div>
+                  </div>
+                )}
               </section>
 
               <section className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">

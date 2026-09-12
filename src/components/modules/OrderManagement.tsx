@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Plus, RefreshCw, Save, Search, Star, Trash2, X } from 'lucide-react';
+import { Copy, Loader2, Plus, Printer, RefreshCw, Save, Search, Star, Trash2, X } from 'lucide-react';
 import { isMissingSupabaseTableError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ProductImage from '../ProductImage';
@@ -22,6 +22,7 @@ interface Order {
   channel?: string | null;
   company_name?: string | null;
   company_tax_id?: string | null;
+  invoice_type?: 'personal' | 'company' | null;
   customer_name?: string | null;
   customer_email?: string | null;
   customer_phone?: string | null;
@@ -107,6 +108,14 @@ const formatCurrency = (value: number) =>
     currency: 'TWD',
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+
+const escapePrintHtml = (value: unknown) =>
+  String(value ?? '-')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
 const formatDateTime = (value?: string | null) => (value ? new Date(value).toLocaleString('zh-TW', { hour12: false }) : '-');
 
@@ -391,6 +400,10 @@ export default function OrderManagement() {
         `訂購人：${customerNameEdit || '-'}`,
         `訂購 Email：${customerEmailEdit || '-'}`,
         `訂購電話：${customerPhoneEdit || '-'}`,
+        `發票類型：${viewingOrder.invoice_type === 'company' ? '公司' : '個人'}`,
+        ...(viewingOrder.invoice_type === 'company'
+          ? [`公司名稱：${companyNameEdit || '-'}`, `統一編號：${companyTaxIdEdit || '-'}`]
+          : []),
         `收件人：${recipientNameEdit || '-'}`,
         `收件電話：${recipientPhoneEdit || '-'}`,
         `配送狀態：${shippingStatusLabel(shippingStatusEdit) || '-'}`,
@@ -418,6 +431,73 @@ export default function OrderManagement() {
       console.error('Failed to copy order text:', err);
       alert('複製失敗，請手動選取文字複製');
     }
+  };
+
+  const printShippingSlip = () => {
+    if (!viewingOrder) return;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=1000');
+    if (!printWindow) {
+      alert('無法開啟列印視窗，請允許瀏覽器的彈出視窗。');
+      return;
+    }
+
+    const address = [shippingCountryEdit, shippingPostalCodeEdit, shippingCityEdit, shippingDistrictEdit, shippingLine1Edit]
+      .filter(Boolean)
+      .join(' ');
+    const invoice = viewingOrder.invoice_type === 'company'
+      ? `公司｜${companyNameEdit || '-'}（統一編號：${companyTaxIdEdit || '-'}）`
+      : '個人';
+    const itemRows = orderItems
+      .map((item) => `<tr><td>${escapePrintHtml(item.product_name)}</td><td class="center">${escapePrintHtml(item.quantity)}</td><td class="right">${escapePrintHtml(formatCurrency(item.total))}</td></tr>`)
+      .join('');
+
+    printWindow.document.write(`<!doctype html>
+      <html lang="zh-Hant">
+        <head>
+          <meta charset="utf-8" />
+          <title>出貨單 ${escapePrintHtml(viewingOrder.order_number)}</title>
+          <style>
+            @page { size: A4 portrait; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body { margin: 0; color: #292524; font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; font-size: 14px; }
+            h1 { margin: 0; font-size: 28px; letter-spacing: .18em; }
+            h2 { margin: 0 0 10px; font-size: 17px; }
+            .header { display: flex; justify-content: space-between; align-items: end; border-bottom: 2px solid #292524; padding-bottom: 14px; }
+            .muted { color: #78716c; font-size: 12px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+            .card { border: 1px solid #d6d3d1; border-radius: 8px; padding: 14px; min-height: 112px; }
+            .row { display: flex; gap: 8px; margin: 6px 0; line-height: 1.5; }
+            .label { color: #78716c; min-width: 72px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+            th, td { border-bottom: 1px solid #e7e5e4; padding: 10px 6px; text-align: left; }
+            th { background: #f5f5f4; font-weight: 600; }
+            .center { text-align: center; }
+            .right { text-align: right; }
+            .totals { margin: 16px 0 0 auto; width: 280px; }
+            .total { border-top: 2px solid #292524; font-size: 17px; font-weight: 700; padding-top: 10px; }
+            .note { border: 1px solid #d6d3d1; border-radius: 8px; margin-top: 18px; padding: 12px; min-height: 70px; white-space: pre-wrap; }
+            .footer { border-top: 1px solid #d6d3d1; color: #78716c; font-size: 11px; margin-top: 28px; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <header class="header">
+            <div><h1>出貨單</h1><div class="muted">淞品土雞專賣店</div></div>
+            <div class="right"><strong>訂單編號：${escapePrintHtml(viewingOrder.order_number)}</strong><br /><span class="muted">列印日期：${escapePrintHtml(formatDateTime(new Date().toISOString()))}</span></div>
+          </header>
+          <div class="grid">
+            <section class="card"><h2>寄件資訊</h2><div class="row"><span class="label">寄件人</span><span>淞品土雞專賣店</span></div><div class="row"><span class="label">電話</span><span>02-2338-0018</span></div></section>
+            <section class="card"><h2>收件資訊</h2><div class="row"><span class="label">收件人</span><strong>${escapePrintHtml(recipientNameEdit)}</strong></div><div class="row"><span class="label">電話</span><span>${escapePrintHtml(recipientPhoneEdit)}</span></div><div class="row"><span class="label">地址</span><span>${escapePrintHtml(address)}</span></div></section>
+          </div>
+          <section class="card" style="margin-top: 12px;"><h2>配送與發票</h2><div class="grid" style="margin-top: 0;"><div><div class="row"><span class="label">配送方式</span><span>${escapePrintHtml(shippingMethodEdit)}</span></div><div class="row"><span class="label">託運編號</span><span>${escapePrintHtml(trackingNumberEdit || '-')}</span></div></div><div><div class="row"><span class="label">發票</span><span>${escapePrintHtml(invoice)}</span></div><div class="row"><span class="label">備註</span><span>${escapePrintHtml(shippingNotesEdit || orderNoteEdit || '-')}</span></div></div></div></section>
+          <table><thead><tr><th>商品名稱</th><th class="center">數量</th><th class="right">小計</th></tr></thead><tbody>${itemRows || '<tr><td colspan="3">無商品資料</td></tr>'}</tbody></table>
+          <div class="totals"><div class="row"><span class="label">商品小計</span><span class="right">${escapePrintHtml(formatCurrency(viewingOrder.subtotal))}</span></div><div class="row"><span class="label">運費</span><span class="right">${escapePrintHtml(formatCurrency(viewingOrder.shipping))}</span></div><div class="row total"><span>訂單總額</span><span class="right">${escapePrintHtml(formatCurrency(viewingOrder.total))}</span></div></div>
+          <div class="footer">請依收件資訊核對商品後出貨。此文件為淞品土雞專賣店訂單出貨單。</div>
+        </body>
+      </html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 250);
   };
 
   const pushEvent = async (orderId: string, description: string) => {
@@ -689,10 +769,16 @@ export default function OrderManagement() {
             <section className="mx-6 mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="font-semibold text-slate-900">完整訂單文字資訊</h3>
-                <button type="button" onClick={() => void copyOrderText()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
-                  <Copy className="h-4 w-4" />
-                  複製全部
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={printShippingSlip} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                    <Printer className="h-4 w-4" />
+                    列印出貨單
+                  </button>
+                  <button type="button" onClick={() => void copyOrderText()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                    <Copy className="h-4 w-4" />
+                    複製全部
+                  </button>
+                </div>
               </div>
               <div className="w-full whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-6 text-slate-700" aria-label="完整訂單文字資訊">
                 {orderText}
@@ -710,6 +796,7 @@ export default function OrderManagement() {
                 <Field label={t('order_management.source', '訂單來源')} value={viewingOrder.source || t('order_management.frontend_store', '前台購物網站')} />
                 <Field label={t('order_management.company_name', '公司名稱')} value={companyNameEdit || '-'} />
                 <Field label={t('order_management.company_tax_id', '統一編號')} value={companyTaxIdEdit || '-'} />
+                <Field label="發票類型" value={viewingOrder.invoice_type === 'company' ? '公司' : '個人'} />
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-xs text-slate-500">{t('order_management.order_notes', '訂單備註')}</label>
                   <textarea

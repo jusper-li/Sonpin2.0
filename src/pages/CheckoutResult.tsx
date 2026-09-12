@@ -16,6 +16,9 @@ interface OrderSummary {
   order_number: string;
   status: string | null;
   payment_status: string | null;
+  invoice_type: 'personal' | 'company' | null;
+  company_tax_id: string | null;
+  company_name: string | null;
   subtotal: number | null;
   shipping: number | null;
   total: number | null;
@@ -99,7 +102,7 @@ export default function CheckoutResult() {
     const loadOrderStatus = async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('order_number,status,payment_status,subtotal,shipping,total,shipping_method,customer_name,customer_email')
+        .select('order_number,status,payment_status,invoice_type,company_tax_id,company_name,subtotal,shipping,total,shipping_method,customer_name,customer_email')
         .eq('id', orderId)
         .maybeSingle();
 
@@ -312,6 +315,14 @@ export default function CheckoutResult() {
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                 <span>{t('checkout.shipping_method', '配送方式')}</span>
                 <span className="text-right">{orderSummary?.shipping_method || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <span>發票</span>
+                <span className="text-right">
+                  {orderSummary?.invoice_type === 'company'
+                    ? `公司｜${orderSummary.company_name || '-'}（${orderSummary.company_tax_id || '-'}）`
+                    : '個人'}
+                </span>
               </div>
               <div className="flex items-center justify-between text-base font-semibold text-stone-900">
                 <span>{t('checkout.total', '訂單總額')}</span>
