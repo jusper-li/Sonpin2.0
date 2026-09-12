@@ -101,7 +101,7 @@ export default function Checkout() {
         throw new Error('Shipping quote is still loading');
       }
 
-      const orderNumber = `ORD-${Date.now()}`;
+      const requestedOrderNumber = `ORD-${Date.now()}`;
       const orderId = crypto.randomUUID();
       const shippingAmount = Number(shippingTotal || 0);
       const finalTotal = total + shippingAmount;
@@ -110,14 +110,14 @@ export default function Checkout() {
           ? shippingBreakdown.map((item) => item.categoryName + (item.quantityLabel ? ' ' + item.quantityLabel : '')).join('、')
           : '銀行轉帳';
 
-      const insertMinimal = async (table: string, payload: unknown) => {
+      const insertMinimal = async (table: string, payload: unknown, returnRepresentation = false) => {
         const response = await fetch(`${supabaseBaseUrl}/rest/v1/${table}`, {
           method: 'POST',
           headers: {
             apikey: supabaseAnonKey,
             authorization: `Bearer ${session?.access_token || supabaseAnonKey}`,
             'content-type': 'application/json',
-            Prefer: 'return=minimal',
+            Prefer: returnRepresentation ? 'return=representation' : 'return=minimal',
           },
           body: JSON.stringify(payload),
         });
@@ -126,11 +126,13 @@ export default function Checkout() {
           const details = await response.text();
           throw new Error(`Failed to insert ${table}: ${details || response.statusText}`);
         }
+
+        return returnRepresentation ? response.json() : null;
       };
 
-      await insertMinimal('orders', {
+      const createdOrders = await insertMinimal('orders', {
         id: orderId,
-        order_number: orderNumber,
+        order_number: requestedOrderNumber,
         status: 'pending',
         source: 'frontend',
         channel: 'storefront',
@@ -162,7 +164,8 @@ export default function Checkout() {
           country: '台灣',
         },
         notes: formData.notes,
-      });
+      }, true) as Array<{ order_number?: string }>;
+      const orderNumber = createdOrders[0]?.order_number || requestedOrderNumber;
 
       const orderItems = items.map((item) => ({
         order_id: orderId,

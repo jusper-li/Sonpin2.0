@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, RefreshCw, Save, Search, Star, Trash2, X } from 'lucide-react';
+import { Copy, Loader2, Plus, RefreshCw, Save, Search, Star, Trash2, X } from 'lucide-react';
 import { isMissingSupabaseTableError, supabase } from '../../lib/supabase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ProductImage from '../ProductImage';
@@ -325,6 +325,10 @@ export default function OrderManagement() {
     });
   }, [orders, searchTerm, members, t]);
 
+  const displayOrderNumbers = useMemo(() => {
+    return new Map(orders.map((order) => [order.id, order.order_number]));
+  }, [orders]);
+
   const openDetail = async (order: Order) => {
     const hasExtendedOrderFields = Object.prototype.hasOwnProperty.call(order, 'communication_notes');
     if (!hasExtendedOrderFields) setSupportsOrderTimeline(false);
@@ -364,10 +368,8 @@ export default function OrderManagement() {
     if (!confirmed) return;
 
     try {
-      const orderResult = await supabase.from('orders').delete().eq('id', order.id);
-      if (orderResult.error) throw orderResult.error;
-      const remittanceResult = await supabase.from('remittance_notifications').delete().eq('order_number', order.order_number);
-      if (remittanceResult.error && !isMissingSupabaseTableError(remittanceResult.error)) throw remittanceResult.error;
+      const { error: deleteError } = await supabase.rpc('admin_delete_order', { p_order_id: order.id });
+      if (deleteError) throw deleteError;
 
       if (viewingOrder?.id === order.id) setViewingOrder(null);
       setOrders((current) => current.filter((item) => item.id !== order.id));
@@ -375,6 +377,46 @@ export default function OrderManagement() {
     } catch (err) {
       console.error('Failed to delete order:', err);
       alert(`刪除訂單失敗：${err instanceof Error ? err.message : '未知錯誤'}`);
+    }
+  };
+
+  const orderText = viewingOrder
+    ? [
+        `訂單編號：${viewingOrder.order_number}`,
+        `訂單日期：${formatDateTime(viewingOrder.created_at)}`,
+        `訂單狀態：${statusLabel(statusEdit)}`,
+        `付款狀態：${paymentStatusLabel(paymentStatusEdit)}`,
+        `付款方式：${payments[0]?.method || '-'}`,
+        `交易序號：${payments[0]?.transaction_id || '-'}`,
+        `訂購人：${customerNameEdit || '-'}`,
+        `訂購 Email：${customerEmailEdit || '-'}`,
+        `訂購電話：${customerPhoneEdit || '-'}`,
+        `收件人：${recipientNameEdit || '-'}`,
+        `收件電話：${recipientPhoneEdit || '-'}`,
+        `配送狀態：${shippingStatusLabel(shippingStatusEdit) || '-'}`,
+        `送貨狀態：${shippingStatusLabel(deliveryStatusEdit) || '-'}`,
+        `配送方式：${shippingMethodEdit || '-'}`,
+        `配送地址：${[shippingCountryEdit, shippingPostalCodeEdit, shippingCityEdit, shippingDistrictEdit, shippingLine1Edit].filter(Boolean).join(' ') || '-'}`,
+        `託運編號：${trackingNumberEdit || '-'}`,
+        '',
+        '商品：',
+        ...orderItems.map((item) => `- ${item.product_name} x${item.quantity}：${formatCurrency(item.total)}`),
+        '',
+        `商品小計：${formatCurrency(viewingOrder.subtotal)}`,
+        `運費：${formatCurrency(viewingOrder.shipping)}`,
+        `訂單總額：${formatCurrency(viewingOrder.total)}`,
+        `訂單備註：${orderNoteEdit || '-'}`,
+      ].join('\n')
+    : '';
+
+  const copyOrderText = async () => {
+    if (!orderText) return;
+    try {
+      await navigator.clipboard.writeText(orderText);
+      alert('完整訂單資訊已複製');
+    } catch (err) {
+      console.error('Failed to copy order text:', err);
+      alert('複製失敗，請手動選取文字複製');
     }
   };
 
@@ -555,13 +597,13 @@ export default function OrderManagement() {
             <table className="min-w-full text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">{t('order_management.column_order_number', '訂單號碼')}</th>
                   <th className="px-4 py-3">{t('order_management.column_date', '訂單日期')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_order_number', '訂單號碼')}</th>
+                  <th className="px-4 py-3">{t('order_management.column_customer', '訂購人')}</th>
+                  <th className="px-4 py-3 text-right">{t('order_management.column_amount', '合計')}</th>
                   <th className="px-4 py-3">{t('order_management.column_status', '訂單狀態')}</th>
                   <th className="px-4 py-3">{t('order_management.column_payment', '付款狀態')}</th>
                   <th className="px-4 py-3">{t('order_management.column_shipping', '送貨狀態')}</th>
-                  <th className="px-4 py-3">{t('order_management.column_customer', '訂購人')}</th>
-                  <th className="px-4 py-3 text-right">{t('order_management.column_amount', '合計')}</th>
                   <th className="px-4 py-3 text-right">操作</th>
                 </tr>
               </thead>
@@ -574,6 +616,7 @@ export default function OrderManagement() {
 
                   return (
                     <tr key={order.id} className="cursor-pointer hover:bg-slate-50" onClick={() => void openDetail(order)}>
+                      <td className="px-4 py-3 text-sm text-slate-600">{formatOrderDateTime(order.created_at)}</td>
                       <td className="px-4 py-3 font-mono text-sm text-sky-700">
                         <button
                           type="button"
@@ -583,10 +626,16 @@ export default function OrderManagement() {
                             void openDetail(order);
                           }}
                         >
-                          {order.order_number}
+                          {displayOrderNumbers.get(order.id) || order.order_number}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{formatOrderDateTime(order.created_at)}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-slate-800">{customerName || '-'}</div>
+                          {customerEmail && <div className="truncate text-xs text-slate-500">{customerEmail}</div>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-slate-800">{formatCurrency(order.total)}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`inline-flex rounded border px-3 py-1 text-xs font-medium ${statusTone(order.status)}`}>
                           {statusLabel(order.status)}
@@ -602,13 +651,6 @@ export default function OrderManagement() {
                           {shippingStatusLabel(shippingValue) || '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="min-w-0">
-                          <div className="truncate font-medium text-slate-800">{customerName || '-'}</div>
-                          {customerEmail && <div className="truncate text-xs text-slate-500">{customerEmail}</div>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-slate-800">{formatCurrency(order.total)}</td>
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
@@ -637,17 +679,30 @@ export default function OrderManagement() {
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
               <div>
                 <h2 className="text-xl font-bold">{t('order_management.detail_title', '訂單詳情')}</h2>
-                <p className="font-mono text-sm text-slate-500">{viewingOrder.order_number}</p>
+                <p className="font-mono text-sm text-slate-500">{displayOrderNumbers.get(viewingOrder.id) || viewingOrder.order_number}</p>
               </div>
               <button onClick={() => setViewingOrder(null)} className="rounded-lg p-2 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
+            <section className="mx-6 mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-slate-900">完整訂單文字資訊</h3>
+                <button type="button" onClick={() => void copyOrderText()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                  <Copy className="h-4 w-4" />
+                  複製全部
+                </button>
+              </div>
+              <div className="w-full whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-6 text-slate-700" aria-label="完整訂單文字資訊">
+                {orderText}
+              </div>
+            </section>
+
             <div className="space-y-6 p-6 pb-28">
               <section className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-2">
                 <h3 className="md:col-span-2 text-lg font-semibold">{t('order_management.order_info', '訂單資料')}</h3>
-                <Field label={t('order_management.order_number', '訂單號碼')} value={viewingOrder.order_number} />
+                <Field label={t('order_management.order_number', '訂單號碼')} value={displayOrderNumbers.get(viewingOrder.id) || viewingOrder.order_number} />
                 <Field label={t('order_management.order_date', '訂單日期')} value={formatOrderDateTime(viewingOrder.created_at)} />
                 <Field label={t('order_management.order_status', '訂單狀態')} value={statusLabel(statusEdit)} />
                 <Field label={t('order_management.completed_at', '完成時間')} value={formatOrderDateTime(viewingOrder.completed_at)} />

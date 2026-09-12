@@ -7,12 +7,14 @@ import SiteHeader from '../components/SiteHeader';
 import ProductImage from '../components/ProductImage';
 import { REMITTANCE_INFO, remittanceLines } from '../data/remittanceInfo';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useMemberAuth } from '../contexts/MemberAuthContext';
 import { resolveSonpinProductImages } from '../lib/productImages';
 
 type PaymentState = 'paid' | 'failed' | 'pending' | 'unknown';
 
 interface OrderSummary {
   order_number: string;
+  status: string | null;
   payment_status: string | null;
   subtotal: number | null;
   shipping: number | null;
@@ -44,6 +46,7 @@ const getOrderItemImage = (item: OrderItemSummary) => {
 
 export default function CheckoutResult() {
   const { t } = useLanguage();
+  const { user } = useMemberAuth();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order_id') || '';
   const orderNumberParam = searchParams.get('order_number') || '';
@@ -55,6 +58,7 @@ export default function CheckoutResult() {
   const [loading, setLoading] = useState<boolean>(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [orderCopyState, setOrderCopyState] = useState<'idle' | 'copied'>('idle');
+  const [cancelling, setCancelling] = useState(false);
   const stateConfig: Record<PaymentState, { title: string; description: string; tone: string }> = {
     paid: { title: t('checkout.result.paid.title', '訂單已送出'), description: t('checkout.result.paid.description', '我們已收到您的付款，訂單會盡快安排處理與出貨。'), tone: 'text-emerald-700' },
     failed: { title: t('checkout.result.failed.title', '付款失敗'), description: t('checkout.result.failed.description', '目前付款狀態顯示失敗，若您已完成匯款，請重新通知我們進行確認。'), tone: 'text-rose-700' },
@@ -95,7 +99,7 @@ export default function CheckoutResult() {
     const loadOrderStatus = async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('order_number,payment_status,subtotal,shipping,total,shipping_method,customer_name,customer_email')
+        .select('order_number,status,payment_status,subtotal,shipping,total,shipping_method,customer_name,customer_email')
         .eq('id', orderId)
         .maybeSingle();
 
@@ -174,6 +178,38 @@ export default function CheckoutResult() {
       window.setTimeout(() => setOrderCopyState('idle'), 2000);
     } catch {
       setOrderCopyState('idle');
+    }
+  };
+
+  const canCancelOrder = Boolean(
+    user && orderSummary && ['pending', 'processing'].includes((orderSummary.status || '').toLowerCase()),
+  );
+
+  const cancelOrder = async () => {
+    if (!user || !orderId || !canCancelOrder || cancelling) return;
+    const confirmed = window.confirm(`確定要取消訂單「${orderNumber || orderId}」嗎？取消後將無法復原。`);
+    if (!confirmed) return;
+
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId)
+        .eq('customer_account', user.id)
+        .in('status', ['pending', 'processing'])
+        .select('status')
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        throw new Error('Order could not be cancelled');
+      }
+      setOrderSummary((current) => (current ? { ...current, status: 'cancelled' } : current));
+    } catch (error) {
+      console.error('Failed to cancel order:', error);
+      alert('訂單取消失敗，請稍後再試或聯繫客服。');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -318,6 +354,19 @@ export default function CheckoutResult() {
               {t('checkout.back_to_cart', '回到購物車')}
             </Link>
           </div>
+
+          {canCancelOrder && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => void cancelOrder()}
+                disabled={cancelling}
+                className="rounded-xl border border-rose-200 px-6 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {cancelling ? '取消處理中...' : '取消訂單'}
+              </button>
+            </div>
+          )}
         </div>
       </main>
       <DeferredSiteFooter />

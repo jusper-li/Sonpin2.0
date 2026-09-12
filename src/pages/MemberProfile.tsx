@@ -98,6 +98,26 @@ export default function MemberProfile() {
     };
   }, [user?.email]);
 
+  const cancelOrder = async (order: MemberOrder) => {
+    const confirmed = window.confirm(`確定要取消訂單「${order.order_number}」嗎？取消後將無法復原。`);
+    if (!confirmed) return;
+
+    setError('');
+    try {
+      const { error: cancelError } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', order.id)
+        .in('status', ['pending', 'processing']);
+      if (cancelError) throw cancelError;
+      setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, status: 'cancelled' } : item)));
+      setSuccessMsg('訂單已取消。');
+    } catch (cancelError) {
+      console.error('Failed to cancel order:', cancelError);
+      setError('訂單取消失敗，請稍後再試或聯繫客服。');
+    }
+  };
+
   const cancelEdit = () => {
     setEditing(null);
     setError('');
@@ -431,24 +451,36 @@ export default function MemberProfile() {
               <p className="px-6 py-8 text-sm text-stone-500">{t('member.profile.orders.empty', '目前沒有訂單紀錄。')}</p>
             ) : (
               <div className="divide-y divide-stone-100">
-                {orders.map((order) => (
-                  <Link
+                {orders.map((order) => {
+                  const canCancel = order.status === 'pending' || order.status === 'processing';
+                  return (
+                  <div
                     key={order.id}
-                    to={`/checkout/result?order_id=${encodeURIComponent(order.id)}&order_number=${encodeURIComponent(order.order_number)}`}
                     className="flex items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-stone-50"
                   >
-                    <div className="min-w-0">
-                      <p className="font-mono text-sm text-stone-800">{order.order_number}</p>
-                      <p className="mt-1 text-xs text-stone-500">
-                        {new Date(order.created_at).toLocaleDateString('zh-TW')} · {formatMemberOrderStatus(order.status)}
-                      </p>
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span className="text-sm font-medium text-stone-800">NT$ {Number(order.total || 0).toLocaleString('zh-TW')}</span>
-                      <ChevronRight className="h-4 w-4 text-stone-300" />
-                    </div>
-                  </Link>
-                ))}
+                    <Link
+                      to={`/checkout/result?order_id=${encodeURIComponent(order.id)}&order_number=${encodeURIComponent(order.order_number)}`}
+                      className="flex min-w-0 flex-1 items-center justify-between gap-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-sm text-stone-800">{order.order_number}</p>
+                        <p className="mt-1 text-xs text-stone-500">
+                          {new Date(order.created_at).toLocaleDateString('zh-TW')} · {formatMemberOrderStatus(order.status)}
+                        </p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span className="text-sm font-medium text-stone-800">NT$ {Number(order.total || 0).toLocaleString('zh-TW')}</span>
+                        <ChevronRight className="h-4 w-4 text-stone-300" />
+                      </div>
+                    </Link>
+                    {canCancel && (
+                      <button type="button" onClick={() => void cancelOrder(order)} className="flex-shrink-0 rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50">
+                        取消訂單
+                      </button>
+                    )}
+                  </div>
+                  );
+                })}
               </div>
             )}
           </div>
