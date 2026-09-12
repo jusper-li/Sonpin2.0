@@ -57,6 +57,17 @@ const dateTime = (value?: string | null) => {
   return d.toLocaleString('zh-TW', { hour12: false });
 };
 
+const taipeiTodayStart = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return new Date(`${values.year}-${values.month}-${values.day}T00:00:00+08:00`).toISOString();
+};
+
 export default function MemberManagement() {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +87,7 @@ export default function MemberManagement() {
     address: '',
     is_active: true,
   });
-  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, totalRevenue: 0 });
+  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, today: 0, totalRevenue: 0 });
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadData(), 250);
@@ -86,20 +97,22 @@ export default function MemberManagement() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [totalRes, activeRes, inactiveRes, totalsRes] = await Promise.all([
+      const [totalRes, activeRes, inactiveRes, todayRes, totalsRes] = await Promise.all([
         supabase.from('members').select('id', { count: 'exact', head: true }),
         supabase.from('members').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('members').select('id', { count: 'exact', head: true }).eq('is_active', false),
+        supabase.from('members').select('id', { count: 'exact', head: true }).gte('created_at', taipeiTodayStart()).lte('created_at', new Date().toISOString()),
         supabase.from('members').select('total_spent').range(0, 9999),
       ]);
 
-      const summaryError = [totalRes.error, activeRes.error, inactiveRes.error, totalsRes.error].find(Boolean);
+      const summaryError = [totalRes.error, activeRes.error, inactiveRes.error, todayRes.error, totalsRes.error].find(Boolean);
       if (summaryError) throw summaryError;
 
       setSummary({
         total: totalRes.count || 0,
         active: activeRes.count || 0,
         inactive: inactiveRes.count || 0,
+        today: todayRes.count || 0,
         totalRevenue: (totalsRes.data || []).reduce((total, member) => total + Number(member.total_spent || 0), 0),
       });
 
@@ -361,7 +374,7 @@ export default function MemberManagement() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-xs text-slate-500">{t('member_management.total_members', '會員總數')}</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900">{summary.total}</p>
@@ -373,6 +386,10 @@ export default function MemberManagement() {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-xs text-slate-500">{t('member_management.inactive_members', '停用會員')}</p>
           <p className="mt-1 text-2xl font-semibold text-slate-700">{summary.inactive}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-xs text-slate-500">{t('member_management.today_new_members', '今日新增')}</p>
+          <p className="mt-1 text-2xl font-semibold text-sky-700">{summary.today}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-xs text-slate-500">{t('member_management.total_spent', '累積消費')}</p>
